@@ -1,13 +1,64 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState } from 'react';
+import Layout from '@/components/Layout';
+import NovaVistoria from '@/components/NovaVistoria';
+import ListaVistorias from '@/components/ListaVistorias';
+import PreviewPDF from '@/components/PreviewPDF';
+import Configuracoes from '@/components/Configuracoes';
+
+interface VistoriaData {
+  condominio: string;
+  numeroInterno: string;
+  dataVistoria: string;
+  ambiente: string;
+  grupo: string;
+  item: string;
+  status: string;
+  parecer: string;
+  observacoes: string;
+  responsavel: string;
+  fotos: File[];
+}
 
 const Index = () => {
+  const [currentPage, setCurrentPage] = useState('vistorias');
+  const [previewData, setPreviewData] = useState<VistoriaData | null>(null);
+
+  const handleNavigate = (page: string) => {
+    setCurrentPage(page);
+    setPreviewData(null);
+  };
+
+  const handlePreview = (data: VistoriaData) => {
+    setPreviewData(data);
+    setCurrentPage('preview');
+  };
+
+  const handleBackFromPreview = () => {
+    setPreviewData(null);
+    setCurrentPage('nova-vistoria');
+  };
+
+  const renderContent = () => {
+    if (currentPage === 'preview' && previewData) {
+      return <PreviewPDF data={previewData} onBack={handleBackFromPreview} />;
+    }
+
+    switch (currentPage) {
+      case 'nova-vistoria':
+        return <NovaVistoria onPreview={handlePreview} />;
+      case 'configuracoes':
+        return <Configuracoes />;
+      case 'vistorias':
+      default:
+        return <ListaVistorias />;
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <Layout currentPage={currentPage} onNavigate={handleNavigate}>
+      {renderContent()}
+    </Layout>
   );
 };
 
