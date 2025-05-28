@@ -9,10 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Upload, Save, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import UploadFotos from './UploadFotos';
+import { Condominio } from '@/hooks/useCondominios';
 
 interface VistoriaData {
   condominio: string;
+  condominioId: string;
   numeroInterno: string;
+  idSequencial: number;
   dataVistoria: string;
   ambiente: string;
   grupo: string;
@@ -26,13 +29,18 @@ interface VistoriaData {
 
 interface NovaVistoriaProps {
   onPreview: (data: VistoriaData) => void;
+  condominios: Condominio[];
+  obterProximoNumero: (condominioId: string) => number;
+  incrementarNumero: (condominioId: string) => void;
 }
 
-const NovaVistoria = ({ onPreview }: NovaVistoriaProps) => {
+const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarNumero }: NovaVistoriaProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<VistoriaData>({
     condominio: '',
+    condominioId: '',
     numeroInterno: '',
+    idSequencial: 0,
     dataVistoria: new Date().toISOString().split('T')[0],
     ambiente: '',
     grupo: '',
@@ -59,23 +67,49 @@ const NovaVistoria = ({ onPreview }: NovaVistoriaProps) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleCondominioChange = (condominioId: string) => {
+    const condominio = condominios.find(c => c.id === condominioId);
+    if (condominio) {
+      const proximoNumero = obterProximoNumero(condominioId);
+      setFormData(prev => ({
+        ...prev,
+        condominioId,
+        condominio: condominio.nome,
+        idSequencial: proximoNumero,
+        numeroInterno: `${new Date().getFullYear()}-${proximoNumero.toString().padStart(4, '0')}`
+      }));
+    }
+  };
+
   const handleFotosChange = (fotos: File[]) => {
     setFormData(prev => ({ ...prev, fotos }));
   };
 
   const handleSave = () => {
+    if (!formData.condominioId) {
+      toast({
+        title: "Condomínio Obrigatório",
+        description: "Por favor, selecione um condomínio.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Incrementar o número sequencial do condomínio
+    incrementarNumero(formData.condominioId);
+    
     console.log('Salvando vistoria:', formData);
     toast({
       title: "Vistoria Salva",
-      description: "Os dados da vistoria foram salvos com sucesso.",
+      description: `Vistoria #${formData.numeroInterno} salva com sucesso.`,
     });
   };
 
   const handlePreview = () => {
-    if (!formData.condominio || !formData.numeroInterno) {
+    if (!formData.condominioId) {
       toast({
-        title: "Dados Incompletos",
-        description: "Por favor, preencha pelo menos o nome do condomínio e número interno.",
+        title: "Condomínio Obrigatório",
+        description: "Por favor, selecione um condomínio.",
         variant: "destructive",
       });
       return;
@@ -110,34 +144,60 @@ const NovaVistoria = ({ onPreview }: NovaVistoriaProps) => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="condominio">Nome do Condomínio *</Label>
-              <Input
-                id="condominio"
-                value={formData.condominio}
-                onChange={(e) => handleInputChange('condominio', e.target.value)}
-                placeholder="Ex: Condomínio Edifício Artur Ramos"
-              />
+              <Label htmlFor="condominio">Condomínio *</Label>
+              {condominios.length === 0 ? (
+                <div className="p-3 border border-orange-200 bg-orange-50 rounded-md">
+                  <p className="text-sm text-orange-700">
+                    Nenhum condomínio cadastrado. Acesse a aba "Condomínios" para cadastrar.
+                  </p>
+                </div>
+              ) : (
+                <Select value={formData.condominioId} onValueChange={handleCondominioChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o condomínio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {condominios.map((condominio) => (
+                      <SelectItem key={condominio.id} value={condominio.id}>
+                        {condominio.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="numeroInterno">Nº Interno *</Label>
+                <Label htmlFor="numeroInterno">Nº Interno</Label>
                 <Input
                   id="numeroInterno"
                   value={formData.numeroInterno}
-                  onChange={(e) => handleInputChange('numeroInterno', e.target.value)}
-                  placeholder="Ex: 2028"
+                  readOnly
+                  className="bg-gray-50"
+                  placeholder="Selecione um condomínio"
                 />
               </div>
               <div>
-                <Label htmlFor="dataVistoria">Data da Vistoria</Label>
+                <Label htmlFor="idSequencial">ID Sequencial</Label>
                 <Input
-                  id="dataVistoria"
-                  type="date"
-                  value={formData.dataVistoria}
-                  onChange={(e) => handleInputChange('dataVistoria', e.target.value)}
+                  id="idSequencial"
+                  value={formData.idSequencial || ''}
+                  readOnly
+                  className="bg-gray-50"
+                  placeholder="Auto"
                 />
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="dataVistoria">Data da Vistoria</Label>
+              <Input
+                id="dataVistoria"
+                type="date"
+                value={formData.dataVistoria}
+                onChange={(e) => handleInputChange('dataVistoria', e.target.value)}
+              />
             </div>
 
             <div>

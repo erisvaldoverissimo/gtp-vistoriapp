@@ -5,10 +5,14 @@ import NovaVistoria from '@/components/NovaVistoria';
 import ListaVistorias from '@/components/ListaVistorias';
 import PreviewPDF from '@/components/PreviewPDF';
 import Configuracoes from '@/components/Configuracoes';
+import GerenciarCondominios from '@/components/GerenciarCondominios';
+import { useCondominios } from '@/hooks/useCondominios';
 
 interface VistoriaData {
   condominio: string;
+  condominioId: string;
   numeroInterno: string;
+  idSequencial: number;
   dataVistoria: string;
   ambiente: string;
   grupo: string;
@@ -23,6 +27,7 @@ interface VistoriaData {
 const Index = () => {
   const [currentPage, setCurrentPage] = useState('vistorias');
   const [previewData, setPreviewData] = useState<VistoriaData | null>(null);
+  const { condominios, atualizarCondominios, obterProximoNumero, incrementarNumero } = useCondominios();
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
@@ -46,7 +51,21 @@ const Index = () => {
 
     switch (currentPage) {
       case 'nova-vistoria':
-        return <NovaVistoria onPreview={handlePreview} />;
+        return (
+          <NovaVistoria 
+            onPreview={handlePreview} 
+            condominios={condominios}
+            obterProximoNumero={obterProximoNumero}
+            incrementarNumero={incrementarNumero}
+          />
+        );
+      case 'condominios':
+        return (
+          <GerenciarCondominios 
+            condominios={condominios}
+            onCondominiosChange={atualizarCondominios}
+          />
+        );
       case 'configuracoes':
         return <Configuracoes />;
       case 'vistorias':
