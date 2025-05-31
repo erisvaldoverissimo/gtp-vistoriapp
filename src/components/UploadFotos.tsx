@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -6,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import DescricaoAutomatica from './DescricaoAutomatica';
 
 interface FotoData {
   file: File;
@@ -89,23 +89,8 @@ const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
     setFotos(updatedFotos);
   };
 
-  const generateAutoDescription = async (index: number) => {
-    // Simular geração automática de descrição com IA
-    const descriptions = [
-      "Vista do acesso ao elevador de serviço",
-      "Destaque para os sensores dos elevadores, que apresentam falha no reconhecimento das digitais",
-      "Painel de controle interno do elevador",
-      "Sistema de automação e controle predial",
-      "Detalhes da instalação elétrica"
-    ];
-    
-    const randomDescription = descriptions[Math.floor(Math.random() * descriptions.length)];
-    handleDescricaoChange(index, randomDescription);
-    
-    toast({
-      title: "Descrição Gerada",
-      description: "Descrição automática gerada pela IA. Você pode editá-la se necessário.",
-    });
+  const handleDescriptionGenerated = (index: number, description: string) => {
+    handleDescricaoChange(index, description);
   };
 
   return (
@@ -163,15 +148,10 @@ const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
                     onChange={(e) => handleDescricaoChange(index, e.target.value)}
                     placeholder="Descreva o que mostra esta foto..."
                   />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => generateAutoDescription(index)}
-                    className="w-full"
-                  >
-                    <ImageIcon size={16} className="mr-2" />
-                    Gerar Descrição IA
-                  </Button>
+                  <DescricaoAutomatica
+                    imageFile={foto.file}
+                    onDescriptionGenerated={(description) => handleDescriptionGenerated(index, description)}
+                  />
                 </div>
               </Card>
             ))}
