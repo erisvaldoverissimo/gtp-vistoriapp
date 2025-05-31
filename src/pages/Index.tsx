@@ -6,6 +6,7 @@ import ListaVistorias from '@/components/ListaVistorias';
 import PreviewPDF from '@/components/PreviewPDF';
 import Configuracoes from '@/components/Configuracoes';
 import GerenciarCondominios from '@/components/GerenciarCondominios';
+import ChatIA from '@/components/ChatIA';
 import { useCondominios } from '@/hooks/useCondominios';
 
 interface VistoriaData {
@@ -66,6 +67,8 @@ const Index = () => {
             onCondominiosChange={atualizarCondominios}
           />
         );
+      case 'chat-ia':
+        return <ChatIA />;
       case 'configuracoes':
         return <Configuracoes />;
       case 'vistorias':
