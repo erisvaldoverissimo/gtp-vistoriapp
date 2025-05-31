@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Eye, Download, Calendar, Building, FileText, Loader2 } from 'lucide-react';
+import { Eye, Download, Calendar, Building, FileText, Loader2 } from 'lucide-react';
 import { useVistorias } from '@/hooks/useVistorias';
 import DetalheVistoria from './DetalheVistoria';
+import FiltrosAvancados from './FiltrosAvancados';
+import Paginacao from './Paginacao';
 import { useToast } from '@/hooks/use-toast';
 
 interface Vistoria {
@@ -22,18 +24,36 @@ interface Vistoria {
   idSequencial?: number;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const ListaVistorias = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedVistoria, setSelectedVistoria] = useState<Vistoria | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { vistorias, loading } = useVistorias();
   const { toast } = useToast();
 
-  const filteredVistorias = vistorias.filter(vistoria =>
-    vistoria.condominio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vistoria.numeroInterno.includes(searchTerm) ||
-    vistoria.responsavel.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVistorias = useMemo(() => {
+    return vistorias.filter(vistoria => {
+      const matchesSearch = 
+        vistoria.condominio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vistoria.numeroInterno.includes(searchTerm) ||
+        vistoria.responsavel.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = !statusFilter || vistoria.status === statusFilter;
+      
+      const matchesDate = !dateFilter || vistoria.dataVistoria === dateFilter;
+
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [vistorias, searchTerm, statusFilter, dateFilter]);
+
+  const totalPages = Math.ceil(filteredVistorias.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedVistorias = filteredVistorias.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -59,13 +79,11 @@ const ListaVistorias = () => {
   };
 
   const handleDownloadPDF = (vistoria: Vistoria) => {
-    // Simular geração de PDF
     toast({
       title: "PDF em preparação",
       description: `Gerando PDF da vistoria ${vistoria.numeroInterno}...`,
     });
 
-    // Simular delay da geração
     setTimeout(() => {
       toast({
         title: "PDF gerado com sucesso!",
@@ -77,6 +95,17 @@ const ListaVistorias = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedVistoria(null);
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('');
+    setDateFilter('');
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   if (loading) {
@@ -92,18 +121,18 @@ const ListaVistorias = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Vistorias Realizadas</h2>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <Input
-              placeholder="Buscar por condomínio, número ou responsável..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-80"
-            />
-          </div>
-        </div>
       </div>
+
+      {/* Filtros Avançados */}
+      <FiltrosAvancados
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        dateFilter={dateFilter}
+        onDateFilterChange={setDateFilter}
+        onClearFilters={handleClearFilters}
+      />
 
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -113,7 +142,7 @@ const ListaVistorias = () => {
               <FileText className="h-8 w-8 text-teal-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total de Vistorias</p>
-                <p className="text-2xl font-bold text-gray-900">{vistorias.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{filteredVistorias.length}</p>
               </div>
             </div>
           </CardContent>
@@ -126,7 +155,7 @@ const ListaVistorias = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Conformes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {vistorias.filter(v => v.status === 'Conforme').length}
+                  {filteredVistorias.filter(v => v.status === 'Conforme').length}
                 </p>
               </div>
             </div>
@@ -140,7 +169,7 @@ const ListaVistorias = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Não Conformes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {vistorias.filter(v => v.status === 'Não Conforme').length}
+                  {filteredVistorias.filter(v => v.status === 'Não Conforme').length}
                 </p>
               </div>
             </div>
@@ -154,7 +183,7 @@ const ListaVistorias = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Requer Atenção</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {vistorias.filter(v => v.status === 'Requer Atenção').length}
+                  {filteredVistorias.filter(v => v.status === 'Requer Atenção').length}
                 </p>
               </div>
             </div>
@@ -164,18 +193,18 @@ const ListaVistorias = () => {
 
       {/* Lista de Vistorias */}
       <div className="space-y-4">
-        {filteredVistorias.length === 0 ? (
+        {paginatedVistorias.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <FileText size={48} className="mx-auto text-gray-300 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma vistoria encontrada</h3>
               <p className="text-gray-600">
-                {searchTerm ? 'Tente ajustar os filtros de busca.' : 'Comece criando uma nova vistoria.'}
+                {searchTerm || statusFilter || dateFilter ? 'Tente ajustar os filtros de busca.' : 'Comece criando uma nova vistoria.'}
               </p>
             </CardContent>
           </Card>
         ) : (
-          filteredVistorias.map((vistoria) => (
+          paginatedVistorias.map((vistoria) => (
             <Card key={vistoria.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -232,6 +261,15 @@ const ListaVistorias = () => {
           ))
         )}
       </div>
+
+      {/* Paginação */}
+      <Paginacao
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredVistorias.length}
+        itemsPerPage={ITEMS_PER_PAGE}
+        onPageChange={handlePageChange}
+      />
 
       {/* Modal de Detalhes */}
       <DetalheVistoria
