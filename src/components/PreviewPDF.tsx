@@ -105,11 +105,11 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     <div className="bg-brand-purple text-white p-4 rounded-t-lg mb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-brand-green rounded-lg flex items-center justify-center">
+          <div className="flex items-center justify-center">
             <img 
-              src="/lovable-uploads/9e07dcd0-b996-4996-9028-7daeb90e3140.png" 
+              src="/lovable-uploads/ebfcae5e-f5c0-4403-8fcd-6c6c182ffa98.png" 
               alt="GTP Logo" 
-              className="w-8 h-8 object-contain"
+              className="w-12 h-12 object-contain"
             />
           </div>
           <div>
