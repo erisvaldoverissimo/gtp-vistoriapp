@@ -218,10 +218,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
 
           {/* Grupos de Vistoria */}
           {data.grupos.map((grupo, grupoIndex) => (
-            <div key={grupo.id}>
-              {/* Nova página para cada grupo (exceto o primeiro) */}
-              {grupoIndex > 0 && <div className="break-before-page"></div>}
-              
+            <div key={grupo.id} className={`mb-6 ${grupoIndex > 0 ? 'break-before-page' : ''}`} style={{ breakInside: 'avoid' }}>
               {/* Tabela de Detalhes do Grupo */}
               <div className="mb-4">
                 <h3 className="text-base font-semibold mb-2 text-brand-purple">
@@ -258,47 +255,47 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                 </table>
               </div>
 
-              {/* Evidências Fotográficas do Grupo - Uma nova página para cada 2 fotos */}
+              {/* Evidências Fotográficas do Grupo - Dividindo a cada 2 fotos por página */}
               {grupo.fotos.length > 0 && (
                 <>
-                  {grupo.fotos.map((foto, fotoIndex) => {
-                    const fotoComDescricao = foto as File & { descricao?: string };
-                    const numeroFoto = fotoIndex + 1;
-                    const isEvenPhoto = fotoIndex % 2 === 1;
-                    const isFirstPhoto = fotoIndex === 0;
+                  {Array.from({ length: Math.ceil(grupo.fotos.length / 2) }, (_, pageIndex) => {
+                    const startIndex = pageIndex * 2;
+                    const endIndex = Math.min(startIndex + 2, grupo.fotos.length);
+                    const fotosNaPagina = grupo.fotos.slice(startIndex, endIndex);
                     
                     return (
-                      <div key={fotoIndex}>
-                        {/* Nova página a cada 2 fotos (mas não na primeira foto do grupo) */}
-                        {fotoIndex > 0 && fotoIndex % 2 === 0 && (
-                          <div className="break-before-page"></div>
-                        )}
-                        
-                        {/* Título das evidências fotográficas (apenas no início de cada página) */}
-                        {(isFirstPhoto || fotoIndex % 2 === 0) && (
-                          <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                            Evidências Fotográficas - Grupo {grupoIndex + 1}
-                            {fotoIndex > 0 && ` (Página ${Math.floor(fotoIndex / 2) + 1})`}
-                          </h4>
-                        )}
-                        
-                        <div className={`mb-4 ${isEvenPhoto ? 'mb-8' : ''}`}>
-                          <div className="border rounded-lg p-2">
-                            <img
-                              src={URL.createObjectURL(foto)}
-                              alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
-                              className="w-full aspect-square object-cover rounded mb-2"
-                              style={{ maxHeight: '300px' }}
-                            />
-                            <div>
-                              <p className="text-xs font-medium mb-1">
-                                Foto {String(numeroFoto).padStart(2, '0')} - Grupo {grupoIndex + 1}
-                              </p>
-                              <p className="text-xs text-gray-700 leading-relaxed">
-                                {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
-                              </p>
-                            </div>
-                          </div>
+                      <div 
+                        key={pageIndex} 
+                        className={`mb-4 ${pageIndex > 0 ? 'break-before-page' : ''}`} 
+                        style={{ breakInside: 'avoid' }}
+                      >
+                        <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                          Evidências Fotográficas - Grupo {grupoIndex + 1}
+                          {pageIndex > 0 && ` (Página ${pageIndex + 1})`}
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          {fotosNaPagina.map((foto, fotoIndex) => {
+                            const fotoComDescricao = foto as File & { descricao?: string };
+                            const numeroFoto = startIndex + fotoIndex + 1;
+                            
+                            return (
+                              <div key={fotoIndex} className="border rounded-lg p-2">
+                                <img
+                                  src={URL.createObjectURL(foto)}
+                                  alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
+                                  className="w-full aspect-square object-cover rounded mb-2"
+                                />
+                                <div>
+                                  <p className="text-xs font-medium mb-1">
+                                    Foto {String(numeroFoto).padStart(2, '0')} - Grupo {grupoIndex + 1}
+                                  </p>
+                                  <p className="text-xs text-gray-700 leading-relaxed">
+                                    {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -310,7 +307,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
 
           {/* Observações Gerais */}
           {data.observacoes && (
-            <div className="mb-4 break-before-page">
+            <div className="mb-4">
               <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
               <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
                 {data.observacoes}
