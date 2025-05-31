@@ -256,7 +256,7 @@ const PreviewPDF = ({ data, onBack, onEdit }: PreviewPDFProps) => {
             Foto {String(numeroFoto).padStart(2, '0')} - Sistema {grupoIndex + 1}
           </p>
           <p className="text-xs text-gray-700 leading-relaxed" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>
-            {truncateText(fotoComDescricao.descricao || 'Evidência fotográfica da vistoria', 150)}
+            {truncateText(fotoComDescricao.descricao || 'Evidência fotográfica da vistoria', 200)}
           </p>
         </div>
       </div>

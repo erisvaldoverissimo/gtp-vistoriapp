@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -25,7 +26,7 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
   const [fotos, setFotos] = useState<FotoData[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const MAX_DESCRICAO_LENGTH = 300;
+  const MAX_DESCRICAO_LENGTH = 200;
 
   // Reset fotos quando o grupoId muda (novo grupo)
   useEffect(() => {
@@ -183,7 +184,7 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
                   <img
                     src={foto.preview}
                     alt={`Foto ${index + 1}`}
-                    className="w-full h-48 object-cover rounded-lg"
+                    className="w-full aspect-square object-cover rounded-lg"
                   />
                   <Button
                     variant="destructive"
