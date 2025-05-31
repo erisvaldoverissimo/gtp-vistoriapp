@@ -93,7 +93,6 @@ const Index = () => {
           data={previewData} 
           onBack={handleBackFromPreview}
           onEdit={handleEditFromPreview}
-          onSave={handleSalvarVistoria}
         />
       );
     }
@@ -107,6 +106,7 @@ const Index = () => {
             obterProximoNumero={obterProximoNumero}
             incrementarNumero={incrementarNumero}
             initialData={previewData}
+            onSave={handleSalvarVistoria}
           />
         );
       case 'usuarios':
