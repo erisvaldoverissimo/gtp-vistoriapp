@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Mail, Image, Save, Upload } from 'lucide-react';
+import { Settings, Mail, Image, Save, Upload, Bot, Brain } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Configuracoes = () => {
@@ -33,6 +32,32 @@ const Configuracoes = () => {
     apiKeyOpenAI: '',
     enableAutoDescription: true,
     
+    // Configurações do Agente IA
+    nomeAgente: 'Theo',
+    promptPersona: `Seu nome é Theo, atue como um Tutor virtual e Mentor de estudo no Seminário Teológico de Guarulhos, você possui vasta experiência em pedagogia teológica, Cosmovisão Cristã e práticas de aprendizagem ativa. Seu propósito é auxiliar alunos durante todo o processo educativo.
+
+### PERSONA
+- Tom acolhedor e empático, transmitindo calma e segurança ao estudante
+- Estilo de fala claro, objetivo e acessível, evitando jargões técnicos sem necessidade
+- Uso ocasional de metáforas e ilustrações bíblicas (por exemplo, "como um farol que guia o barco.")
+- Demonstra paciência exemplar, encorajando o aluno a expor dúvidas sem receio
+- Mostra entusiasmo sincero ao reconhecer o progresso ou empenho do estudante
+- Adota postura respeitosa e humilde, reconhecendo limites de conhecimento e aprendendo junto
+- Sinaliza abertura para feedback contínuo e novas perguntas`,
+    promptObjetivo: `Esclarecer dúvidas em tempo real sobre Cosmovisão e Espiritualidade, fundamentando-se em textos bíblicos e referências teológicas
+
+- Gerar cronogramas de estudo customizados de acordo com a disponibilidade semanal e metas individuais de cada aluno
+- Incentivar o engajamento e a autonomia do estudante por meio de métodos de estudo eficazes`,
+    promptComportamento: `### COMPORTAMENTO E AÇÕES
+
+1. **Atendimento de dúvidas:**
+   - Responder com linguagem clara, contextualizada e fundamentada em passagens bíblicas, livros acadêmicos e artigos teológicos
+   - Quando citar autores ou obras, sempre incluir referência completa (título, autor, edição e, se possível, link para a biblioteca digital do Seminário)
+
+2. **Gerenciamento de cronogramas:**
+   - Solicitar ao aluno sua disponibilidade semanal (horas/dias) e adaptar o plano de estudo conforme prazos de entrega ou exames`,
+    enableAgente: true,
+    
     // Configurações Gerais
     limiteFotos: 10,
     tamanhoMaximoFoto: '5', // MB
@@ -45,6 +70,7 @@ const Configuracoes = () => {
 
   const handleSave = () => {
     console.log('Salvando configurações:', config);
+    localStorage.setItem('configuracoes', JSON.stringify(config));
     toast({
       title: "Configurações Salvas",
       description: "Todas as configurações foram salvas com sucesso.",
@@ -68,6 +94,14 @@ const Configuracoes = () => {
         description: "A logo da empresa foi carregada com sucesso.",
       });
     }
+  };
+
+  const handleTestAgente = () => {
+    console.log('Testando configurações do agente IA...');
+    toast({
+      title: "Agente IA Testado",
+      description: "O agente foi configurado com as definições atuais.",
+    });
   };
 
   return (
@@ -219,6 +253,76 @@ const Configuracoes = () => {
             <Button onClick={handleTestEmail} variant="outline" className="w-full">
               <Mail size={16} className="mr-2" />
               Testar Configurações de Email
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Configurações do Agente IA */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Bot size={20} className="mr-2" />
+              Configuração do Agente IA
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={config.enableAgente}
+                onCheckedChange={(checked) => handleInputChange('enableAgente', checked)}
+              />
+              <Label>Habilitar Agente IA Especialista</Label>
+            </div>
+
+            <div>
+              <Label htmlFor="nomeAgente">Nome do Agente</Label>
+              <Input
+                id="nomeAgente"
+                value={config.nomeAgente}
+                onChange={(e) => handleInputChange('nomeAgente', e.target.value)}
+                placeholder="Ex: Theo, Maria, João..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="promptPersona">Prompt - Persona</Label>
+              <Textarea
+                id="promptPersona"
+                value={config.promptPersona}
+                onChange={(e) => handleInputChange('promptPersona', e.target.value)}
+                placeholder="Defina a personalidade e características do agente..."
+                rows={8}
+                className="font-mono text-sm"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="promptObjetivo">Prompt - Objetivo</Label>
+              <Textarea
+                id="promptObjetivo"
+                value={config.promptObjetivo}
+                onChange={(e) => handleInputChange('promptObjetivo', e.target.value)}
+                placeholder="Defina os objetivos e metas do agente..."
+                rows={4}
+                className="font-mono text-sm"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="promptComportamento">Prompt - Comportamento e Ações</Label>
+              <Textarea
+                id="promptComportamento"
+                value={config.promptComportamento}
+                onChange={(e) => handleInputChange('promptComportamento', e.target.value)}
+                placeholder="Defina como o agente deve se comportar e agir..."
+                rows={10}
+                className="font-mono text-sm"
+              />
+            </div>
+
+            <Button onClick={handleTestAgente} variant="outline" className="w-full">
+              <Brain size={16} className="mr-2" />
+              Testar Configurações do Agente
             </Button>
           </CardContent>
         </Card>
