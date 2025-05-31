@@ -4,55 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Eye, Download, Calendar, Building, FileText } from 'lucide-react';
-
-interface Vistoria {
-  id: string;
-  condominio: string;
-  numeroInterno: string;
-  dataVistoria: string;
-  ambiente: string;
-  status: string;
-  responsavel: string;
-  fotosCount: number;
-}
+import { Search, Eye, Download, Calendar, Building, FileText, Loader2 } from 'lucide-react';
+import { useVistorias } from '@/hooks/useVistorias';
 
 const ListaVistorias = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Dados mockados para demonstração
-  const vistorias: Vistoria[] = [
-    {
-      id: '1',
-      condominio: 'Condomínio Edifício Artur Ramos',
-      numeroInterno: '2028',
-      dataVistoria: '2025-02-14',
-      ambiente: 'Térreo',
-      status: 'N/A',
-      responsavel: 'João Silva',
-      fotosCount: 3
-    },
-    {
-      id: '2',
-      condominio: 'Residencial Park View',
-      numeroInterno: '2029',
-      dataVistoria: '2025-02-13',
-      ambiente: '1º Andar',
-      status: 'Conforme',
-      responsavel: 'Maria Santos',
-      fotosCount: 5
-    },
-    {
-      id: '3',
-      condominio: 'Edifício Central Plaza',
-      numeroInterno: '2030',
-      dataVistoria: '2025-02-12',
-      ambiente: 'Cobertura',
-      status: 'Não Conforme',
-      responsavel: 'Carlos Oliveira',
-      fotosCount: 8
-    }
-  ];
+  const { vistorias, loading } = useVistorias();
 
   const filteredVistorias = vistorias.filter(vistoria =>
     vistoria.condominio.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -77,6 +34,15 @@ const ListaVistorias = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+        <span className="ml-2 text-gray-600">Carregando vistorias...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
