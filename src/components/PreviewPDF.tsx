@@ -195,7 +195,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                           <img
                             src={URL.createObjectURL(foto)}
                             alt={`Foto ${index + 1}`}
-                            className="w-full h-64 object-cover rounded"
+                            className="w-full aspect-square object-cover rounded"
                           />
                           <p className="text-sm font-medium text-center mt-2">
                             Foto {String(index + 1).padStart(2, '0')}
