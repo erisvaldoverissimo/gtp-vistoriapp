@@ -49,6 +49,10 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     return now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const slugify = (text: string) => {
+    return text.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+  };
+
   const handleDownloadPDF = async () => {
     if (!reportRef.current) return;
 
@@ -58,56 +62,37 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
         description: "Por favor, aguarde enquanto o relatório está sendo gerado...",
       });
 
-      // Configurações para captura
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 1.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        width: reportRef.current.scrollWidth,
-        height: reportRef.current.scrollHeight,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      
-      // Criar PDF
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 0;
-
-      // Se a imagem for muito alta, dividir em páginas
-      const totalPages = Math.ceil((imgHeight * ratio) / pdfHeight);
+      const pages = reportRef.current.querySelectorAll('.page');
       
-      for (let i = 0; i < totalPages; i++) {
+      for (let i = 0; i < pages.length; i++) {
+        const pageElement = pages[i] as HTMLElement;
+        
+        const canvas = await html2canvas(pageElement, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: pageElement.offsetWidth,
+          height: pageElement.offsetHeight,
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        
         if (i > 0) {
           pdf.addPage();
         }
         
-        const yOffset = -i * pdfHeight / ratio;
-        pdf.addImage(
-          imgData,
-          'PNG',
-          imgX,
-          imgY + yOffset * ratio,
-          imgWidth * ratio,
-          imgHeight * ratio
-        );
+        // Adicionar imagem ocupando toda a página A4
+        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
       }
 
-      // Nome do arquivo
-      const fileName = `Relatorio-${data.numeroInterno}-${data.condominio.replace(/\s+/g, '-')}.pdf`;
-      
-      // Fazer download
+      const fileName = `Relatorio-${data.numeroInterno}-${slugify(data.condominio)}.pdf`;
       pdf.save(fileName);
 
       toast({
@@ -127,13 +112,83 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
   };
 
   const handleSendEmail = () => {
-    // Simular envio por email
     toast({
       title: "Email Enviado",
       description: "O relatório foi enviado por email com sucesso.",
     });
     console.log('Enviando email com dados:', data);
   };
+
+  // Função para organizar fotos em páginas de 2
+  const organizarFotosEmPaginas = (fotos: FotoComDescricao[]) => {
+    const paginas = [];
+    for (let i = 0; i < fotos.length; i += 2) {
+      paginas.push(fotos.slice(i, i + 2));
+    }
+    return paginas;
+  };
+
+  // Renderizar cabeçalho padrão
+  const renderCabecalho = () => (
+    <div className="bg-brand-purple text-white p-4 rounded-t-lg mb-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-brand-green rounded-lg flex items-center justify-center">
+            <span className="text-brand-purple font-bold text-lg">V</span>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Relatório de vistoria (fotográfico)</h1>
+            <p className="text-purple-200 text-sm">Sistema de Vistorias Prediais</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Renderizar informações da vistoria
+  const renderInformacoesVistoria = () => (
+    <div className="bg-gray-100 p-3 rounded-lg mb-4">
+      <div className="grid grid-cols-4 gap-3 text-xs">
+        <div>
+          <span className="font-semibold">Data de emissão:</span>
+          <br />
+          {formatDate(new Date().toISOString())}
+        </div>
+        <div>
+          <span className="font-semibold">Hora:</span>
+          <br />
+          {getCurrentTime()}
+        </div>
+        <div>
+          <span className="font-semibold">Usuário:</span>
+          <br />
+          {data.responsavel || 'Não informado'}
+        </div>
+        <div>
+          <span className="font-semibold">Empreendimento:</span>
+          <br />
+          {data.condominio}
+        </div>
+        <div className="col-span-2">
+          <span className="font-semibold">Nº interno da vistoria:</span>
+          <br />
+          {data.numeroInterno}
+        </div>
+        <div className="col-span-2">
+          <span className="font-semibold">Data da vistoria:</span>
+          <br />
+          {formatDate(data.dataVistoria)}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Renderizar rodapé
+  const renderRodape = () => (
+    <div className="border-t pt-2 text-xs text-gray-600 mt-auto">
+      <p>Relatório gerado automaticamente pelo Sistema de Vistorias - {formatDate(new Date().toISOString())} às {getCurrentTime()}</p>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -162,163 +217,121 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
         </div>
       </div>
 
-      {/* Preview do PDF - Ajustado para A4 */}
+      {/* CSS para quebras de página */}
+      <style>{`
+        .page {
+          page-break-after: always;
+          break-after: always;
+        }
+        .page:last-child {
+          page-break-after: auto;
+          break-after: auto;
+        }
+      `}</style>
+
+      {/* Preview do PDF */}
       <Card className="max-w-none mx-auto" style={{ width: '210mm', maxWidth: '210mm' }}>
-        <div ref={reportRef} className="bg-white" style={{ width: '210mm', minHeight: '297mm', padding: '10mm' }}>
-          {/* Cabeçalho do Relatório */}
-          <div className="bg-brand-purple text-white p-4 rounded-t-lg mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-brand-green rounded-lg flex items-center justify-center">
-                  <span className="text-brand-purple font-bold text-lg">V</span>
+        <div ref={reportRef} className="bg-white">
+          {data.grupos.map((grupo, grupoIndex) => {
+            const paginasFotos = organizarFotosEmPaginas(grupo.fotos);
+            
+            return (
+              <React.Fragment key={grupo.id}>
+                {/* Página com detalhes do grupo */}
+                <div className="page bg-white" style={{ width: '210mm', minHeight: '297mm', padding: '10mm' }}>
+                  {renderCabecalho()}
+                  {renderInformacoesVistoria()}
+                  
+                  {/* Detalhes do Grupo */}
+                  <div className="mb-4">
+                    <h3 className="text-base font-semibold mb-2 text-brand-purple">
+                      Grupo de Vistoria {grupoIndex + 1}
+                    </h3>
+                    <table className="w-full border-collapse border border-gray-300 text-xs">
+                      <thead>
+                        <tr className="bg-brand-purple text-white">
+                          <th className="border border-gray-300 p-2 text-left w-[15%]">Ambiente</th>
+                          <th className="border border-gray-300 p-2 text-left w-[15%]">Grupo</th>
+                          <th className="border border-gray-300 p-2 text-left w-[15%]">Item</th>
+                          <th className="border border-gray-300 p-2 text-left w-[12%]">Status</th>
+                          <th className="border border-gray-300 p-2 text-left w-[43%]">Parecer</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="border border-gray-300 p-2">{grupo.ambiente}</td>
+                          <td className="border border-gray-300 p-2">{grupo.grupo}</td>
+                          <td className="border border-gray-300 p-2">{grupo.item}</td>
+                          <td className="border border-gray-300 p-2">
+                            <span className={`px-1 py-0.5 rounded text-xs ${
+                              grupo.status === 'N/A' ? 'bg-gray-200' :
+                              grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
+                              grupo.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
+                              'bg-yellow-200 text-yellow-800'
+                            }`}>
+                              {grupo.status}
+                            </span>
+                          </td>
+                          <td className="border border-gray-300 p-2">{grupo.parecer}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Observações Gerais (apenas na primeira página) */}
+                  {grupoIndex === 0 && data.observacoes && (
+                    <div className="mb-4">
+                      <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
+                      <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
+                        {data.observacoes}
+                      </p>
+                    </div>
+                  )}
+
+                  {renderRodape()}
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold">Relatório de vistoria (fotográfico)</h1>
-                  <p className="text-purple-200 text-sm">Sistema de Vistorias Prediais</p>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Informações da Vistoria */}
-          <div className="bg-gray-100 p-3 rounded-lg mb-4">
-            <div className="grid grid-cols-4 gap-3 text-xs">
-              <div>
-                <span className="font-semibold">Data de emissão:</span>
-                <br />
-                {formatDate(new Date().toISOString())}
-              </div>
-              <div>
-                <span className="font-semibold">Hora:</span>
-                <br />
-                {getCurrentTime()}
-              </div>
-              <div>
-                <span className="font-semibold">Usuário:</span>
-                <br />
-                {data.responsavel || 'Não informado'}
-              </div>
-              <div>
-                <span className="font-semibold">Empreendimento:</span>
-                <br />
-                {data.condominio}
-              </div>
-              <div className="col-span-2">
-                <span className="font-semibold">Nº interno da vistoria:</span>
-                <br />
-                {data.numeroInterno}
-              </div>
-              <div className="col-span-2">
-                <span className="font-semibold">Data da vistoria:</span>
-                <br />
-                {formatDate(data.dataVistoria)}
-              </div>
-            </div>
-          </div>
-
-          {/* Grupos de Vistoria */}
-          {data.grupos.map((grupo, grupoIndex) => (
-            <div key={grupo.id} className={`mb-6 ${grupoIndex > 0 ? 'break-before-page' : ''}`} style={{ breakInside: 'avoid' }}>
-              {/* Tabela de Detalhes do Grupo */}
-              <div className="mb-4">
-                <h3 className="text-base font-semibold mb-2 text-brand-purple">
-                  Grupo de Vistoria {grupoIndex + 1}
-                </h3>
-                <table className="w-full border-collapse border border-gray-300 text-xs">
-                  <thead>
-                    <tr className="bg-brand-purple text-white">
-                      <th className="border border-gray-300 p-2 text-left w-[15%]">Ambiente</th>
-                      <th className="border border-gray-300 p-2 text-left w-[15%]">Grupo</th>
-                      <th className="border border-gray-300 p-2 text-left w-[15%]">Item</th>
-                      <th className="border border-gray-300 p-2 text-left w-[12%]">Status</th>
-                      <th className="border border-gray-300 p-2 text-left w-[43%]">Parecer</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="border border-gray-300 p-2">{grupo.ambiente}</td>
-                      <td className="border border-gray-300 p-2">{grupo.grupo}</td>
-                      <td className="border border-gray-300 p-2">{grupo.item}</td>
-                      <td className="border border-gray-300 p-2">
-                        <span className={`px-1 py-0.5 rounded text-xs ${
-                          grupo.status === 'N/A' ? 'bg-gray-200' :
-                          grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
-                          grupo.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
-                          'bg-yellow-200 text-yellow-800'
-                        }`}>
-                          {grupo.status}
-                        </span>
-                      </td>
-                      <td className="border border-gray-300 p-2">{grupo.parecer}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Evidências Fotográficas do Grupo - Dividindo a cada 2 fotos por página */}
-              {grupo.fotos.length > 0 && (
-                <>
-                  {Array.from({ length: Math.ceil(grupo.fotos.length / 2) }, (_, pageIndex) => {
-                    const startIndex = pageIndex * 2;
-                    const endIndex = Math.min(startIndex + 2, grupo.fotos.length);
-                    const fotosNaPagina = grupo.fotos.slice(startIndex, endIndex);
+                {/* Páginas com fotos (2 por página) */}
+                {paginasFotos.map((paginaFotos, paginaIndex) => (
+                  <div key={paginaIndex} className="page bg-white" style={{ width: '210mm', minHeight: '297mm', padding: '10mm' }}>
+                    {renderCabecalho()}
                     
-                    return (
-                      <div 
-                        key={pageIndex} 
-                        className={`mb-4 ${pageIndex > 0 ? 'break-before-page' : ''}`} 
-                        style={{ breakInside: 'avoid' }}
-                      >
-                        <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                          Evidências Fotográficas - Grupo {grupoIndex + 1}
-                          {pageIndex > 0 && ` (Página ${pageIndex + 1})`}
-                        </h4>
-                        <div className="grid grid-cols-2 gap-3">
-                          {fotosNaPagina.map((foto, fotoIndex) => {
-                            const fotoComDescricao = foto as File & { descricao?: string };
-                            const numeroFoto = startIndex + fotoIndex + 1;
-                            
-                            return (
-                              <div key={fotoIndex} className="border rounded-lg p-2">
-                                <img
-                                  src={URL.createObjectURL(foto)}
-                                  alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
-                                  className="w-full aspect-square object-cover rounded mb-2"
-                                />
-                                <div>
-                                  <p className="text-xs font-medium mb-1">
-                                    Foto {String(numeroFoto).padStart(2, '0')} - Grupo {grupoIndex + 1}
-                                  </p>
-                                  <p className="text-xs text-gray-700 leading-relaxed">
-                                    {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-            </div>
-          ))}
+                    <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                      Evidências Fotográficas - Grupo {grupoIndex + 1}
+                      {paginasFotos.length > 1 && ` (Página ${paginaIndex + 1})`}
+                    </h4>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      {paginaFotos.map((foto, fotoIndex) => {
+                        const fotoComDescricao = foto as File & { descricao?: string };
+                        const numeroFoto = paginaIndex * 2 + fotoIndex + 1;
+                        
+                        return (
+                          <div key={fotoIndex} className="border rounded-lg p-2">
+                            <img
+                              src={URL.createObjectURL(foto)}
+                              alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
+                              className="w-full aspect-square object-cover rounded mb-2"
+                            />
+                            <div>
+                              <p className="text-xs font-medium mb-1">
+                                Foto {String(numeroFoto).padStart(2, '0')} - Grupo {grupoIndex + 1}
+                              </p>
+                              <p className="text-xs text-gray-700 leading-relaxed">
+                                {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
 
-          {/* Observações Gerais */}
-          {data.observacoes && (
-            <div className="mb-4">
-              <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
-              <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
-                {data.observacoes}
-              </p>
-            </div>
-          )}
-
-          {/* Rodapé */}
-          <div className="border-t pt-2 text-xs text-gray-600">
-            <p>Relatório gerado automaticamente pelo Sistema de Vistorias - {formatDate(new Date().toISOString())} às {getCurrentTime()}</p>
-          </div>
+                    {renderRodape()}
+                  </div>
+                ))}
+              </React.Fragment>
+            );
+          })}
         </div>
       </Card>
     </div>
