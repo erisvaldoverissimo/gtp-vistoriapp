@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -220,6 +219,17 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     );
   };
 
+  const renderObservacoesGerais = () => (
+    data.observacoes && (
+      <div className="mb-4">
+        <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
+        <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
+          {data.observacoes}
+        </p>
+      </div>
+    )
+  );
+
   return (
     <div className="space-y-6">
       {/* Header com ações */}
@@ -286,16 +296,9 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                             </>
                           )}
 
-                          {/* Observações Gerais (apenas na primeira página do primeiro grupo) */}
-                          {grupoIndex === 0 && idx === 0 && data.observacoes && (
-                            <div className="mb-4">
-                              <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
-                              <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
-                                {data.observacoes}
-                              </p>
-                            </div>
-                          )}
-
+                          {/* Observações Gerais em todas as páginas */}
+                          {renderObservacoesGerais()}
+                          
                           <div className="flex gap-4 mb-4 flex-1">
                             {/* Renderizar a foto */}
                             {renderFotoCard(foto, idx, grupoIndex)}
