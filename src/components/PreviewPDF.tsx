@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -160,19 +161,19 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
       <table className="w-full border-collapse border border-gray-300 text-xs">
         <thead>
           <tr className="bg-brand-purple text-white">
-            <th className="border border-gray-300 p-2 text-left w-[15%]">Ambiente</th>
-            <th className="border border-gray-300 p-2 text-left w-[15%]">Grupo</th>
-            <th className="border border-gray-300 p-2 text-left w-[15%]">Item</th>
-            <th className="border border-gray-300 p-2 text-left w-[12%]">Status</th>
-            <th className="border border-gray-300 p-2 text-left w-[43%]">Parecer</th>
+            <th className="border border-gray-300 p-2 text-center w-[15%]">Ambiente</th>
+            <th className="border border-gray-300 p-2 text-center w-[15%]">Sistema</th>
+            <th className="border border-gray-300 p-2 text-center w-[15%]">Subsistema</th>
+            <th className="border border-gray-300 p-2 text-center w-[12%]">Status</th>
+            <th className="border border-gray-300 p-2 text-center w-[43%]">Parecer</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td className="border border-gray-300 p-2">{grupo.ambiente}</td>
-            <td className="border border-gray-300 p-2">{grupo.grupo}</td>
-            <td className="border border-gray-300 p-2">{grupo.item}</td>
-            <td className="border border-gray-300 p-2">
+            <td className="border border-gray-300 p-2 text-center">{grupo.ambiente}</td>
+            <td className="border border-gray-300 p-2 text-center">{grupo.grupo}</td>
+            <td className="border border-gray-300 p-2 text-center">{grupo.item}</td>
+            <td className="border border-gray-300 p-2 text-center">
               <span className={`px-1 py-0.5 rounded text-xs ${
                 grupo.status === 'N/A' ? 'bg-gray-200' :
                 grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
@@ -182,7 +183,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                 {grupo.status}
               </span>
             </td>
-            <td className="border border-gray-300 p-2">{grupo.parecer}</td>
+            <td className="border border-gray-300 p-2 text-center">{grupo.parecer}</td>
           </tr>
         </tbody>
       </table>
