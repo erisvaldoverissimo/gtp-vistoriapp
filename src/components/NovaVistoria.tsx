@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import UploadFotos from './UploadFotos';
 import { Condominio } from '@/hooks/useCondominios';
 import { useUsuarios } from '@/hooks/useUsuarios';
-import { useVistorias } from '@/hooks/useVistorias';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface FotoComDescricao extends File {
@@ -44,17 +43,12 @@ interface NovaVistoriaProps {
   obterProximoNumero: (condominioId: string) => number;
   incrementarNumero: (condominioId: string) => void;
   initialData?: VistoriaData | null;
-  onNavigate?: (page: string) => void;
 }
 
-const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarNumero, initialData, onNavigate }: NovaVistoriaProps) => {
+const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarNumero, initialData }: NovaVistoriaProps) => {
   const { toast } = useToast();
   const { obterUsuariosAtivos } = useUsuarios();
-  const { salvarVistoria, atualizarVistoria } = useVistorias();
   const usuariosAtivos = obterUsuariosAtivos();
-  
-  const [isEditing, setIsEditing] = useState(false);
-  const [vistoriaId, setVistoriaId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<VistoriaData>({
     condominio: '',
@@ -79,14 +73,6 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
-      setIsEditing(true);
-      // Se tem initialData, significa que veio de uma edição
-      if ((initialData as any).id) {
-        setVistoriaId((initialData as any).id);
-      }
-    } else {
-      setIsEditing(false);
-      setVistoriaId(null);
     }
   }, [initialData]);
 
@@ -206,92 +192,13 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
       return;
     }
 
-    if (!formData.responsavel) {
-      toast({
-        title: "Responsável Obrigatório",
-        description: "Por favor, selecione um responsável pela vistoria.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      if (isEditing && vistoriaId) {
-        // Atualizar vistoria existente
-        atualizarVistoria(vistoriaId, {
-          condominio: formData.condominio,
-          numeroInterno: formData.numeroInterno,
-          dataVistoria: formData.dataVistoria,
-          ambiente: formData.grupos[0]?.ambiente || '',
-          status: formData.grupos[0]?.status || '',
-          responsavel: formData.responsavel,
-          fotosCount: formData.grupos.reduce((total, grupo) => total + grupo.fotos.length, 0),
-          observacoes: formData.observacoes,
-          condominioId: formData.condominioId,
-          idSequencial: formData.idSequencial
-        });
-
-        toast({
-          title: "Vistoria Atualizada",
-          description: `Vistoria #${formData.numeroInterno} atualizada com sucesso.`,
-        });
-      } else {
-        // Salvar nova vistoria
-        incrementarNumero(formData.condominioId);
-        
-        const novaVistoria = salvarVistoria({
-          condominio: formData.condominio,
-          numeroInterno: formData.numeroInterno,
-          dataVistoria: formData.dataVistoria,
-          ambiente: formData.grupos[0]?.ambiente || '',
-          status: formData.grupos[0]?.status || '',
-          responsavel: formData.responsavel,
-          fotosCount: formData.grupos.reduce((total, grupo) => total + grupo.fotos.length, 0),
-          observacoes: formData.observacoes,
-          condominioId: formData.condominioId,
-          idSequencial: formData.idSequencial
-        });
-
-        toast({
-          title: "Vistoria Salva",
-          description: `Vistoria #${formData.numeroInterno} salva com sucesso.`,
-        });
-
-        // Limpar formulário após salvar
-        setFormData({
-          condominio: '',
-          condominioId: '',
-          numeroInterno: '',
-          idSequencial: 0,
-          dataVistoria: new Date().toISOString().split('T')[0],
-          observacoes: '',
-          responsavel: '',
-          grupos: [{
-            id: '1',
-            ambiente: '',
-            grupo: '',
-            item: '',
-            status: '',
-            parecer: '',
-            fotos: []
-          }]
-        });
-      }
-
-      // Redirecionar para lista de vistorias após salvar
-      if (onNavigate) {
-        setTimeout(() => {
-          onNavigate('vistorias');
-        }, 1500);
-      }
-    } catch (error) {
-      console.error('Erro ao salvar vistoria:', error);
-      toast({
-        title: "Erro ao Salvar",
-        description: "Ocorreu um erro ao salvar a vistoria. Tente novamente.",
-        variant: "destructive",
-      });
-    }
+    incrementarNumero(formData.condominioId);
+    
+    console.log('Salvando vistoria:', formData);
+    toast({
+      title: "Vistoria Salva",
+      description: `Vistoria #${formData.numeroInterno} salva com sucesso.`,
+    });
   };
 
   const handlePreview = () => {
@@ -310,12 +217,12 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">
-          {isEditing ? 'Editar Vistoria' : 'Nova Vistoria'}
+          {initialData ? 'Editar Vistoria' : 'Nova Vistoria'}
         </h2>
         <div className="flex space-x-2">
           <Button onClick={handleSave} variant="outline">
             <Save size={18} className="mr-2" />
-            {isEditing ? 'Atualizar' : 'Salvar'}
+            Salvar
           </Button>
           <Button onClick={handlePreview} className="bg-teal-600 hover:bg-teal-700">
             <Eye size={18} className="mr-2" />
