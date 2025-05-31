@@ -79,7 +79,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
             <Mail size={18} className="mr-2" />
             Enviar Email
           </Button>
-          <Button onClick={handleDownloadPDF} className="bg-teal-600 hover:bg-teal-700">
+          <Button onClick={handleDownloadPDF} className="bg-brand-green hover:bg-brand-green-light">
             <Download size={18} className="mr-2" />
             Baixar PDF
           </Button>
@@ -90,15 +90,15 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
       <Card className="max-w-4xl mx-auto">
         <div className="p-8 bg-white">
           {/* Cabeçalho do Relatório */}
-          <div className="bg-teal-700 text-white p-6 rounded-t-lg mb-6">
+          <div className="bg-brand-purple text-white p-6 rounded-t-lg mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center">
-                  <span className="text-teal-700 font-bold text-xl">V</span>
+                <div className="w-16 h-16 bg-brand-green rounded-lg flex items-center justify-center">
+                  <span className="text-brand-purple font-bold text-xl">V</span>
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold">Relatório de vistoria (fotográfico)</h1>
-                  <p className="text-teal-100">Sistema de Vistorias Prediais</p>
+                  <p className="text-purple-200">Sistema de Vistorias Prediais</p>
                 </div>
               </div>
             </div>
@@ -149,7 +149,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
           <div className="mb-6">
             <table className="w-full border-collapse border border-gray-300">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-brand-purple text-white">
                   <th className="border border-gray-300 p-3 text-left w-[15%]">Ambiente</th>
                   <th className="border border-gray-300 p-3 text-left w-[15%]">Grupo</th>
                   <th className="border border-gray-300 p-3 text-left w-[15%]">Item</th>
@@ -165,7 +165,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                   <td className="border border-gray-300 p-3 text-sm">
                     <span className={`px-2 py-1 rounded text-xs ${
                       data.status === 'N/A' ? 'bg-gray-200' :
-                      data.status === 'Conforme' ? 'bg-green-200 text-green-800' :
+                      data.status === 'Conforme' ? 'bg-brand-green text-white' :
                       data.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
                       'bg-yellow-200 text-yellow-800'
                     }`}>
@@ -181,7 +181,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
           {/* Área de Fotos */}
           {data.fotos.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Evidências Fotográficas</h3>
+              <h3 className="text-lg font-semibold mb-4 text-brand-purple">Evidências Fotográficas</h3>
               <div className="space-y-6">
                 {data.fotos.map((foto, index) => {
                   // Buscar descrição da foto no estado do componente UploadFotos
@@ -218,7 +218,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
           {/* Observações */}
           {data.observacoes && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">Observações</h3>
+              <h3 className="text-lg font-semibold mb-2 text-brand-purple">Observações</h3>
               <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded">
                 {data.observacoes}
               </p>
