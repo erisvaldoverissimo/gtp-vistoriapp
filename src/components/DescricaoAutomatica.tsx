@@ -35,7 +35,7 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
     if (apiKey.startsWith('sk-')) {
       return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
     } else if (apiKey.startsWith('gsk_')) {
-      return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.2-90b-vision-preview' };
+      return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llava-v1.5-7b-4096-preview' };
     }
     return null;
   };
@@ -87,7 +87,7 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
         reader.readAsDataURL(imageFile);
       });
 
-      console.log('Gerando descrição via:', apiInfo.provider);
+      console.log('Gerando descrição via:', apiInfo.provider, 'modelo:', apiInfo.model);
 
       const response = await fetch(apiInfo.url, {
         method: 'POST',
