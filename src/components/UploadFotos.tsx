@@ -110,16 +110,6 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
   };
 
   const handleDescricaoChange = (index: number, descricao: string) => {
-    // Verificar limite antes de permitir a mudança
-    if (descricao.length > MAX_DESCRICAO_LENGTH) {
-      toast({
-        title: "Limite de Caracteres Excedido",
-        description: `A descrição deve ter no máximo ${MAX_DESCRICAO_LENGTH} caracteres.`,
-        variant: "destructive",
-      });
-      return;
-    }
-    
     const updatedFotos = fotos.map((foto, i) => 
       i === index ? { ...foto, descricao } : foto
     );
@@ -199,7 +189,7 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between items-center">
                     <Label htmlFor={`descricao-${index}`}>Descrição da Foto {index + 1}</Label>
-                    <span className={`text-xs ${foto.descricao.length > MAX_DESCRICAO_LENGTH * 0.9 ? 'text-red-500' : 'text-gray-500'}`}>
+                    <span className={`text-xs ${foto.descricao.length > MAX_DESCRICAO_LENGTH ? 'text-red-500 font-semibold' : foto.descricao.length > MAX_DESCRICAO_LENGTH * 0.9 ? 'text-yellow-600' : 'text-gray-500'}`}>
                       {foto.descricao.length}/{MAX_DESCRICAO_LENGTH}
                     </span>
                   </div>
@@ -208,11 +198,12 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
                     value={foto.descricao}
                     onChange={(e) => handleDescricaoChange(index, e.target.value)}
                     placeholder="Descreva o que mostra esta foto..."
+                    className={foto.descricao.length > MAX_DESCRICAO_LENGTH ? 'border-red-500 focus:ring-red-500' : ''}
                   />
                   {foto.descricao.length > MAX_DESCRICAO_LENGTH && (
                     <Alert variant="warning">
                       <AlertDescription>
-                        A descrição excede o limite de {MAX_DESCRICAO_LENGTH} caracteres e será truncada no PDF.
+                        A descrição excede o limite de {MAX_DESCRICAO_LENGTH} caracteres e será truncada no PDF ({foto.descricao.length - MAX_DESCRICAO_LENGTH} caracteres excedentes).
                       </AlertDescription>
                     </Alert>
                   )}
