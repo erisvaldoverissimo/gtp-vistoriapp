@@ -43,9 +43,10 @@ interface NovaVistoriaProps {
   obterProximoNumero: (condominioId: string) => number;
   incrementarNumero: (condominioId: string) => void;
   initialData?: VistoriaData | null;
+  onSave: (data: VistoriaData) => void;
 }
 
-const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarNumero, initialData }: NovaVistoriaProps) => {
+const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarNumero, initialData, onSave }: NovaVistoriaProps) => {
   const { toast } = useToast();
   const { obterUsuariosAtivos } = useUsuarios();
   const usuariosAtivos = obterUsuariosAtivos();
@@ -192,7 +193,7 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
       return;
     }
 
-    incrementarNumero(formData.condominioId);
+    onSave(formData);
     
     console.log('Salvando vistoria:', formData);
     toast({
