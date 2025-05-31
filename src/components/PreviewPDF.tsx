@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -149,11 +150,11 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
             <table className="w-full border-collapse border border-gray-300">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="border border-gray-300 p-3 text-left">Ambiente</th>
-                  <th className="border border-gray-300 p-3 text-left">Grupo</th>
-                  <th className="border border-gray-300 p-3 text-left">Item</th>
-                  <th className="border border-gray-300 p-3 text-left">Status</th>
-                  <th className="border border-gray-300 p-3 text-left">Parecer</th>
+                  <th className="border border-gray-300 p-3 text-left w-[15%]">Ambiente</th>
+                  <th className="border border-gray-300 p-3 text-left w-[15%]">Grupo</th>
+                  <th className="border border-gray-300 p-3 text-left w-[15%]">Item</th>
+                  <th className="border border-gray-300 p-3 text-left w-[12%]">Status</th>
+                  <th className="border border-gray-300 p-3 text-left w-[43%]">Parecer</th>
                 </tr>
               </thead>
               <tbody>
