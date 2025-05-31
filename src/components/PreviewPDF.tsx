@@ -119,15 +119,6 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     console.log('Enviando email com dados:', data);
   };
 
-  // Função para organizar fotos em páginas de 2
-  const organizarFotosEmPaginas = (fotos: FotoComDescricao[]) => {
-    const paginas = [];
-    for (let i = 0; i < fotos.length; i += 2) {
-      paginas.push(fotos.slice(i, i + 2));
-    }
-    return paginas;
-  };
-
   // Renderizar cabeçalho padrão
   const renderCabecalho = () => (
     <div className="bg-brand-purple text-white p-4 rounded-t-lg mb-4">
@@ -183,12 +174,74 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     </div>
   );
 
+  // Renderizar tabela do grupo
+  const renderTabelaGrupo = (grupo: GrupoVistoria, grupoIndex: number) => (
+    <div className="mb-4">
+      <h3 className="text-base font-semibold mb-2 text-brand-purple">
+        Grupo de Vistoria {grupoIndex + 1}
+      </h3>
+      <table className="w-full border-collapse border border-gray-300 text-xs">
+        <thead>
+          <tr className="bg-brand-purple text-white">
+            <th className="border border-gray-300 p-2 text-left w-[15%]">Ambiente</th>
+            <th className="border border-gray-300 p-2 text-left w-[15%]">Grupo</th>
+            <th className="border border-gray-300 p-2 text-left w-[15%]">Item</th>
+            <th className="border border-gray-300 p-2 text-left w-[12%]">Status</th>
+            <th className="border border-gray-300 p-2 text-left w-[43%]">Parecer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="border border-gray-300 p-2">{grupo.ambiente}</td>
+            <td className="border border-gray-300 p-2">{grupo.grupo}</td>
+            <td className="border border-gray-300 p-2">{grupo.item}</td>
+            <td className="border border-gray-300 p-2">
+              <span className={`px-1 py-0.5 rounded text-xs ${
+                grupo.status === 'N/A' ? 'bg-gray-200' :
+                grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
+                grupo.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
+                'bg-yellow-200 text-yellow-800'
+              }`}>
+                {grupo.status}
+              </span>
+            </td>
+            <td className="border border-gray-300 p-2">{grupo.parecer}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+
   // Renderizar rodapé
   const renderRodape = () => (
     <div className="border-t pt-2 text-xs text-gray-600 mt-auto">
       <p>Relatório gerado automaticamente pelo Sistema de Vistorias - {formatDate(new Date().toISOString())} às {getCurrentTime()}</p>
     </div>
   );
+
+  // Renderizar foto individual
+  const renderFotoCard = (foto: FotoComDescricao, fotoIndex: number, grupoIndex: number) => {
+    const fotoComDescricao = foto as File & { descricao?: string };
+    const numeroFoto = fotoIndex + 1;
+    
+    return (
+      <div className="border rounded-lg p-2 flex-1">
+        <img
+          src={URL.createObjectURL(foto)}
+          alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
+          className="w-full aspect-square object-cover rounded mb-2"
+        />
+        <div>
+          <p className="text-xs font-medium mb-1">
+            Foto {String(numeroFoto).padStart(2, '0')} - Grupo {grupoIndex + 1}
+          </p>
+          <p className="text-xs text-gray-700 leading-relaxed">
+            {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
+          </p>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -217,121 +270,64 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
         </div>
       </div>
 
-      {/* CSS para quebras de página */}
-      <style>{`
-        .page {
-          page-break-after: always;
-          break-after: always;
-        }
-        .page:last-child {
-          page-break-after: auto;
-          break-after: auto;
-        }
-      `}</style>
-
       {/* Preview do PDF */}
       <Card className="max-w-none mx-auto" style={{ width: '210mm', maxWidth: '210mm' }}>
         <div ref={reportRef} className="bg-white">
-          {data.grupos.map((grupo, grupoIndex) => {
-            const paginasFotos = organizarFotosEmPaginas(grupo.fotos);
-            
-            return (
-              <React.Fragment key={grupo.id}>
-                {/* Página com detalhes do grupo */}
-                <div className="page bg-white" style={{ width: '210mm', minHeight: '297mm', padding: '10mm' }}>
-                  {renderCabecalho()}
-                  {renderInformacoesVistoria()}
-                  
-                  {/* Detalhes do Grupo */}
-                  <div className="mb-4">
-                    <h3 className="text-base font-semibold mb-2 text-brand-purple">
-                      Grupo de Vistoria {grupoIndex + 1}
-                    </h3>
-                    <table className="w-full border-collapse border border-gray-300 text-xs">
-                      <thead>
-                        <tr className="bg-brand-purple text-white">
-                          <th className="border border-gray-300 p-2 text-left w-[15%]">Ambiente</th>
-                          <th className="border border-gray-300 p-2 text-left w-[15%]">Grupo</th>
-                          <th className="border border-gray-300 p-2 text-left w-[15%]">Item</th>
-                          <th className="border border-gray-300 p-2 text-left w-[12%]">Status</th>
-                          <th className="border border-gray-300 p-2 text-left w-[43%]">Parecer</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="border border-gray-300 p-2">{grupo.ambiente}</td>
-                          <td className="border border-gray-300 p-2">{grupo.grupo}</td>
-                          <td className="border border-gray-300 p-2">{grupo.item}</td>
-                          <td className="border border-gray-300 p-2">
-                            <span className={`px-1 py-0.5 rounded text-xs ${
-                              grupo.status === 'N/A' ? 'bg-gray-200' :
-                              grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
-                              grupo.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
-                              'bg-yellow-200 text-yellow-800'
-                            }`}>
-                              {grupo.status}
-                            </span>
-                          </td>
-                          <td className="border border-gray-300 p-2">{grupo.parecer}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+          {data.grupos.map((grupo, grupoIndex) => (
+            <React.Fragment key={grupo.id}>
+              {grupo.fotos.map((foto, idx) => {
+                const isFirstOfPair = idx % 2 === 0;
+                const isLastOfPair = idx % 2 === 1 || idx === grupo.fotos.length - 1;
 
-                  {/* Observações Gerais (apenas na primeira página) */}
-                  {grupoIndex === 0 && data.observacoes && (
-                    <div className="mb-4">
-                      <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
-                      <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
-                        {data.observacoes}
-                      </p>
-                    </div>
-                  )}
-
-                  {renderRodape()}
-                </div>
-
-                {/* Páginas com fotos (2 por página) */}
-                {paginasFotos.map((paginaFotos, paginaIndex) => (
-                  <div key={paginaIndex} className="page bg-white" style={{ width: '210mm', minHeight: '297mm', padding: '10mm' }}>
-                    {renderCabecalho()}
-                    
-                    <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                      Evidências Fotográficas - Grupo {grupoIndex + 1}
-                      {paginasFotos.length > 1 && ` (Página ${paginaIndex + 1})`}
-                    </h4>
-                    
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      {paginaFotos.map((foto, fotoIndex) => {
-                        const fotoComDescricao = foto as File & { descricao?: string };
-                        const numeroFoto = paginaIndex * 2 + fotoIndex + 1;
+                return (
+                  <React.Fragment key={idx}>
+                    {isFirstOfPair && (
+                      <div className="page flex flex-col gap-3">
+                        {/* Cabeçalho + tabela só no idx === 0 */}
+                        {idx === 0 && renderCabecalho()}
+                        {idx === 0 && renderInformacoesVistoria()}
+                        {idx === 0 && renderTabelaGrupo(grupo, grupoIndex)}
                         
-                        return (
-                          <div key={fotoIndex} className="border rounded-lg p-2">
-                            <img
-                              src={URL.createObjectURL(foto)}
-                              alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
-                              className="w-full aspect-square object-cover rounded mb-2"
-                            />
-                            <div>
-                              <p className="text-xs font-medium mb-1">
-                                Foto {String(numeroFoto).padStart(2, '0')} - Grupo {grupoIndex + 1}
-                              </p>
-                              <p className="text-xs text-gray-700 leading-relaxed">
-                                {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                        {/* Título das evidências fotográficas */}
+                        {idx === 0 ? (
+                          <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                            Evidências Fotográficas - Grupo {grupoIndex + 1}
+                          </h4>
+                        ) : (
+                          <>
+                            {renderCabecalho()}
+                            <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                              Evidências Fotográficas - Grupo {grupoIndex + 1} (Continuação)
+                            </h4>
+                          </>
+                        )}
 
-                    {renderRodape()}
-                  </div>
-                ))}
-              </React.Fragment>
-            );
-          })}
+                        {/* Observações Gerais (apenas na primeira página do primeiro grupo) */}
+                        {grupoIndex === 0 && idx === 0 && data.observacoes && (
+                          <div className="mb-4">
+                            <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
+                            <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
+                              {data.observacoes}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-4 mb-4 flex-1">
+                    )}
+
+                    {/* Renderizar a foto */}
+                    {renderFotoCard(foto, idx, grupoIndex)}
+
+                    {isLastOfPair && (
+                        </div>
+                        {renderRodape()}
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </React.Fragment>
+          ))}
         </div>
       </Card>
     </div>
