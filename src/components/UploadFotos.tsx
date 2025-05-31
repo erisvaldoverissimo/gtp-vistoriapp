@@ -22,6 +22,8 @@ const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
   const [fotos, setFotos] = useState<FotoData[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const MAX_DESCRICAO_LENGTH = 300;
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     
@@ -83,14 +85,19 @@ const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
   };
 
   const handleDescricaoChange = (index: number, descricao: string) => {
+    // Limitar a 300 caracteres
+    const descricaoLimitada = descricao.slice(0, MAX_DESCRICAO_LENGTH);
+    
     const updatedFotos = fotos.map((foto, i) => 
-      i === index ? { ...foto, descricao } : foto
+      i === index ? { ...foto, descricao: descricaoLimitada } : foto
     );
     setFotos(updatedFotos);
   };
 
   const handleDescriptionGenerated = (index: number, description: string) => {
-    handleDescricaoChange(index, description);
+    // Limitar a descrição gerada automaticamente também
+    const descricaoLimitada = description.slice(0, MAX_DESCRICAO_LENGTH);
+    handleDescricaoChange(index, descricaoLimitada);
   };
 
   return (
@@ -141,12 +148,18 @@ const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
                 </div>
                 
                 <div className="mt-3 space-y-2">
-                  <Label htmlFor={`descricao-${index}`}>Descrição da Foto {index + 1}</Label>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor={`descricao-${index}`}>Descrição da Foto {index + 1}</Label>
+                    <span className={`text-xs ${foto.descricao.length > MAX_DESCRICAO_LENGTH * 0.9 ? 'text-red-500' : 'text-gray-500'}`}>
+                      {foto.descricao.length}/{MAX_DESCRICAO_LENGTH}
+                    </span>
+                  </div>
                   <Input
                     id={`descricao-${index}`}
                     value={foto.descricao}
                     onChange={(e) => handleDescricaoChange(index, e.target.value)}
                     placeholder="Descreva o que mostra esta foto..."
+                    maxLength={MAX_DESCRICAO_LENGTH}
                   />
                   <DescricaoAutomatica
                     imageFile={foto.file}
