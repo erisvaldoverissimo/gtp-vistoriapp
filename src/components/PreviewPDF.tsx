@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -218,7 +217,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
 
           {/* Grupos de Vistoria */}
           {data.grupos.map((grupo, grupoIndex) => (
-            <div key={grupo.id} className="mb-6" style={{ breakInside: 'avoid' }}>
+            <div key={grupo.id} className={`mb-6 ${grupoIndex > 0 ? 'break-before-page' : ''}`} style={{ breakInside: 'avoid' }}>
               {/* Tabela de Detalhes do Grupo */}
               <div className="mb-4">
                 <h3 className="text-base font-semibold mb-2 text-brand-purple">
