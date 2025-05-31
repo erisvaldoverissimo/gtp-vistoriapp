@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -278,13 +279,13 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                         )}
 
                         <div className="flex gap-4 mb-4 flex-1">
-                    )}
-
-                    {/* Renderizar a foto */}
-                    {renderFotoCard(foto, idx, grupoIndex)}
-
-                    {isLastOfPair && (
+                          {/* Renderizar a foto */}
+                          {renderFotoCard(foto, idx, grupoIndex)}
+                          
+                          {/* Renderizar a segunda foto se existir */}
+                          {!isLastOfPair && grupo.fotos[idx + 1] && renderFotoCard(grupo.fotos[idx + 1], idx + 1, grupoIndex)}
                         </div>
+                        
                         {renderRodape()}
                       </div>
                     )}
