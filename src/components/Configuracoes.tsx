@@ -337,16 +337,16 @@ const Configuracoes = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="apiKeyOpenAI">API Key OpenAI</Label>
+              <Label htmlFor="apiKeyOpenAI">API Key (OpenAI ou Groq)</Label>
               <Input
                 id="apiKeyOpenAI"
                 type="password"
                 value={config.apiKeyOpenAI}
                 onChange={(e) => handleInputChange('apiKeyOpenAI', e.target.value)}
-                placeholder="sk-..."
+                placeholder="sk-... ou gsk_..."
               />
               <p className="text-sm text-gray-600 mt-1">
-                Necessária para descrição automática de imagens
+                Suporta OpenAI (sk-...) e Groq (gsk_...). Detecção automática do provedor.
               </p>
             </div>
 

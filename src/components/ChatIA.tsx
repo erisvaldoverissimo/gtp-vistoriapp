@@ -52,6 +52,16 @@ const ChatIA = () => {
     }
   }, [messages]);
 
+  // Detectar o tipo de API baseado na chave
+  const detectApiProvider = (apiKey: string) => {
+    if (apiKey.startsWith('sk-')) {
+      return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
+    } else if (apiKey.startsWith('gsk_')) {
+      return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.1-8b-instant' };
+    }
+    return null;
+  };
+
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
 
@@ -67,7 +77,17 @@ const ChatIA = () => {
     if (!config.apiKeyOpenAI) {
       toast({
         title: "API Key Necessária",
-        description: "Configure a API Key da OpenAI nas configurações.",
+        description: "Configure a API Key (OpenAI ou Groq) nas configurações.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const apiInfo = detectApiProvider(config.apiKeyOpenAI);
+    if (!apiInfo) {
+      toast({
+        title: "API Key Inválida",
+        description: "A API Key deve começar com 'sk-' (OpenAI) ou 'gsk_' (Groq).",
         variant: "destructive"
       });
       return;
@@ -88,14 +108,17 @@ const ChatIA = () => {
       // Construir o prompt completo do sistema
       const systemPrompt = `${config.promptPersona}\n\n${config.promptObjetivo}\n\n${config.promptComportamento}`;
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      console.log('Enviando para:', apiInfo.provider, apiInfo.url);
+      console.log('Modelo:', apiInfo.model);
+
+      const response = await fetch(apiInfo.url, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${config.apiKeyOpenAI}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: apiInfo.model,
           messages: [
             {
               role: 'system',
@@ -115,11 +138,17 @@ const ChatIA = () => {
         }),
       });
 
+      console.log('Status da resposta:', response.status);
+
       if (!response.ok) {
-        throw new Error('Erro na API da OpenAI');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erro da API:', errorData);
+        throw new Error(`Erro na API ${apiInfo.provider}: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('Resposta recebida:', data);
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -128,11 +157,17 @@ const ChatIA = () => {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      toast({
+        title: "Mensagem Enviada",
+        description: `Resposta recebida via ${apiInfo.provider.toUpperCase()}`,
+      });
+
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       toast({
         title: "Erro na Comunicação",
-        description: "Não foi possível se comunicar com a IA. Verifique sua API Key.",
+        description: `Não foi possível se comunicar com a IA. Verifique sua API Key.`,
         variant: "destructive"
       });
     } finally {
@@ -155,10 +190,20 @@ const ChatIA = () => {
     });
   };
 
+  // Detectar o provedor atual para exibir na interface
+  const currentProvider = config.apiKeyOpenAI ? detectApiProvider(config.apiKeyOpenAI) : null;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Chat com IA - {config.nomeAgente}</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Chat com IA - {config.nomeAgente}</h2>
+          {currentProvider && (
+            <p className="text-sm text-gray-600">
+              Conectado via {currentProvider.provider.toUpperCase()} ({currentProvider.model})
+            </p>
+          )}
+        </div>
         <Button onClick={clearChat} variant="outline">
           <MessageCircle size={18} className="mr-2" />
           Limpar Chat
@@ -173,6 +218,11 @@ const ChatIA = () => {
             {!config.enableAgente && (
               <span className="ml-2 text-sm text-red-500 font-normal">(Desabilitado)</span>
             )}
+            {currentProvider && (
+              <span className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded">
+                {currentProvider.provider.toUpperCase()}
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         
@@ -184,6 +234,11 @@ const ChatIA = () => {
                   <Bot size={48} className="mx-auto mb-4 text-gray-300" />
                   <p>Inicie uma conversa com {config.nomeAgente}</p>
                   <p className="text-sm mt-2">Digite sua mensagem abaixo para começar</p>
+                  {currentProvider && (
+                    <p className="text-xs mt-2 text-gray-400">
+                      Usando {currentProvider.provider.toUpperCase()} - {currentProvider.model}
+                    </p>
+                  )}
                 </div>
               )}
               
