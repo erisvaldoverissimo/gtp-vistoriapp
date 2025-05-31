@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Eye, Download, Calendar, Building, FileText, Loader2 } from 'lucide-react';
 import { useVistorias } from '@/hooks/useVistorias';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const ListaVistorias = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { vistorias, loading } = useVistorias();
+  const isMobile = useIsMobile();
 
   const filteredVistorias = vistorias.filter(vistoria =>
     vistoria.condominio.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,43 +47,43 @@ const ListaVistorias = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Vistorias Realizadas</h2>
+    <div className="space-y-4 md:space-y-6">
+      <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-center justify-between'}`}>
+        <h2 className={`font-bold text-gray-900 ${isMobile ? 'text-xl' : 'text-2xl'}`}>Vistorias Realizadas</h2>
         <div className="flex items-center space-x-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <Input
-              placeholder="Buscar por condomínio, número ou responsável..."
+              placeholder={isMobile ? "Buscar..." : "Buscar por condomínio, número ou responsável..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-80"
+              className={`pl-10 ${isMobile ? 'w-full' : 'w-80'}`}
             />
           </div>
         </div>
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-4'} gap-4`}>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
             <div className="flex items-center">
-              <FileText className="h-8 w-8 text-teal-600" />
+              <FileText className={`text-teal-600 ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`} />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total de Vistorias</p>
-                <p className="text-2xl font-bold text-gray-900">{vistorias.length}</p>
+                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Total</p>
+                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{vistorias.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
             <div className="flex items-center">
-              <Building className="h-8 w-8 text-green-600" />
+              <Building className={`text-green-600 ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`} />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Conformes</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Conformes</p>
+                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
                   {vistorias.filter(v => v.status === 'Conforme').length}
                 </p>
               </div>
@@ -90,12 +92,12 @@ const ListaVistorias = () => {
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
             <div className="flex items-center">
-              <Calendar className="h-8 w-8 text-red-600" />
+              <Calendar className={`text-red-600 ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`} />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Não Conformes</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Não Conformes</p>
+                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
                   {vistorias.filter(v => v.status === 'Não Conforme').length}
                 </p>
               </div>
@@ -104,12 +106,12 @@ const ListaVistorias = () => {
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
             <div className="flex items-center">
-              <Eye className="h-8 w-8 text-yellow-600" />
+              <Eye className={`text-yellow-600 ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`} />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Requer Atenção</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Requer Atenção</p>
+                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
                   {vistorias.filter(v => v.status === 'Requer Atenção').length}
                 </p>
               </div>
@@ -122,10 +124,10 @@ const ListaVistorias = () => {
       <div className="space-y-4">
         {filteredVistorias.length === 0 ? (
           <Card>
-            <CardContent className="p-8 text-center">
-              <FileText size={48} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma vistoria encontrada</h3>
-              <p className="text-gray-600">
+            <CardContent className={`text-center ${isMobile ? 'p-6' : 'p-8'}`}>
+              <FileText size={isMobile ? 32 : 48} className="mx-auto text-gray-300 mb-4" />
+              <h3 className={`font-medium text-gray-900 mb-2 ${isMobile ? 'text-base' : 'text-lg'}`}>Nenhuma vistoria encontrada</h3>
+              <p className={`text-gray-600 ${isMobile ? 'text-sm' : ''}`}>
                 {searchTerm ? 'Tente ajustar os filtros de busca.' : 'Comece criando uma nova vistoria.'}
               </p>
             </CardContent>
@@ -133,11 +135,11 @@ const ListaVistorias = () => {
         ) : (
           filteredVistorias.map((vistoria) => (
             <Card key={vistoria.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+              <CardContent className={isMobile ? 'p-4' : 'p-6'}>
+                <div className={`${isMobile ? 'space-y-4' : 'flex items-center justify-between'}`}>
                   <div className="flex-1">
-                    <div className="flex items-center space-x-4 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                    <div className={`flex items-center mb-2 ${isMobile ? 'flex-wrap gap-2' : 'space-x-4'}`}>
+                      <h3 className={`font-semibold text-gray-900 ${isMobile ? 'text-base' : 'text-lg'}`}>
                         {vistoria.condominio}
                       </h3>
                       <Badge variant="outline">
@@ -148,7 +150,7 @@ const ListaVistorias = () => {
                       </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                    <div className={`grid gap-2 text-gray-600 ${isMobile ? 'grid-cols-1 text-sm' : 'grid-cols-2 md:grid-cols-4 gap-4 text-sm'}`}>
                       <div>
                         <span className="font-medium">Data:</span> {formatDate(vistoria.dataVistoria)}
                       </div>
@@ -164,14 +166,14 @@ const ListaVistorias = () => {
                     </div>
                   </div>
                   
-                  <div className="flex space-x-2 ml-4">
-                    <Button variant="outline" size="sm">
-                      <Eye size={16} className="mr-2" />
-                      Visualizar
+                  <div className={`flex space-x-2 ${isMobile ? 'w-full' : 'ml-4'}`}>
+                    <Button variant="outline" size="sm" className={isMobile ? 'flex-1' : ''}>
+                      <Eye size={16} className={isMobile ? '' : 'mr-2'} />
+                      {!isMobile && 'Visualizar'}
                     </Button>
-                    <Button variant="outline" size="sm">
-                      <Download size={16} className="mr-2" />
-                      PDF
+                    <Button variant="outline" size="sm" className={isMobile ? 'flex-1' : ''}>
+                      <Download size={16} className={isMobile ? '' : 'mr-2'} />
+                      {!isMobile && 'PDF'}
                     </Button>
                   </div>
                 </div>
