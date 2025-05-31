@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Building2, FileImage, List, Settings, Building, MessageCircle } from 'lucide-react';
+import { Building2, FileImage, List, Settings, Building, MessageCircle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface LayoutProps {
@@ -13,6 +12,7 @@ const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
   const navigation = [
     { id: 'vistorias', label: 'Vistorias', icon: List },
     { id: 'nova-vistoria', label: 'Nova Vistoria', icon: FileImage },
+    { id: 'usuarios', label: 'Usuários', icon: Users },
     { id: 'condominios', label: 'Condomínios', icon: Building },
     { id: 'chat-ia', label: 'Chat IA', icon: MessageCircle },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
