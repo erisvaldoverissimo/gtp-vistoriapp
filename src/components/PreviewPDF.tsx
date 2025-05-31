@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +50,11 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
 
   const slugify = (text: string) => {
     return text.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+  };
+
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   };
 
   const handleDownloadPDF = async () => {
@@ -194,7 +198,9 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                 </span>
               </div>
             </td>
-            <td className="border border-gray-300 p-2 text-center align-middle" style={{ textAlign: 'center', verticalAlign: 'middle' }}>{grupo.parecer}</td>
+            <td className="border border-gray-300 p-2 text-center align-middle" style={{ textAlign: 'center', verticalAlign: 'middle', wordBreak: 'break-word', hyphens: 'auto' }}>
+              {truncateText(grupo.parecer, 200)}
+            </td>
           </tr>
         </tbody>
       </table>
@@ -203,10 +209,10 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
 
   const renderObservacoesGerais = () => (
     data.observacoes && (
-      <div className="mb-4">
-        <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
-        <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
-          {data.observacoes}
+      <div className="mb-2">
+        <h3 className="text-sm font-semibold mb-1 text-brand-purple">Observações Gerais</h3>
+        <p className="text-xs text-gray-700 bg-gray-50 p-2 rounded leading-tight" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>
+          {truncateText(data.observacoes, 150)}
         </p>
       </div>
     )
@@ -240,8 +246,8 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
           <p className="text-xs font-medium mb-1">
             Foto {String(numeroFoto).padStart(2, '0')} - Sistema {grupoIndex + 1}
           </p>
-          <p className="text-xs text-gray-700 leading-relaxed">
-            {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
+          <p className="text-xs text-gray-700 leading-relaxed" style={{ wordBreak: 'break-word', hyphens: 'auto' }}>
+            {truncateText(fotoComDescricao.descricao || 'Evidência fotográfica da vistoria', 150)}
           </p>
         </div>
       </div>
