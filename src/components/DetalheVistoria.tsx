@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -10,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, X, Calendar, Building, User, MapPin, FileText, Edit } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
 
 interface Vistoria {
   id: string;
@@ -34,6 +35,8 @@ interface DetalheVistoriaProps {
 }
 
 const DetalheVistoria = ({ vistoria, isOpen, onClose, onDownloadPDF, onEdit }: DetalheVistoriaProps) => {
+  const { toast } = useToast();
+
   if (!vistoria) return null;
 
   const formatDate = (dateString: string) => {
@@ -51,6 +54,93 @@ const DetalheVistoria = ({ vistoria, isOpen, onClose, onDownloadPDF, onEdit }: D
         return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleDownloadPDFLocal = async () => {
+    try {
+      toast({
+        title: "Gerando PDF...",
+        description: `Preparando relatório da vistoria ${vistoria.numeroInterno}`,
+      });
+
+      // Usar a mesma lógica de geração de PDF
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      // Cabeçalho
+      pdf.setFillColor(128, 90, 213);
+      pdf.rect(0, 0, pageWidth, 40, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.text('Relatório de Vistoria Técnica - GTP', pageWidth / 2, 25, { align: 'center' });
+      
+      // Informações da vistoria
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(12);
+      
+      let yPosition = 60;
+      
+      pdf.text(`Condomínio: ${vistoria.condominio}`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.text(`Número Interno: #${vistoria.numeroInterno}`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.text(`Data da Vistoria: ${formatDate(vistoria.dataVistoria)}`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.text(`Ambiente: ${vistoria.ambiente}`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.text(`Status: ${vistoria.status}`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.text(`Responsável: ${vistoria.responsavel}`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.text(`Fotos Registradas: ${vistoria.fotosCount}`, 20, yPosition);
+      yPosition += 20;
+      
+      // Observações se existirem
+      if (vistoria.observacoes) {
+        pdf.setFontSize(14);
+        pdf.text('Observações:', 20, yPosition);
+        yPosition += 10;
+        
+        pdf.setFontSize(10);
+        const observacoes = pdf.splitTextToSize(vistoria.observacoes, pageWidth - 40);
+        pdf.text(observacoes, 20, yPosition);
+        yPosition += observacoes.length * 5;
+      }
+      
+      // Rodapé
+      pdf.setFontSize(8);
+      pdf.setTextColor(128, 128, 128);
+      pdf.text(
+        `Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
+        20,
+        pageHeight - 20
+      );
+      
+      // Salvar o PDF
+      const fileName = `Vistoria_${vistoria.numeroInterno}_${vistoria.condominio.replace(/\s+/g, '_')}.pdf`;
+      pdf.save(fileName);
+      
+      toast({
+        title: "PDF gerado com sucesso!",
+        description: `Relatório ${fileName} foi baixado`,
+      });
+      
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Ocorreu um erro durante a geração do relatório",
+        variant: "destructive",
+      });
     }
   };
 
@@ -72,7 +162,7 @@ const DetalheVistoria = ({ vistoria, isOpen, onClose, onDownloadPDF, onEdit }: D
                 Editar
               </Button>
               <Button 
-                onClick={() => onDownloadPDF(vistoria)}
+                onClick={handleDownloadPDFLocal}
                 variant="outline" 
                 size="sm"
               >
