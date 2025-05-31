@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import NovaVistoria from '@/components/NovaVistoria';
@@ -55,9 +54,20 @@ const Index = () => {
     setCurrentPage('nova-vistoria');
   };
 
+  const handleEditFromPreview = () => {
+    setCurrentPage('nova-vistoria');
+    // Mantém os dados do previewData para serem editados
+  };
+
   const renderContent = () => {
     if (currentPage === 'preview' && previewData) {
-      return <PreviewPDF data={previewData} onBack={handleBackFromPreview} />;
+      return (
+        <PreviewPDF 
+          data={previewData} 
+          onBack={handleBackFromPreview}
+          onEdit={handleEditFromPreview}
+        />
+      );
     }
 
     switch (currentPage) {
@@ -68,6 +78,7 @@ const Index = () => {
             condominios={condominios}
             obterProximoNumero={obterProximoNumero}
             incrementarNumero={incrementarNumero}
+            initialData={previewData}
           />
         );
       case 'usuarios':

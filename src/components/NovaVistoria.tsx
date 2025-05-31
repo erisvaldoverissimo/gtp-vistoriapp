@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,9 +41,10 @@ interface NovaVistoriaProps {
   condominios: Condominio[];
   obterProximoNumero: (condominioId: string) => number;
   incrementarNumero: (condominioId: string) => void;
+  initialData?: VistoriaData | null;
 }
 
-const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarNumero }: NovaVistoriaProps) => {
+const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarNumero, initialData }: NovaVistoriaProps) => {
   const { toast } = useToast();
   const { obterUsuariosAtivos } = useUsuarios();
   const usuariosAtivos = obterUsuariosAtivos();
@@ -67,6 +67,13 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
       fotos: []
     }]
   });
+
+  // Carrega os dados iniciais quando há dados para edição
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, [initialData]);
 
   const ambientes = ['Térreo', '1º Andar', '2º Andar', '3º Andar', 'Subsolo', 'Cobertura', 'Área Externa'];
   const grupos = [
@@ -189,7 +196,9 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Nova Vistoria</h2>
+        <h2 className="text-2xl font-bold text-gray-900">
+          {initialData ? 'Editar Vistoria' : 'Nova Vistoria'}
+        </h2>
         <div className="flex space-x-2">
           <Button onClick={handleSave} variant="outline">
             <Save size={18} className="mr-2" />

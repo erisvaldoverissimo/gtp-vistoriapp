@@ -32,9 +32,10 @@ interface VistoriaData {
 interface PreviewPDFProps {
   data: VistoriaData;
   onBack: () => void;
+  onEdit?: () => void;
 }
 
-const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
+const PreviewPDF = ({ data, onBack, onEdit }: PreviewPDFProps) => {
   const { toast } = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -92,6 +93,14 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
       description: "O relatório foi enviado por email com sucesso.",
     });
     console.log('Enviando email com dados:', data);
+  };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit();
+    } else {
+      onBack();
+    }
   };
 
   const calculateTotalPages = () => {
@@ -266,7 +275,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
           <h2 className="text-2xl font-bold text-gray-900">Preview do Relatório</h2>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline">
+          <Button onClick={handleEdit} variant="outline">
             <Edit size={18} className="mr-2" />
             Editar
           </Button>
