@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -254,69 +255,52 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                 </table>
               </div>
 
-              {/* Evidências Fotográficas do Grupo (máximo 2 por página) */}
+              {/* Evidências Fotográficas do Grupo - Dividindo a cada 2 fotos por página */}
               {grupo.fotos.length > 0 && (
-                <div className="mb-4" style={{ breakInside: 'avoid' }}>
-                  <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                    Evidências Fotográficas - Grupo {grupoIndex + 1}
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {grupo.fotos.slice(0, 2).map((foto, fotoIndex) => {
-                      const fotoComDescricao = foto as File & { descricao?: string };
-                      
-                      return (
-                        <div key={fotoIndex} className="border rounded-lg p-2">
-                          <img
-                            src={URL.createObjectURL(foto)}
-                            alt={`Foto ${fotoIndex + 1} - Grupo ${grupoIndex + 1}`}
-                            className="w-full aspect-square object-cover rounded mb-2"
-                          />
-                          <div>
-                            <p className="text-xs font-medium mb-1">
-                              Foto {String(fotoIndex + 1).padStart(2, '0')} - Grupo {grupoIndex + 1}
-                            </p>
-                            <p className="text-xs text-gray-700 leading-relaxed">
-                              {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
-                            </p>
-                          </div>
+                <>
+                  {Array.from({ length: Math.ceil(grupo.fotos.length / 2) }, (_, pageIndex) => {
+                    const startIndex = pageIndex * 2;
+                    const endIndex = Math.min(startIndex + 2, grupo.fotos.length);
+                    const fotosNaPagina = grupo.fotos.slice(startIndex, endIndex);
+                    
+                    return (
+                      <div 
+                        key={pageIndex} 
+                        className={`mb-4 ${pageIndex > 0 ? 'break-before-page' : ''}`} 
+                        style={{ breakInside: 'avoid' }}
+                      >
+                        <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                          Evidências Fotográficas - Grupo {grupoIndex + 1}
+                          {pageIndex > 0 && ` (Página ${pageIndex + 1})`}
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          {fotosNaPagina.map((foto, fotoIndex) => {
+                            const fotoComDescricao = foto as File & { descricao?: string };
+                            const numeroFoto = startIndex + fotoIndex + 1;
+                            
+                            return (
+                              <div key={fotoIndex} className="border rounded-lg p-2">
+                                <img
+                                  src={URL.createObjectURL(foto)}
+                                  alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
+                                  className="w-full aspect-square object-cover rounded mb-2"
+                                />
+                                <div>
+                                  <p className="text-xs font-medium mb-1">
+                                    Foto {String(numeroFoto).padStart(2, '0')} - Grupo {grupoIndex + 1}
+                                  </p>
+                                  <p className="text-xs text-gray-700 leading-relaxed">
+                                    {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Se há mais de 2 fotos, criar nova seção */}
-              {grupo.fotos.length > 2 && (
-                <div className="mb-4" style={{ breakBefore: 'page', breakInside: 'avoid' }}>
-                  <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                    Evidências Fotográficas - Grupo {grupoIndex + 1} (Continuação)
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {grupo.fotos.slice(2, 4).map((foto, fotoIndex) => {
-                      const fotoComDescricao = foto as File & { descricao?: string };
-                      const numeroFoto = fotoIndex + 3;
-                      
-                      return (
-                        <div key={fotoIndex} className="border rounded-lg p-2">
-                          <img
-                            src={URL.createObjectURL(foto)}
-                            alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
-                            className="w-full aspect-square object-cover rounded mb-2"
-                          />
-                          <div>
-                            <p className="text-xs font-medium mb-1">
-                              Foto {String(numeroFoto).padStart(2, '0')} - Grupo {grupoIndex + 1}
-                            </p>
-                            <p className="text-xs text-gray-700 leading-relaxed">
-                              {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                      </div>
+                    );
+                  })}
+                </>
               )}
             </div>
           ))}
