@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -178,20 +179,22 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
         </thead>
         <tbody>
           <tr>
-            <td className="border border-gray-300 p-2 text-center align-middle">{grupo.ambiente}</td>
-            <td className="border border-gray-300 p-2 text-center align-middle">{grupo.grupo}</td>
-            <td className="border border-gray-300 p-2 text-center align-middle">{grupo.item}</td>
-            <td className="border border-gray-300 p-2 text-center align-middle">
-              <span className={`inline-block px-2 py-1 rounded text-xs ${
-                grupo.status === 'N/A' ? 'bg-gray-200' :
-                grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
-                grupo.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
-                'bg-yellow-200 text-yellow-800'
-              }`}>
-                {grupo.status}
-              </span>
+            <td className="border border-gray-300 p-2 text-center align-middle" style={{ textAlign: 'center', verticalAlign: 'middle' }}>{grupo.ambiente}</td>
+            <td className="border border-gray-300 p-2 text-center align-middle" style={{ textAlign: 'center', verticalAlign: 'middle' }}>{grupo.grupo}</td>
+            <td className="border border-gray-300 p-2 text-center align-middle" style={{ textAlign: 'center', verticalAlign: 'middle' }}>{grupo.item}</td>
+            <td className="border border-gray-300 p-2 text-center align-middle" style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <span className={`inline-block px-2 py-1 rounded text-xs ${
+                  grupo.status === 'N/A' ? 'bg-gray-200' :
+                  grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
+                  grupo.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
+                  'bg-yellow-200 text-yellow-800'
+                }`} style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '4px' }}>
+                  {grupo.status}
+                </span>
+              </div>
             </td>
-            <td className="border border-gray-300 p-2 text-center align-middle">{grupo.parecer}</td>
+            <td className="border border-gray-300 p-2 text-center align-middle" style={{ textAlign: 'center', verticalAlign: 'middle' }}>{grupo.parecer}</td>
           </tr>
         </tbody>
       </table>
