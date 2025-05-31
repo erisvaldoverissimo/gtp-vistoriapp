@@ -1,8 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -193,12 +192,13 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
                       {foto.descricao.length}/{MAX_DESCRICAO_LENGTH}
                     </span>
                   </div>
-                  <Input
+                  <Textarea
                     id={`descricao-${index}`}
                     value={foto.descricao}
                     onChange={(e) => handleDescricaoChange(index, e.target.value)}
                     placeholder="Descreva o que mostra esta foto..."
-                    className={foto.descricao.length > MAX_DESCRICAO_LENGTH ? 'border-red-500 focus:ring-red-500' : ''}
+                    className={`min-h-[100px] ${foto.descricao.length > MAX_DESCRICAO_LENGTH ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    rows={4}
                   />
                   {foto.descricao.length > MAX_DESCRICAO_LENGTH && (
                     <Alert variant="warning">
