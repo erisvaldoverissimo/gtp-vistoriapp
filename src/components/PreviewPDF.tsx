@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -155,7 +156,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
   const renderTabelaGrupo = (grupo: GrupoVistoria, grupoIndex: number) => (
     <div className="mb-4">
       <h3 className="text-base font-semibold mb-2 text-brand-purple">
-        Grupo de Vistoria {grupoIndex + 1}
+        Sistema de Vistoria {grupoIndex + 1}
       </h3>
       <table className="w-full border-collapse border border-gray-300 text-xs">
         <thead>
@@ -189,10 +190,27 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     </div>
   );
 
+  const renderObservacoesGerais = () => (
+    data.observacoes && (
+      <div className="mb-4">
+        <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
+        <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
+          {data.observacoes}
+        </p>
+      </div>
+    )
+  );
+
   const renderRodape = (currentPageNumber: number) => (
-    <div className="border-t pt-2 text-xs text-gray-600 mt-auto flex justify-between items-center">
-      <p>Relatório gerado automaticamente pelo Sistema de Vistorias - {formatDate(new Date().toISOString())} às {getCurrentTime()}</p>
-      <p className="font-medium">Página {currentPageNumber}/{totalPages}</p>
+    <div className="mt-auto">
+      {/* Observações Gerais no rodapé */}
+      {renderObservacoesGerais()}
+      
+      {/* Rodapé com numeração */}
+      <div className="border-t pt-2 text-xs text-gray-600 flex justify-between items-center">
+        <p>Relatório gerado automaticamente pelo Sistema de Vistorias - {formatDate(new Date().toISOString())} às {getCurrentTime()}</p>
+        <p className="font-medium">Página {currentPageNumber}/{totalPages}</p>
+      </div>
     </div>
   );
 
@@ -204,12 +222,12 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
       <div className="border rounded-lg p-2 flex-1">
         <img
           src={URL.createObjectURL(foto)}
-          alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
+          alt={`Foto ${numeroFoto} - Sistema ${grupoIndex + 1}`}
           className="w-full aspect-square object-cover rounded mb-2"
         />
         <div>
           <p className="text-xs font-medium mb-1">
-            Foto {String(numeroFoto).padStart(2, '0')} - Grupo {grupoIndex + 1}
+            Foto {String(numeroFoto).padStart(2, '0')} - Sistema {grupoIndex + 1}
           </p>
           <p className="text-xs text-gray-700 leading-relaxed">
             {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
@@ -218,17 +236,6 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
       </div>
     );
   };
-
-  const renderObservacoesGerais = () => (
-    data.observacoes && (
-      <div className="mb-4">
-        <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
-        <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
-          {data.observacoes}
-        </p>
-      </div>
-    )
-  );
 
   return (
     <div className="space-y-6">
@@ -276,7 +283,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                   return (
                     <React.Fragment key={idx}>
                       {isFirstOfPair && (
-                        <div className="page flex flex-col gap-3">
+                        <div className="page flex flex-col gap-3 min-h-screen">
                           {/* Cabeçalho + tabela só no idx === 0 */}
                           {idx === 0 && renderCabecalho()}
                           {idx === 0 && renderInformacoesVistoria()}
@@ -285,19 +292,16 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                           {/* Título das evidências fotográficas */}
                           {idx === 0 ? (
                             <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                              Evidências Fotográficas - Grupo {grupoIndex + 1}
+                              Evidências Fotográficas - Sistema {grupoIndex + 1}
                             </h4>
                           ) : (
                             <>
                               {renderCabecalho()}
                               <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                                Evidências Fotográficas - Grupo {grupoIndex + 1} (Continuação)
+                                Evidências Fotográficas - Sistema {grupoIndex + 1} (Continuação)
                               </h4>
                             </>
                           )}
-
-                          {/* Observações Gerais em todas as páginas */}
-                          {renderObservacoesGerais()}
                           
                           <div className="flex gap-4 mb-4 flex-1">
                             {/* Renderizar a foto */}
