@@ -9,6 +9,7 @@ import { Calendar, Upload, Save, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import UploadFotos from './UploadFotos';
 import { Condominio } from '@/hooks/useCondominios';
+import { useUsuarios } from '@/hooks/useUsuarios';
 
 interface FotoComDescricao extends File {
   descricao?: string;
@@ -39,6 +40,9 @@ interface NovaVistoriaProps {
 
 const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarNumero }: NovaVistoriaProps) => {
   const { toast } = useToast();
+  const { obterUsuariosAtivos } = useUsuarios();
+  const usuariosAtivos = obterUsuariosAtivos();
+  
   const [formData, setFormData] = useState<VistoriaData>({
     condominio: '',
     condominioId: '',
@@ -214,12 +218,26 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
 
             <div>
               <Label htmlFor="responsavel">Responsável pela Vistoria</Label>
-              <Input
-                id="responsavel"
-                value={formData.responsavel}
-                onChange={(e) => handleInputChange('responsavel', e.target.value)}
-                placeholder="Nome do vistoriador"
-              />
+              {usuariosAtivos.length === 0 ? (
+                <div className="p-3 border border-orange-200 bg-orange-50 rounded-md">
+                  <p className="text-sm text-orange-700">
+                    Nenhum usuário cadastrado. Acesse a aba "Usuários" para cadastrar vistoriadores.
+                  </p>
+                </div>
+              ) : (
+                <Select value={formData.responsavel} onValueChange={(value) => handleInputChange('responsavel', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {usuariosAtivos.map((usuario) => (
+                      <SelectItem key={usuario.id} value={usuario.nome}>
+                        {usuario.nome} {usuario.cargo && `- ${usuario.cargo}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </CardContent>
         </Card>

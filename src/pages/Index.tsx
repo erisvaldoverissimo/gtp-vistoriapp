@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import NovaVistoria from '@/components/NovaVistoria';
@@ -7,6 +6,7 @@ import PreviewPDF from '@/components/PreviewPDF';
 import Configuracoes from '@/components/Configuracoes';
 import GerenciarCondominios from '@/components/GerenciarCondominios';
 import ChatIA from '@/components/ChatIA';
+import GerenciarUsuarios from '@/components/GerenciarUsuarios';
 import { useCondominios } from '@/hooks/useCondominios';
 
 interface VistoriaData {
@@ -60,6 +60,8 @@ const Index = () => {
             incrementarNumero={incrementarNumero}
           />
         );
+      case 'usuarios':
+        return <GerenciarUsuarios />;
       case 'condominios':
         return (
           <GerenciarCondominios 
