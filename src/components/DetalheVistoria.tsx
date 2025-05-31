@@ -9,7 +9,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, X, Calendar, Building, User, MapPin, FileText } from 'lucide-react';
+import { Download, X, Calendar, Building, User, MapPin, FileText, Edit } from 'lucide-react';
 
 interface Vistoria {
   id: string;
@@ -30,9 +30,10 @@ interface DetalheVistoriaProps {
   isOpen: boolean;
   onClose: () => void;
   onDownloadPDF: (vistoria: Vistoria) => void;
+  onEdit: (vistoria: Vistoria) => void;
 }
 
-const DetalheVistoria = ({ vistoria, isOpen, onClose, onDownloadPDF }: DetalheVistoriaProps) => {
+const DetalheVistoria = ({ vistoria, isOpen, onClose, onDownloadPDF, onEdit }: DetalheVistoriaProps) => {
   if (!vistoria) return null;
 
   const formatDate = (dateString: string) => {
@@ -62,6 +63,14 @@ const DetalheVistoria = ({ vistoria, isOpen, onClose, onDownloadPDF }: DetalheVi
               Detalhes da Vistoria
             </DialogTitle>
             <div className="flex space-x-2">
+              <Button 
+                onClick={() => onEdit(vistoria)}
+                variant="outline" 
+                size="sm"
+              >
+                <Edit size={16} className="mr-2" />
+                Editar
+              </Button>
               <Button 
                 onClick={() => onDownloadPDF(vistoria)}
                 variant="outline" 

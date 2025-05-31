@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Download, Calendar, Building, FileText, Loader2, Edit } from 'lucide-react';
+import { Eye, Download, Calendar, Building, FileText, Loader2, Edit, Plus } from 'lucide-react';
 import { useVistorias } from '@/hooks/useVistorias';
 import DetalheVistoria from './DetalheVistoria';
 import FiltrosAvancados from './FiltrosAvancados';
