@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import NovaVistoria from '@/components/NovaVistoria';
@@ -8,6 +9,7 @@ import GerenciarCondominios from '@/components/GerenciarCondominios';
 import ChatIA from '@/components/ChatIA';
 import GerenciarUsuarios from '@/components/GerenciarUsuarios';
 import { useCondominios } from '@/hooks/useCondominios';
+import { useVistorias } from '@/hooks/useVistorias';
 
 interface FotoComDescricao extends File {
   descricao?: string;
@@ -38,6 +40,7 @@ const Index = () => {
   const [currentPage, setCurrentPage] = useState('vistorias');
   const [previewData, setPreviewData] = useState<VistoriaData | null>(null);
   const { condominios, atualizarCondominios, obterProximoNumero, incrementarNumero } = useCondominios();
+  const { salvarVistoria } = useVistorias();
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
@@ -59,6 +62,30 @@ const Index = () => {
     // Mantém os dados do previewData para serem editados
   };
 
+  const handleSalvarVistoria = (data: VistoriaData) => {
+    // Converter fotos para formato de salvamento (apenas nome e descrição)
+    const grupos = data.grupos.map(grupo => ({
+      ...grupo,
+      fotos: grupo.fotos.map(foto => ({
+        name: foto.name,
+        descricao: foto.descricao
+      }))
+    }));
+
+    const vistoriaSalva = {
+      condominio: data.condominio,
+      condominioId: data.condominioId,
+      numeroInterno: data.numeroInterno,
+      dataVistoria: data.dataVistoria,
+      observacoes: data.observacoes,
+      responsavel: data.responsavel,
+      grupos
+    };
+
+    salvarVistoria(vistoriaSalva);
+    incrementarNumero(data.condominioId);
+  };
+
   const renderContent = () => {
     if (currentPage === 'preview' && previewData) {
       return (
@@ -66,6 +93,7 @@ const Index = () => {
           data={previewData} 
           onBack={handleBackFromPreview}
           onEdit={handleEditFromPreview}
+          onSave={handleSalvarVistoria}
         />
       );
     }
