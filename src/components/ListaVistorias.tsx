@@ -1,9 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Download, Calendar, Building, FileText, Loader2 } from 'lucide-react';
+import { Eye, Download, Calendar, Building, FileText, Loader2, Edit } from 'lucide-react';
 import { useVistorias } from '@/hooks/useVistorias';
 import DetalheVistoria from './DetalheVistoria';
 import FiltrosAvancados from './FiltrosAvancados';
@@ -24,16 +23,21 @@ interface Vistoria {
   idSequencial?: number;
 }
 
+interface ListaVistoriasProps {
+  onNavigate?: (page: string) => void;
+  onEditVistoria?: (vistoria: Vistoria) => void;
+}
+
 const ITEMS_PER_PAGE = 10;
 
-const ListaVistorias = () => {
+const ListaVistorias = ({ onNavigate, onEditVistoria }: ListaVistoriasProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedVistoria, setSelectedVistoria] = useState<Vistoria | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { vistorias, loading } = useVistorias();
+  const { vistorias, loading, excluirVistoria } = useVistorias();
   const { toast } = useToast();
 
   const filteredVistorias = useMemo(() => {
@@ -78,6 +82,15 @@ const ListaVistorias = () => {
     setIsModalOpen(true);
   };
 
+  const handleEditVistoria = (vistoria: Vistoria) => {
+    if (onEditVistoria) {
+      onEditVistoria(vistoria);
+    }
+    if (onNavigate) {
+      onNavigate('nova-vistoria');
+    }
+  };
+
   const handleDownloadPDF = (vistoria: Vistoria) => {
     toast({
       title: "PDF em preparação",
@@ -90,6 +103,24 @@ const ListaVistorias = () => {
         description: `Vistoria_${vistoria.numeroInterno}_${vistoria.condominio.replace(/\s+/g, '_')}.pdf`,
       });
     }, 2000);
+  };
+
+  const handleDeleteVistoria = async (vistoria: Vistoria) => {
+    if (window.confirm(`Tem certeza que deseja excluir a vistoria ${vistoria.numeroInterno}?`)) {
+      try {
+        excluirVistoria(vistoria.id);
+        toast({
+          title: "Vistoria Excluída",
+          description: `Vistoria ${vistoria.numeroInterno} foi excluída com sucesso.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Erro ao Excluir",
+          description: "Ocorreu um erro ao excluir a vistoria.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleCloseModal = () => {
@@ -121,6 +152,13 @@ const ListaVistorias = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Vistorias Realizadas</h2>
+        <Button 
+          onClick={() => onNavigate && onNavigate('nova-vistoria')} 
+          className="bg-teal-600 hover:bg-teal-700"
+        >
+          <Plus className="mr-2" size={18} />
+          Nova Vistoria
+        </Button>
       </div>
 
       {/* Filtros Avançados */}
@@ -198,9 +236,18 @@ const ListaVistorias = () => {
             <CardContent className="p-8 text-center">
               <FileText size={48} className="mx-auto text-gray-300 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma vistoria encontrada</h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-4">
                 {searchTerm || statusFilter || dateFilter ? 'Tente ajustar os filtros de busca.' : 'Comece criando uma nova vistoria.'}
               </p>
+              {!searchTerm && !statusFilter && !dateFilter && (
+                <Button 
+                  onClick={() => onNavigate && onNavigate('nova-vistoria')} 
+                  className="bg-teal-600 hover:bg-teal-700"
+                >
+                  <Plus className="mr-2" size={18} />
+                  Criar Primeira Vistoria
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -249,6 +296,14 @@ const ListaVistorias = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
+                      onClick={() => handleEditVistoria(vistoria)}
+                    >
+                      <Edit size={16} className="mr-2" />
+                      Editar
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
                       onClick={() => handleDownloadPDF(vistoria)}
                     >
                       <Download size={16} className="mr-2" />
@@ -277,6 +332,7 @@ const ListaVistorias = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onDownloadPDF={handleDownloadPDF}
+        onEdit={handleEditVistoria}
       />
     </div>
   );
