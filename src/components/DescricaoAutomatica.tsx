@@ -35,7 +35,7 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
     if (apiKey.startsWith('sk-')) {
       return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
     } else if (apiKey.startsWith('gsk_')) {
-      return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.2-11b-vision-preview' };
+      return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.2-90b-vision-preview' };
     }
     return null;
   };
@@ -122,7 +122,7 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('Erro da API:', errorData);
-        throw new Error(`Erro na API ${apiInfo.provider}: ${response.status}`);
+        throw new Error(`Erro na API ${apiInfo.provider}: ${response.status} - ${errorData.error?.message || 'Erro desconhecido'}`);
       }
 
       const data = await response.json();
@@ -139,7 +139,7 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
       console.error('Erro ao gerar descrição:', error);
       toast({
         title: "Erro na Geração",
-        description: "Não foi possível gerar a descrição. Verifique sua API Key e conexão.",
+        description: error instanceof Error ? error.message : "Não foi possível gerar a descrição. Verifique sua API Key e conexão.",
         variant: "destructive"
       });
     } finally {
