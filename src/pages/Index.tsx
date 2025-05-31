@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import NovaVistoria from '@/components/NovaVistoria';
@@ -9,20 +10,29 @@ import ChatIA from '@/components/ChatIA';
 import GerenciarUsuarios from '@/components/GerenciarUsuarios';
 import { useCondominios } from '@/hooks/useCondominios';
 
+interface FotoComDescricao extends File {
+  descricao?: string;
+}
+
+interface GrupoVistoria {
+  id: string;
+  ambiente: string;
+  grupo: string;
+  item: string;
+  status: string;
+  parecer: string;
+  fotos: FotoComDescricao[];
+}
+
 interface VistoriaData {
   condominio: string;
   condominioId: string;
   numeroInterno: string;
   idSequencial: number;
   dataVistoria: string;
-  ambiente: string;
-  grupo: string;
-  item: string;
-  status: string;
-  parecer: string;
   observacoes: string;
   responsavel: string;
-  fotos: File[];
+  grupos: GrupoVistoria[];
 }
 
 const Index = () => {
