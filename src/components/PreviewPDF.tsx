@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,61 +53,32 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
   };
 
   const handleDownloadPDF = async () => {
-    if (!reportRef.current) return;
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const pages = Array.from(
+      document.querySelectorAll(".page")
+    ) as HTMLElement[];
 
-    try {
-      toast({
-        title: "Gerando PDF",
-        description: "Por favor, aguarde enquanto o relatório está sendo gerado...",
+    for (let i = 0; i < pages.length; i++) {
+      const canvas = await html2canvas(pages[i], {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
       });
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const pages = reportRef.current.querySelectorAll('.page');
-      
-      for (let i = 0; i < pages.length; i++) {
-        const pageElement = pages[i] as HTMLElement;
-        
-        const canvas = await html2canvas(pageElement, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          width: pageElement.offsetWidth,
-          height: pageElement.offsetHeight,
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        
-        if (i > 0) {
-          pdf.addPage();
-        }
-        
-        // Adicionar imagem ocupando toda a página A4
-        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-      }
-
-      const fileName = `Relatorio-${data.numeroInterno}-${slugify(data.condominio)}.pdf`;
-      pdf.save(fileName);
-
-      toast({
-        title: "PDF Gerado com Sucesso",
-        description: "O relatório foi baixado com sucesso.",
-      });
-
-      console.log('PDF gerado e baixado:', fileName);
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast({
-        title: "Erro ao Gerar PDF",
-        description: "Ocorreu um erro ao gerar o relatório. Tente novamente.",
-        variant: "destructive",
-      });
+      const img = canvas.toDataURL("image/png");
+      if (i > 0) pdf.addPage();
+      pdf.addImage(
+        img,
+        "PNG",
+        0,
+        0,
+        pdf.internal.pageSize.getWidth(),
+        pdf.internal.pageSize.getHeight()
+      );
     }
+
+    pdf.save(
+      `Relatorio-${data.numeroInterno}-${data.condominio.replace(/\s+/g, "-")}.pdf`
+    );
   };
 
   const handleSendEmail = () => {
@@ -119,7 +89,6 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     console.log('Enviando email com dados:', data);
   };
 
-  // Renderizar cabeçalho padrão
   const renderCabecalho = () => (
     <div className="bg-brand-purple text-white p-4 rounded-t-lg mb-4">
       <div className="flex items-center justify-between">
@@ -136,7 +105,6 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     </div>
   );
 
-  // Renderizar informações da vistoria
   const renderInformacoesVistoria = () => (
     <div className="bg-gray-100 p-3 rounded-lg mb-4">
       <div className="grid grid-cols-4 gap-3 text-xs">
@@ -174,7 +142,6 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     </div>
   );
 
-  // Renderizar tabela do grupo
   const renderTabelaGrupo = (grupo: GrupoVistoria, grupoIndex: number) => (
     <div className="mb-4">
       <h3 className="text-base font-semibold mb-2 text-brand-purple">
@@ -212,14 +179,12 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     </div>
   );
 
-  // Renderizar rodapé
   const renderRodape = () => (
     <div className="border-t pt-2 text-xs text-gray-600 mt-auto">
       <p>Relatório gerado automaticamente pelo Sistema de Vistorias - {formatDate(new Date().toISOString())} às {getCurrentTime()}</p>
     </div>
   );
 
-  // Renderizar foto individual
   const renderFotoCard = (foto: FotoComDescricao, fotoIndex: number, grupoIndex: number) => {
     const fotoComDescricao = foto as File & { descricao?: string };
     const numeroFoto = fotoIndex + 1;
