@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -90,6 +89,16 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     console.log('Enviando email com dados:', data);
   };
 
+  const calculateTotalPages = () => {
+    let totalPages = 0;
+    data.grupos.forEach(grupo => {
+      totalPages += Math.ceil(grupo.fotos.length / 2);
+    });
+    return totalPages;
+  };
+
+  const totalPages = calculateTotalPages();
+
   const renderCabecalho = () => (
     <div className="bg-brand-purple text-white p-4 rounded-t-lg mb-4">
       <div className="flex items-center justify-between">
@@ -180,9 +189,10 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     </div>
   );
 
-  const renderRodape = () => (
-    <div className="border-t pt-2 text-xs text-gray-600 mt-auto">
+  const renderRodape = (currentPageNumber: number) => (
+    <div className="border-t pt-2 text-xs text-gray-600 mt-auto flex justify-between items-center">
       <p>Relatório gerado automaticamente pelo Sistema de Vistorias - {formatDate(new Date().toISOString())} às {getCurrentTime()}</p>
+      <p className="font-medium">Página {currentPageNumber}/{totalPages}</p>
     </div>
   );
 
@@ -239,61 +249,69 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
       {/* Preview do PDF */}
       <Card className="max-w-none mx-auto" style={{ width: '210mm', maxWidth: '210mm' }}>
         <div ref={reportRef} className="bg-white">
-          {data.grupos.map((grupo, grupoIndex) => (
-            <React.Fragment key={grupo.id}>
-              {grupo.fotos.map((foto, idx) => {
-                const isFirstOfPair = idx % 2 === 0;
-                const isLastOfPair = idx % 2 === 1 || idx === grupo.fotos.length - 1;
+          {(() => {
+            let currentPageNumber = 0;
+            
+            return data.grupos.map((grupo, grupoIndex) => (
+              <React.Fragment key={grupo.id}>
+                {grupo.fotos.map((foto, idx) => {
+                  const isFirstOfPair = idx % 2 === 0;
+                  const isLastOfPair = idx % 2 === 1 || idx === grupo.fotos.length - 1;
 
-                return (
-                  <React.Fragment key={idx}>
-                    {isFirstOfPair && (
-                      <div className="page flex flex-col gap-3">
-                        {/* Cabeçalho + tabela só no idx === 0 */}
-                        {idx === 0 && renderCabecalho()}
-                        {idx === 0 && renderInformacoesVistoria()}
-                        {idx === 0 && renderTabelaGrupo(grupo, grupoIndex)}
-                        
-                        {/* Título das evidências fotográficas */}
-                        {idx === 0 ? (
-                          <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                            Evidências Fotográficas - Grupo {grupoIndex + 1}
-                          </h4>
-                        ) : (
-                          <>
-                            {renderCabecalho()}
-                            <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                              Evidências Fotográficas - Grupo {grupoIndex + 1} (Continuação)
-                            </h4>
-                          </>
-                        )}
+                  if (isFirstOfPair) {
+                    currentPageNumber++;
+                  }
 
-                        {/* Observações Gerais (apenas na primeira página do primeiro grupo) */}
-                        {grupoIndex === 0 && idx === 0 && data.observacoes && (
-                          <div className="mb-4">
-                            <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
-                            <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
-                              {data.observacoes}
-                            </p>
-                          </div>
-                        )}
-
-                        <div className="flex gap-4 mb-4 flex-1">
-                          {/* Renderizar a foto */}
-                          {renderFotoCard(foto, idx, grupoIndex)}
+                  return (
+                    <React.Fragment key={idx}>
+                      {isFirstOfPair && (
+                        <div className="page flex flex-col gap-3">
+                          {/* Cabeçalho + tabela só no idx === 0 */}
+                          {idx === 0 && renderCabecalho()}
+                          {idx === 0 && renderInformacoesVistoria()}
+                          {idx === 0 && renderTabelaGrupo(grupo, grupoIndex)}
                           
-                          {/* Renderizar a segunda foto se existir */}
-                          {!isLastOfPair && grupo.fotos[idx + 1] && renderFotoCard(grupo.fotos[idx + 1], idx + 1, grupoIndex)}
+                          {/* Título das evidências fotográficas */}
+                          {idx === 0 ? (
+                            <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                              Evidências Fotográficas - Grupo {grupoIndex + 1}
+                            </h4>
+                          ) : (
+                            <>
+                              {renderCabecalho()}
+                              <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                                Evidências Fotográficas - Grupo {grupoIndex + 1} (Continuação)
+                              </h4>
+                            </>
+                          )}
+
+                          {/* Observações Gerais (apenas na primeira página do primeiro grupo) */}
+                          {grupoIndex === 0 && idx === 0 && data.observacoes && (
+                            <div className="mb-4">
+                              <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
+                              <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
+                                {data.observacoes}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="flex gap-4 mb-4 flex-1">
+                            {/* Renderizar a foto */}
+                            {renderFotoCard(foto, idx, grupoIndex)}
+                            
+                            {/* Renderizar a segunda foto se existir */}
+                            {!isLastOfPair && grupo.fotos[idx + 1] && renderFotoCard(grupo.fotos[idx + 1], idx + 1, grupoIndex)}
+                          </div>
+                          
+                          {renderRodape(currentPageNumber)}
                         </div>
-                        
-                        {renderRodape()}
-                      </div>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </React.Fragment>
-          ))}
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </React.Fragment>
+            ));
+          })()}
         </div>
       </Card>
     </div>
