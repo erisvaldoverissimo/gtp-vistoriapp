@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import UploadFotos from './UploadFotos';
 import { Condominio } from '@/hooks/useCondominios';
 import { useUsuarios } from '@/hooks/useUsuarios';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface FotoComDescricao extends File {
   descricao?: string;
@@ -87,6 +88,15 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
   const statusOptions = ['N/A', 'Conforme', 'Não Conforme', 'Requer Atenção'];
 
   const handleInputChange = (field: keyof VistoriaData, value: string) => {
+    // Validar limite de observações gerais
+    if (field === 'observacoes' && value.length > 150) {
+      toast({
+        title: "Limite de Caracteres Excedido",
+        description: "As observações gerais devem ter no máximo 150 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -105,6 +115,16 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
   };
 
   const handleGrupoChange = (grupoId: string, field: keyof GrupoVistoria, value: string) => {
+    // Validar limite do parecer técnico
+    if (field === 'parecer' && value.length > 200) {
+      toast({
+        title: "Limite de Caracteres Excedido",
+        description: "O parecer técnico deve ter no máximo 200 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       grupos: prev.grupos.map(grupo => 
@@ -398,13 +418,27 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
 
             <div>
               <Label htmlFor={`parecer-${grupo.id}`}>Parecer Técnico</Label>
-              <Textarea
-                id={`parecer-${grupo.id}`}
-                value={grupo.parecer}
-                onChange={(e) => handleGrupoChange(grupo.id, 'parecer', e.target.value)}
-                placeholder="Descreva o parecer técnico detalhado..."
-                className="min-h-[80px]"
-              />
+              <div className="space-y-2">
+                <Textarea
+                  id={`parecer-${grupo.id}`}
+                  value={grupo.parecer}
+                  onChange={(e) => handleGrupoChange(grupo.id, 'parecer', e.target.value)}
+                  placeholder="Descreva o parecer técnico detalhado..."
+                  className="min-h-[80px]"
+                />
+                <div className="flex justify-between items-center">
+                  <span className={`text-xs ${grupo.parecer.length > 180 ? 'text-red-500' : 'text-gray-500'}`}>
+                    {grupo.parecer.length}/200 caracteres
+                  </span>
+                  {grupo.parecer.length > 200 && (
+                    <Alert variant="warning" className="mt-2">
+                      <AlertDescription>
+                        O parecer excede o limite de 200 caracteres e será truncado no PDF.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Upload de Fotos para este grupo (máximo 2) */}
@@ -436,13 +470,27 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
         <CardContent>
           <div>
             <Label htmlFor="observacoes">Observações Gerais</Label>
-            <Textarea
-              id="observacoes"
-              value={formData.observacoes}
-              onChange={(e) => handleInputChange('observacoes', e.target.value)}
-              placeholder="Observações adicionais..."
-              className="min-h-[80px]"
-            />
+            <div className="space-y-2">
+              <Textarea
+                id="observacoes"
+                value={formData.observacoes}
+                onChange={(e) => handleInputChange('observacoes', e.target.value)}
+                placeholder="Observações adicionais..."
+                className="min-h-[80px]"
+              />
+              <div className="flex justify-between items-center">
+                <span className={`text-xs ${formData.observacoes.length > 130 ? 'text-red-500' : 'text-gray-500'}`}>
+                  {formData.observacoes.length}/150 caracteres
+                </span>
+                {formData.observacoes.length > 150 && (
+                  <Alert variant="warning" className="mt-2">
+                    <AlertDescription>
+                      As observações excedem o limite de 150 caracteres e serão truncadas no PDF.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

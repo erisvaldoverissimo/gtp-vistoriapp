@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DescricaoAutomatica from './DescricaoAutomatica';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface FotoData {
   file: File;
@@ -109,11 +109,18 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
   };
 
   const handleDescricaoChange = (index: number, descricao: string) => {
-    // Limitar a 300 caracteres
-    const descricaoLimitada = descricao.slice(0, MAX_DESCRICAO_LENGTH);
+    // Verificar limite antes de permitir a mudança
+    if (descricao.length > MAX_DESCRICAO_LENGTH) {
+      toast({
+        title: "Limite de Caracteres Excedido",
+        description: `A descrição deve ter no máximo ${MAX_DESCRICAO_LENGTH} caracteres.`,
+        variant: "destructive",
+      });
+      return;
+    }
     
     const updatedFotos = fotos.map((foto, i) => 
-      i === index ? { ...foto, descricao: descricaoLimitada } : foto
+      i === index ? { ...foto, descricao } : foto
     );
     setFotos(updatedFotos);
     
@@ -200,8 +207,14 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
                     value={foto.descricao}
                     onChange={(e) => handleDescricaoChange(index, e.target.value)}
                     placeholder="Descreva o que mostra esta foto..."
-                    maxLength={MAX_DESCRICAO_LENGTH}
                   />
+                  {foto.descricao.length > MAX_DESCRICAO_LENGTH && (
+                    <Alert variant="warning">
+                      <AlertDescription>
+                        A descrição excede o limite de {MAX_DESCRICAO_LENGTH} caracteres e será truncada no PDF.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <DescricaoAutomatica
                     imageFile={foto.file}
                     onDescriptionGenerated={(description) => handleDescriptionGenerated(index, description)}
