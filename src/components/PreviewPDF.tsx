@@ -1,5 +1,3 @@
-
-
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -104,18 +102,16 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
   const renderCabecalho = () => (
     <div className="bg-brand-purple text-white p-4 rounded-t-lg mb-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center justify-center">
-            <img 
-              src="/lovable-uploads/ebfcae5e-f5c0-4403-8fcd-6c6c182ffa98.png" 
-              alt="GTP Logo" 
-              className="w-12 h-12 object-contain"
-            />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold">Relatório de Vistoria Técnica - GTP</h1>
-            <p className="text-purple-200 text-sm">Sistema de Vistorias Prediais</p>
-          </div>
+        <div>
+          <h1 className="text-xl font-bold">Relatório de Vistoria Técnica - GTP</h1>
+          <p className="text-purple-200 text-sm">Sistema de Vistorias Prediais</p>
+        </div>
+        <div className="flex items-center justify-center">
+          <img 
+            src="/lovable-uploads/bfe02df4-f545-4232-ad0a-e69690083a38.png" 
+            alt="GTP Logo" 
+            className="w-12 h-12 object-contain"
+          />
         </div>
       </div>
     </div>
