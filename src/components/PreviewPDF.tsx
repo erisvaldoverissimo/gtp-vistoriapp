@@ -54,7 +54,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
 
       // Configurações para captura
       const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -156,27 +156,27 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
         </div>
       </div>
 
-      {/* Preview do PDF */}
-      <Card className="max-w-4xl mx-auto">
-        <div ref={reportRef} className="p-8 bg-white">
-          {/* Cabeçalho do Relatório */}
-          <div className="bg-brand-purple text-white p-6 rounded-t-lg mb-6">
+      {/* Preview do PDF - Ajustado para A4 */}
+      <Card className="max-w-none mx-auto" style={{ width: '210mm', maxWidth: '210mm' }}>
+        <div ref={reportRef} className="bg-white" style={{ width: '210mm', minHeight: '297mm', padding: '10mm' }}>
+          {/* Cabeçalho do Relatório - Compacto */}
+          <div className="bg-brand-purple text-white p-4 rounded-t-lg mb-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-brand-green rounded-lg flex items-center justify-center">
-                  <span className="text-brand-purple font-bold text-xl">V</span>
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-brand-green rounded-lg flex items-center justify-center">
+                  <span className="text-brand-purple font-bold text-lg">V</span>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold">Relatório de vistoria (fotográfico)</h1>
-                  <p className="text-purple-200">Sistema de Vistorias Prediais</p>
+                  <h1 className="text-xl font-bold">Relatório de vistoria (fotográfico)</h1>
+                  <p className="text-purple-200 text-sm">Sistema de Vistorias Prediais</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Informações da Vistoria */}
-          <div className="bg-gray-100 p-4 rounded-lg mb-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          {/* Informações da Vistoria - Compacto */}
+          <div className="bg-gray-100 p-3 rounded-lg mb-4">
+            <div className="grid grid-cols-4 gap-3 text-xs">
               <div>
                 <span className="font-semibold">Data de emissão:</span>
                 <br />
@@ -215,25 +215,25 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
             </div>
           </div>
 
-          {/* Tabela de Detalhes */}
-          <div className="mb-6">
-            <table className="w-full border-collapse border border-gray-300">
+          {/* Tabela de Detalhes - Compacta */}
+          <div className="mb-4">
+            <table className="w-full border-collapse border border-gray-300 text-xs">
               <thead>
                 <tr className="bg-brand-purple text-white">
-                  <th className="border border-gray-300 p-3 text-left w-[15%]">Ambiente</th>
-                  <th className="border border-gray-300 p-3 text-left w-[15%]">Grupo</th>
-                  <th className="border border-gray-300 p-3 text-left w-[15%]">Item</th>
-                  <th className="border border-gray-300 p-3 text-left w-[12%]">Status</th>
-                  <th className="border border-gray-300 p-3 text-left w-[43%]">Parecer</th>
+                  <th className="border border-gray-300 p-2 text-left w-[15%]">Ambiente</th>
+                  <th className="border border-gray-300 p-2 text-left w-[15%]">Grupo</th>
+                  <th className="border border-gray-300 p-2 text-left w-[15%]">Item</th>
+                  <th className="border border-gray-300 p-2 text-left w-[12%]">Status</th>
+                  <th className="border border-gray-300 p-2 text-left w-[43%]">Parecer</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="border border-gray-300 p-3 text-sm">{data.ambiente}</td>
-                  <td className="border border-gray-300 p-3 text-sm">{data.grupo}</td>
-                  <td className="border border-gray-300 p-3 text-sm">{data.item}</td>
-                  <td className="border border-gray-300 p-3 text-sm">
-                    <span className={`px-2 py-1 rounded text-xs ${
+                  <td className="border border-gray-300 p-2">{data.ambiente}</td>
+                  <td className="border border-gray-300 p-2">{data.grupo}</td>
+                  <td className="border border-gray-300 p-2">{data.item}</td>
+                  <td className="border border-gray-300 p-2">
+                    <span className={`px-1 py-0.5 rounded text-xs ${
                       data.status === 'N/A' ? 'bg-gray-200' :
                       data.status === 'Conforme' ? 'bg-brand-green text-white' :
                       data.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
@@ -242,38 +242,36 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                       {data.status}
                     </span>
                   </td>
-                  <td className="border border-gray-300 p-3 text-sm">{data.parecer}</td>
+                  <td className="border border-gray-300 p-2">{data.parecer}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {/* Área de Fotos */}
+          {/* Área de Fotos - Otimizada para 3 fotos por página */}
           {data.fotos.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4 text-brand-purple">Evidências Fotográficas</h3>
-              <div className="space-y-6">
+            <div className="mb-4">
+              <h3 className="text-base font-semibold mb-3 text-brand-purple">Evidências Fotográficas</h3>
+              <div className="space-y-4">
                 {data.fotos.map((foto, index) => {
-                  // Buscar descrição da foto no estado do componente UploadFotos
-                  // Como não temos acesso direto, vamos usar uma estrutura que pode ser passada
                   const fotoComDescricao = foto as File & { descricao?: string };
                   
                   return (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div key={index} className="border rounded-lg p-3" style={{ breakInside: 'avoid' }}>
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
                           <img
                             src={URL.createObjectURL(foto)}
                             alt={`Foto ${index + 1}`}
-                            className="w-full aspect-square object-cover rounded"
+                            className="w-full h-32 object-cover rounded"
                           />
-                          <p className="text-sm font-medium text-center mt-2">
+                          <p className="text-xs font-medium text-center mt-1">
                             Foto {String(index + 1).padStart(2, '0')}
                           </p>
                         </div>
                         <div className="flex flex-col justify-start">
-                          <h4 className="font-semibold text-sm mb-2">Descrição:</h4>
-                          <p className="text-sm text-gray-700 leading-relaxed">
+                          <h4 className="font-semibold text-xs mb-1">Descrição:</h4>
+                          <p className="text-xs text-gray-700 leading-relaxed">
                             {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
                           </p>
                         </div>
@@ -285,18 +283,18 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
             </div>
           )}
 
-          {/* Observações */}
+          {/* Observações - Compacto */}
           {data.observacoes && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-2 text-brand-purple">Observações</h3>
-              <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded">
+            <div className="mb-4">
+              <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações</h3>
+              <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
                 {data.observacoes}
               </p>
             </div>
           )}
 
-          {/* Rodapé */}
-          <div className="border-t pt-4 text-xs text-gray-600">
+          {/* Rodapé - Compacto */}
+          <div className="border-t pt-2 text-xs text-gray-600">
             <p>Relatório gerado automaticamente pelo Sistema de Vistorias - {formatDate(new Date().toISOString())} às {getCurrentTime()}</p>
           </div>
         </div>
