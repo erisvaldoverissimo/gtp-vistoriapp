@@ -98,7 +98,17 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
             content: [
               {
                 type: 'text',
-                text: 'Descreva esta imagem de forma detalhada e técnica, como se fosse para um relatório de vistoria. Inclua aspectos como condições, materiais, possíveis problemas ou observações importantes.'
+                text: `Analise esta imagem de vistoria predial e descreva APENAS as anomalias, problemas ou condições técnicas observadas. 
+
+INSTRUÇÕES OBRIGATÓRIAS:
+- MÁXIMO 200 caracteres
+- Use linguagem técnica e objetiva
+- NÃO mencione datas, horários ou metadados da foto
+- Foque APENAS em: fissuras, infiltrações, desgastes, corrosão, defeitos estruturais, problemas de instalações
+- Se não houver anomalias visíveis, escreva "Sem anomalias aparentes"
+- Use termos técnicos de engenharia civil/predial
+
+Exemplo: "Fissura horizontal na viga de concreto, aprox. 2mm de abertura. Sinais de infiltração com eflorescência na parede lateral direita."`
               },
               {
                 type: 'image_url',
@@ -109,8 +119,8 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
             ]
           }
         ],
-        max_tokens: 500,
-        temperature: 0.3
+        max_tokens: 150,
+        temperature: 0.1
       };
 
       console.log('Enviando requisição para:', apiInfo.url);
@@ -151,13 +161,18 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
       const data = JSON.parse(responseText);
       console.log('Dados parseados:', data);
       
-      const description = data.choices[0].message.content;
+      let description = data.choices[0].message.content;
+
+      // Garantir que a descrição não exceda 200 caracteres
+      if (description.length > 200) {
+        description = description.substring(0, 197) + '...';
+      }
 
       onDescriptionGenerated(description);
 
       toast({
         title: "Descrição Gerada",
-        description: `Descrição criada via ${apiInfo.provider.toUpperCase()}`,
+        description: `Descrição criada via ${apiInfo.provider.toUpperCase()} (${description.length}/200 caracteres)`,
       });
 
     } catch (error) {
