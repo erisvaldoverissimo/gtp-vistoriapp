@@ -108,7 +108,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
           <img 
             src="/lovable-uploads/9e07dcd0-b996-4996-9028-7daeb90e3140.png" 
             alt="GTP Logo Left" 
-            className="w-16 h-16 object-contain"
+            className="w-20 h-20 object-contain"
           />
         </div>
         <div className="text-center">
@@ -119,7 +119,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
           <img 
             src="/lovable-uploads/bfe02df4-f545-4232-ad0a-e69690083a38.png" 
             alt="GTP Logo Right" 
-            className="w-16 h-16 object-contain"
+            className="w-20 h-20 object-contain"
           />
         </div>
       </div>
