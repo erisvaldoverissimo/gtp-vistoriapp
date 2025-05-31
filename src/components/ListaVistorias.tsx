@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,10 +5,29 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Eye, Download, Calendar, Building, FileText, Loader2 } from 'lucide-react';
 import { useVistorias } from '@/hooks/useVistorias';
+import DetalheVistoria from './DetalheVistoria';
+import { useToast } from '@/hooks/use-toast';
+
+interface Vistoria {
+  id: string;
+  condominio: string;
+  numeroInterno: string;
+  dataVistoria: string;
+  ambiente: string;
+  status: string;
+  responsavel: string;
+  fotosCount: number;
+  observacoes?: string;
+  condominioId?: string;
+  idSequencial?: number;
+}
 
 const ListaVistorias = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedVistoria, setSelectedVistoria] = useState<Vistoria | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { vistorias, loading } = useVistorias();
+  const { toast } = useToast();
 
   const filteredVistorias = vistorias.filter(vistoria =>
     vistoria.condominio.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -33,6 +51,32 @@ const ListaVistorias = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const handleViewVistoria = (vistoria: Vistoria) => {
+    setSelectedVistoria(vistoria);
+    setIsModalOpen(true);
+  };
+
+  const handleDownloadPDF = (vistoria: Vistoria) => {
+    // Simular geração de PDF
+    toast({
+      title: "PDF em preparação",
+      description: `Gerando PDF da vistoria ${vistoria.numeroInterno}...`,
+    });
+
+    // Simular delay da geração
+    setTimeout(() => {
+      toast({
+        title: "PDF gerado com sucesso!",
+        description: `Vistoria_${vistoria.numeroInterno}_${vistoria.condominio.replace(/\s+/g, '_')}.pdf`,
+      });
+    }, 2000);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedVistoria(null);
   };
 
   if (loading) {
@@ -165,11 +209,19 @@ const ListaVistorias = () => {
                   </div>
                   
                   <div className="flex space-x-2 ml-4">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewVistoria(vistoria)}
+                    >
                       <Eye size={16} className="mr-2" />
                       Visualizar
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownloadPDF(vistoria)}
+                    >
                       <Download size={16} className="mr-2" />
                       PDF
                     </Button>
@@ -180,6 +232,14 @@ const ListaVistorias = () => {
           ))
         )}
       </div>
+
+      {/* Modal de Detalhes */}
+      <DetalheVistoria
+        vistoria={selectedVistoria}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onDownloadPDF={handleDownloadPDF}
+      />
     </div>
   );
 };
