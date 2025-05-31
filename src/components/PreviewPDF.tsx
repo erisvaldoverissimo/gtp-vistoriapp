@@ -1,9 +1,10 @@
-
-import React from 'react';
+import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, ArrowLeft, Edit, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface FotoComDescricao extends File {
   descricao?: string;
@@ -30,6 +31,7 @@ interface PreviewPDFProps {
 
 const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
   const { toast } = useToast();
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -41,13 +43,81 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
     return now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const handleDownloadPDF = () => {
-    // Simular download do PDF
-    toast({
-      title: "PDF Gerado",
-      description: "O relatório foi gerado e está sendo baixado.",
-    });
-    console.log('Gerando PDF com dados:', data);
+  const handleDownloadPDF = async () => {
+    if (!reportRef.current) return;
+
+    try {
+      toast({
+        title: "Gerando PDF",
+        description: "Por favor, aguarde enquanto o relatório está sendo gerado...",
+      });
+
+      // Configurações para captura
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: reportRef.current.scrollWidth,
+        height: reportRef.current.scrollHeight,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Criar PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 0;
+
+      // Se a imagem for muito alta, dividir em páginas
+      const totalPages = Math.ceil((imgHeight * ratio) / pdfHeight);
+      
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+        
+        const yOffset = -i * pdfHeight / ratio;
+        pdf.addImage(
+          imgData,
+          'PNG',
+          imgX,
+          imgY + yOffset * ratio,
+          imgWidth * ratio,
+          imgHeight * ratio
+        );
+      }
+
+      // Nome do arquivo
+      const fileName = `Relatorio-${data.numeroInterno}-${data.condominio.replace(/\s+/g, '-')}.pdf`;
+      
+      // Fazer download
+      pdf.save(fileName);
+
+      toast({
+        title: "PDF Gerado com Sucesso",
+        description: "O relatório foi baixado com sucesso.",
+      });
+
+      console.log('PDF gerado e baixado:', fileName);
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast({
+        title: "Erro ao Gerar PDF",
+        description: "Ocorreu um erro ao gerar o relatório. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSendEmail = () => {
@@ -88,7 +158,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
 
       {/* Preview do PDF */}
       <Card className="max-w-4xl mx-auto">
-        <div className="p-8 bg-white">
+        <div ref={reportRef} className="p-8 bg-white">
           {/* Cabeçalho do Relatório */}
           <div className="bg-brand-purple text-white p-6 rounded-t-lg mb-6">
             <div className="flex items-center justify-between">
