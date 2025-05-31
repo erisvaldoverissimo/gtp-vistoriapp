@@ -35,6 +35,7 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
     if (apiKey.startsWith('sk-')) {
       return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
     } else if (apiKey.startsWith('gsk_')) {
+      // Usando um modelo de visão que está atualmente disponível no Groq
       return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.2-11b-vision-preview' };
     }
     return null;
@@ -89,43 +90,67 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
 
       console.log('Gerando descrição via:', apiInfo.provider, 'modelo:', apiInfo.model);
 
+      const requestBody = {
+        model: apiInfo.model,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Descreva esta imagem de forma detalhada e técnica, como se fosse para um relatório de vistoria. Inclua aspectos como condições, materiais, possíveis problemas ou observações importantes.'
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.3
+      };
+
+      console.log('Enviando requisição para:', apiInfo.url);
+      console.log('Corpo da requisição:', JSON.stringify(requestBody, null, 2));
+
       const response = await fetch(apiInfo.url, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${config.apiKeyOpenAI}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: apiInfo.model,
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: 'Descreva esta imagem de forma detalhada e técnica, como se fosse para um relatório de vistoria. Inclua aspectos como condições, materiais, possíveis problemas ou observações importantes.'
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:image/jpeg;base64,${base64Image}`
-                  }
-                }
-              ]
-            }
-          ],
-          max_tokens: 500,
-          temperature: 0.3
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('Status da resposta:', response.status);
+      console.log('Headers da resposta:', response.headers);
+
+      const responseText = await response.text();
+      console.log('Resposta bruta:', responseText);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          errorData = { error: { message: responseText } };
+        }
         console.error('Erro da API:', errorData);
+        
+        // Mensagem de erro mais específica para problemas de modelo
+        if (response.status === 400 && errorData.error?.message?.includes('model')) {
+          throw new Error(`Modelo ${apiInfo.model} não disponível no ${apiInfo.provider.toUpperCase()}. Tente usar uma API Key do OpenAI.`);
+        }
+        
         throw new Error(`Erro na API ${apiInfo.provider}: ${response.status} - ${errorData.error?.message || 'Erro desconhecido'}`);
       }
 
-      const data = await response.json();
+      const data = JSON.parse(responseText);
+      console.log('Dados parseados:', data);
+      
       const description = data.choices[0].message.content;
 
       onDescriptionGenerated(description);
