@@ -270,7 +270,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                           <img
                             src={URL.createObjectURL(foto)}
                             alt={`Foto ${fotoIndex + 1} - Grupo ${grupoIndex + 1}`}
-                            className="w-full h-32 object-cover rounded mb-2"
+                            className="w-full aspect-square object-cover rounded mb-2"
                           />
                           <div>
                             <p className="text-xs font-medium mb-1">
@@ -303,7 +303,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                           <img
                             src={URL.createObjectURL(foto)}
                             alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
-                            className="w-full h-32 object-cover rounded mb-2"
+                            className="w-full aspect-square object-cover rounded mb-2"
                           />
                           <div>
                             <p className="text-xs font-medium mb-1">
