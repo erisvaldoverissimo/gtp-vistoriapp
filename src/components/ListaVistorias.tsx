@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Download, Calendar, Building, FileText, Loader2, Edit, Plus } from 'lucide-react';
+import { Eye, Download, Calendar, Building, FileText, Loader2, Edit } from 'lucide-react';
 import { useVistorias } from '@/hooks/useVistorias';
 import DetalheVistoria from './DetalheVistoria';
 import FiltrosAvancados from './FiltrosAvancados';
@@ -226,13 +226,6 @@ const ListaVistorias = ({ onNavigate, onEditVistoria }: ListaVistoriasProps) => 
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Vistorias Realizadas</h2>
-        <Button 
-          onClick={() => onNavigate && onNavigate('nova-vistoria')} 
-          className="bg-teal-600 hover:bg-teal-700"
-        >
-          <Plus className="mr-2" size={18} />
-          Nova Vistoria
-        </Button>
       </div>
 
       {/* Filtros Avançados */}
@@ -311,17 +304,8 @@ const ListaVistorias = ({ onNavigate, onEditVistoria }: ListaVistoriasProps) => 
               <FileText size={48} className="mx-auto text-gray-300 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma vistoria encontrada</h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm || statusFilter || dateFilter ? 'Tente ajustar os filtros de busca.' : 'Comece criando uma nova vistoria.'}
+                {searchTerm || statusFilter || dateFilter ? 'Tente ajustar os filtros de busca.' : 'Acesse "Nova Vistoria" no menu para criar sua primeira vistoria.'}
               </p>
-              {!searchTerm && !statusFilter && !dateFilter && (
-                <Button 
-                  onClick={() => onNavigate && onNavigate('nova-vistoria')} 
-                  className="bg-teal-600 hover:bg-teal-700"
-                >
-                  <Plus className="mr-2" size={18} />
-                  Criar Primeira Vistoria
-                </Button>
-              )}
             </CardContent>
           </Card>
         ) : (
