@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,18 +11,23 @@ interface FotoComDescricao extends File {
   descricao?: string;
 }
 
-interface VistoriaData {
-  condominio: string;
-  numeroInterno: string;
-  dataVistoria: string;
+interface GrupoVistoria {
+  id: string;
   ambiente: string;
   grupo: string;
   item: string;
   status: string;
   parecer: string;
+  fotos: FotoComDescricao[];
+}
+
+interface VistoriaData {
+  condominio: string;
+  numeroInterno: string;
+  dataVistoria: string;
   observacoes: string;
   responsavel: string;
-  fotos: FotoComDescricao[];
+  grupos: GrupoVistoria[];
 }
 
 interface PreviewPDFProps {
@@ -159,7 +165,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
       {/* Preview do PDF - Ajustado para A4 */}
       <Card className="max-w-none mx-auto" style={{ width: '210mm', maxWidth: '210mm' }}>
         <div ref={reportRef} className="bg-white" style={{ width: '210mm', minHeight: '297mm', padding: '10mm' }}>
-          {/* Cabeçalho do Relatório - Compacto */}
+          {/* Cabeçalho do Relatório */}
           <div className="bg-brand-purple text-white p-4 rounded-t-lg mb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -174,7 +180,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
             </div>
           </div>
 
-          {/* Informações da Vistoria - Compacto */}
+          {/* Informações da Vistoria */}
           <div className="bg-gray-100 p-3 rounded-lg mb-4">
             <div className="grid grid-cols-4 gap-3 text-xs">
               <div>
@@ -197,12 +203,7 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
                 <br />
                 {data.condominio}
               </div>
-              <div>
-                <span className="font-semibold">Área:</span>
-                <br />
-                {data.ambiente || 'COMUM'}
-              </div>
-              <div>
+              <div className="col-span-2">
                 <span className="font-semibold">Nº interno da vistoria:</span>
                 <br />
                 {data.numeroInterno}
@@ -215,85 +216,123 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
             </div>
           </div>
 
-          {/* Tabela de Detalhes - Compacta */}
-          <div className="mb-4">
-            <table className="w-full border-collapse border border-gray-300 text-xs">
-              <thead>
-                <tr className="bg-brand-purple text-white">
-                  <th className="border border-gray-300 p-2 text-left w-[15%]">Ambiente</th>
-                  <th className="border border-gray-300 p-2 text-left w-[15%]">Grupo</th>
-                  <th className="border border-gray-300 p-2 text-left w-[15%]">Item</th>
-                  <th className="border border-gray-300 p-2 text-left w-[12%]">Status</th>
-                  <th className="border border-gray-300 p-2 text-left w-[43%]">Parecer</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border border-gray-300 p-2">{data.ambiente}</td>
-                  <td className="border border-gray-300 p-2">{data.grupo}</td>
-                  <td className="border border-gray-300 p-2">{data.item}</td>
-                  <td className="border border-gray-300 p-2">
-                    <span className={`px-1 py-0.5 rounded text-xs ${
-                      data.status === 'N/A' ? 'bg-gray-200' :
-                      data.status === 'Conforme' ? 'bg-brand-green text-white' :
-                      data.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
-                      'bg-yellow-200 text-yellow-800'
-                    }`}>
-                      {data.status}
-                    </span>
-                  </td>
-                  <td className="border border-gray-300 p-2">{data.parecer}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          {/* Grupos de Vistoria */}
+          {data.grupos.map((grupo, grupoIndex) => (
+            <div key={grupo.id} className="mb-6" style={{ breakInside: 'avoid' }}>
+              {/* Tabela de Detalhes do Grupo */}
+              <div className="mb-4">
+                <h3 className="text-base font-semibold mb-2 text-brand-purple">
+                  Grupo de Vistoria {grupoIndex + 1}
+                </h3>
+                <table className="w-full border-collapse border border-gray-300 text-xs">
+                  <thead>
+                    <tr className="bg-brand-purple text-white">
+                      <th className="border border-gray-300 p-2 text-left w-[15%]">Ambiente</th>
+                      <th className="border border-gray-300 p-2 text-left w-[15%]">Grupo</th>
+                      <th className="border border-gray-300 p-2 text-left w-[15%]">Item</th>
+                      <th className="border border-gray-300 p-2 text-left w-[12%]">Status</th>
+                      <th className="border border-gray-300 p-2 text-left w-[43%]">Parecer</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="border border-gray-300 p-2">{grupo.ambiente}</td>
+                      <td className="border border-gray-300 p-2">{grupo.grupo}</td>
+                      <td className="border border-gray-300 p-2">{grupo.item}</td>
+                      <td className="border border-gray-300 p-2">
+                        <span className={`px-1 py-0.5 rounded text-xs ${
+                          grupo.status === 'N/A' ? 'bg-gray-200' :
+                          grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
+                          grupo.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
+                          'bg-yellow-200 text-yellow-800'
+                        }`}>
+                          {grupo.status}
+                        </span>
+                      </td>
+                      <td className="border border-gray-300 p-2">{grupo.parecer}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-          {/* Área de Fotos - Otimizada para 3 fotos por página */}
-          {data.fotos.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-base font-semibold mb-3 text-brand-purple">Evidências Fotográficas</h3>
-              <div className="space-y-4">
-                {data.fotos.map((foto, index) => {
-                  const fotoComDescricao = foto as File & { descricao?: string };
-                  
-                  return (
-                    <div key={index} className="border rounded-lg p-3" style={{ breakInside: 'avoid' }}>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
+              {/* Evidências Fotográficas do Grupo (máximo 2 por página) */}
+              {grupo.fotos.length > 0 && (
+                <div className="mb-4" style={{ breakInside: 'avoid' }}>
+                  <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                    Evidências Fotográficas - Grupo {grupoIndex + 1}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {grupo.fotos.slice(0, 2).map((foto, fotoIndex) => {
+                      const fotoComDescricao = foto as File & { descricao?: string };
+                      
+                      return (
+                        <div key={fotoIndex} className="border rounded-lg p-2">
                           <img
                             src={URL.createObjectURL(foto)}
-                            alt={`Foto ${index + 1}`}
-                            className="w-full h-32 object-cover rounded"
+                            alt={`Foto ${fotoIndex + 1} - Grupo ${grupoIndex + 1}`}
+                            className="w-full h-32 object-cover rounded mb-2"
                           />
-                          <p className="text-xs font-medium text-center mt-1">
-                            Foto {String(index + 1).padStart(2, '0')}
-                          </p>
+                          <div>
+                            <p className="text-xs font-medium mb-1">
+                              Foto {String(fotoIndex + 1).padStart(2, '0')} - Grupo {grupoIndex + 1}
+                            </p>
+                            <p className="text-xs text-gray-700 leading-relaxed">
+                              {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex flex-col justify-start">
-                          <h4 className="font-semibold text-xs mb-1">Descrição:</h4>
-                          <p className="text-xs text-gray-700 leading-relaxed">
-                            {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-          {/* Observações - Compacto */}
+              {/* Se há mais de 2 fotos, criar nova seção */}
+              {grupo.fotos.length > 2 && (
+                <div className="mb-4" style={{ breakBefore: 'page', breakInside: 'avoid' }}>
+                  <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                    Evidências Fotográficas - Grupo {grupoIndex + 1} (Continuação)
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {grupo.fotos.slice(2, 4).map((foto, fotoIndex) => {
+                      const fotoComDescricao = foto as File & { descricao?: string };
+                      const numeroFoto = fotoIndex + 3;
+                      
+                      return (
+                        <div key={fotoIndex} className="border rounded-lg p-2">
+                          <img
+                            src={URL.createObjectURL(foto)}
+                            alt={`Foto ${numeroFoto} - Grupo ${grupoIndex + 1}`}
+                            className="w-full h-32 object-cover rounded mb-2"
+                          />
+                          <div>
+                            <p className="text-xs font-medium mb-1">
+                              Foto {String(numeroFoto).padStart(2, '0')} - Grupo {grupoIndex + 1}
+                            </p>
+                            <p className="text-xs text-gray-700 leading-relaxed">
+                              {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Observações Gerais */}
           {data.observacoes && (
             <div className="mb-4">
-              <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações</h3>
+              <h3 className="text-base font-semibold mb-2 text-brand-purple">Observações Gerais</h3>
               <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded">
                 {data.observacoes}
               </p>
             </div>
           )}
 
-          {/* Rodapé - Compacto */}
+          {/* Rodapé */}
           <div className="border-t pt-2 text-xs text-gray-600">
             <p>Relatório gerado automaticamente pelo Sistema de Vistorias - {formatDate(new Date().toISOString())} às {getCurrentTime()}</p>
           </div>

@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,19 +16,36 @@ interface FotoData {
 
 interface UploadFotosProps {
   onFotosChange: (fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => void;
+  maxFotos?: number;
+  grupoId?: string;
 }
 
-const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
+const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps) => {
   const { toast } = useToast();
   const [fotos, setFotos] = useState<FotoData[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_DESCRICAO_LENGTH = 300;
 
+  // Reset fotos quando o grupoId muda (novo grupo)
+  useEffect(() => {
+    setFotos([]);
+  }, [grupoId]);
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     
     if (files.length === 0) return;
+
+    // Verificar se não vai ultrapassar o limite
+    if (fotos.length + files.length > maxFotos) {
+      toast({
+        title: "Limite de Fotos Atingido",
+        description: `Você pode adicionar no máximo ${maxFotos} fotos por grupo. Fotos restantes: ${maxFotos - fotos.length}`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Validar tipos de arquivo
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -113,19 +131,28 @@ const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
     handleDescricaoChange(index, descricaoLimitada);
   };
 
+  const fotosRestantes = maxFotos - fotos.length;
+
   return (
     <div className="space-y-4">
       {/* Área de Upload */}
       <div 
-        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-teal-400 transition-colors cursor-pointer"
-        onClick={() => fileInputRef.current?.click()}
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+          fotosRestantes > 0 
+            ? 'border-gray-300 hover:border-teal-400' 
+            : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+        }`}
+        onClick={() => fotosRestantes > 0 && fileInputRef.current?.click()}
       >
-        <Upload size={48} className="mx-auto text-gray-400 mb-4" />
-        <p className="text-lg font-medium text-gray-700 mb-2">
-          Clique para adicionar fotos
+        <Upload size={40} className={`mx-auto mb-3 ${fotosRestantes > 0 ? 'text-gray-400' : 'text-gray-300'}`} />
+        <p className={`text-base font-medium mb-1 ${fotosRestantes > 0 ? 'text-gray-700' : 'text-gray-400'}`}>
+          {fotosRestantes > 0 ? 'Clique para adicionar fotos' : 'Limite de fotos atingido'}
         </p>
         <p className="text-sm text-gray-500">
-          Ou arraste e solte arquivos aqui (JPEG, PNG, WebP - máx. 5MB cada)
+          {fotosRestantes > 0 
+            ? `Máximo ${maxFotos} fotos - Restam ${fotosRestantes}` 
+            : `Máximo de ${maxFotos} fotos por grupo`
+          }
         </p>
         <input
           ref={fileInputRef}
@@ -134,14 +161,15 @@ const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
           accept="image/*"
           onChange={handleFileSelect}
           className="hidden"
+          disabled={fotosRestantes === 0}
         />
       </div>
 
       {/* Lista de Fotos */}
       {fotos.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Fotos Adicionadas ({fotos.length})</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <h3 className="text-lg font-medium">Fotos Adicionadas ({fotos.length}/{maxFotos})</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fotos.map((foto, index) => (
               <Card key={index} className="p-4">
                 <div className="relative">
@@ -186,10 +214,10 @@ const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
       )}
 
       {fotos.length === 0 && (
-        <div className="text-center text-gray-500 py-8">
-          <ImageIcon size={64} className="mx-auto mb-4 text-gray-300" />
+        <div className="text-center text-gray-500 py-6">
+          <ImageIcon size={48} className="mx-auto mb-3 text-gray-300" />
           <p>Nenhuma foto adicionada ainda.</p>
-          <p className="text-sm">As fotos serão organizadas automaticamente no relatório PDF.</p>
+          <p className="text-sm">Máximo {maxFotos} fotos por grupo de vistoria.</p>
         </div>
       )}
     </div>

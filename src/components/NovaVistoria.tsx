@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Upload, Save, Eye } from 'lucide-react';
+import { Calendar, Upload, Save, Eye, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import UploadFotos from './UploadFotos';
 import { Condominio } from '@/hooks/useCondominios';
@@ -15,20 +16,25 @@ interface FotoComDescricao extends File {
   descricao?: string;
 }
 
+interface GrupoVistoria {
+  id: string;
+  ambiente: string;
+  grupo: string;
+  item: string;
+  status: string;
+  parecer: string;
+  fotos: FotoComDescricao[];
+}
+
 interface VistoriaData {
   condominio: string;
   condominioId: string;
   numeroInterno: string;
   idSequencial: number;
   dataVistoria: string;
-  ambiente: string;
-  grupo: string;
-  item: string;
-  status: string;
-  parecer: string;
   observacoes: string;
   responsavel: string;
-  fotos: FotoComDescricao[];
+  grupos: GrupoVistoria[];
 }
 
 interface NovaVistoriaProps {
@@ -49,14 +55,17 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
     numeroInterno: '',
     idSequencial: 0,
     dataVistoria: new Date().toISOString().split('T')[0],
-    ambiente: '',
-    grupo: '',
-    item: '',
-    status: '',
-    parecer: '',
     observacoes: '',
     responsavel: '',
-    fotos: []
+    grupos: [{
+      id: '1',
+      ambiente: '',
+      grupo: '',
+      item: '',
+      status: '',
+      parecer: '',
+      fotos: []
+    }]
   });
 
   const ambientes = ['Térreo', '1º Andar', '2º Andar', '3º Andar', 'Subsolo', 'Cobertura', 'Área Externa'];
@@ -88,16 +97,61 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
     }
   };
 
-  const handleFotosChange = (fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => {
+  const handleGrupoChange = (grupoId: string, field: keyof GrupoVistoria, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      grupos: prev.grupos.map(grupo => 
+        grupo.id === grupoId ? { ...grupo, [field]: value } : grupo
+      )
+    }));
+  };
+
+  const handleFotosChange = (grupoId: string, fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => {
     if (fotosComDescricao) {
       const fotosComDescricaoExtendidas: FotoComDescricao[] = fotosComDescricao.map(item => {
         const fotoExtendida = item.file as FotoComDescricao;
         fotoExtendida.descricao = item.descricao;
         return fotoExtendida;
       });
-      setFormData(prev => ({ ...prev, fotos: fotosComDescricaoExtendidas }));
+      setFormData(prev => ({
+        ...prev,
+        grupos: prev.grupos.map(grupo => 
+          grupo.id === grupoId ? { ...grupo, fotos: fotosComDescricaoExtendidas } : grupo
+        )
+      }));
     } else {
-      setFormData(prev => ({ ...prev, fotos }));
+      setFormData(prev => ({
+        ...prev,
+        grupos: prev.grupos.map(grupo => 
+          grupo.id === grupoId ? { ...grupo, fotos } : grupo
+        )
+      }));
+    }
+  };
+
+  const adicionarGrupo = () => {
+    const novoId = (formData.grupos.length + 1).toString();
+    const novoGrupo: GrupoVistoria = {
+      id: novoId,
+      ambiente: '',
+      grupo: '',
+      item: '',
+      status: '',
+      parecer: '',
+      fotos: []
+    };
+    setFormData(prev => ({
+      ...prev,
+      grupos: [...prev.grupos, novoGrupo]
+    }));
+  };
+
+  const removerGrupo = (grupoId: string) => {
+    if (formData.grupos.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        grupos: prev.grupos.filter(grupo => grupo.id !== grupoId)
+      }));
     }
   };
 
@@ -111,7 +165,6 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
       return;
     }
 
-    // Incrementar o número sequencial do condomínio
     incrementarNumero(formData.condominioId);
     
     console.log('Salvando vistoria:', formData);
@@ -149,16 +202,16 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Dados Básicos */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Calendar size={20} className="mr-2" />
-              Dados Básicos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {/* Dados Básicos */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Calendar size={20} className="mr-2" />
+            Dados Básicos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="condominio">Condomínio *</Label>
               {condominios.length === 0 ? (
@@ -181,39 +234,6 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
                   </SelectContent>
                 </Select>
               )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="numeroInterno">Nº Interno</Label>
-                <Input
-                  id="numeroInterno"
-                  value={formData.numeroInterno}
-                  readOnly
-                  className="bg-gray-50"
-                  placeholder="Selecione um condomínio"
-                />
-              </div>
-              <div>
-                <Label htmlFor="idSequencial">ID Sequencial</Label>
-                <Input
-                  id="idSequencial"
-                  value={formData.idSequencial || ''}
-                  readOnly
-                  className="bg-gray-50"
-                  placeholder="Auto"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="dataVistoria">Data da Vistoria</Label>
-              <Input
-                id="dataVistoria"
-                type="date"
-                value={formData.dataVistoria}
-                onChange={(e) => handleInputChange('dataVistoria', e.target.value)}
-              />
             </div>
 
             <div>
@@ -239,93 +259,172 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
                 </Select>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Detalhes da Vistoria */}
-        <Card>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="numeroInterno">Nº Interno</Label>
+              <Input
+                id="numeroInterno"
+                value={formData.numeroInterno}
+                readOnly
+                className="bg-gray-50"
+                placeholder="Selecione um condomínio"
+              />
+            </div>
+            <div>
+              <Label htmlFor="idSequencial">ID Sequencial</Label>
+              <Input
+                id="idSequencial"
+                value={formData.idSequencial || ''}
+                readOnly
+                className="bg-gray-50"
+                placeholder="Auto"
+              />
+            </div>
+            <div>
+              <Label htmlFor="dataVistoria">Data da Vistoria</Label>
+              <Input
+                id="dataVistoria"
+                type="date"
+                value={formData.dataVistoria}
+                onChange={(e) => handleInputChange('dataVistoria', e.target.value)}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Grupos de Vistoria */}
+      {formData.grupos.map((grupo, index) => (
+        <Card key={grupo.id}>
           <CardHeader>
-            <CardTitle>Detalhes da Vistoria</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Grupo de Vistoria {index + 1}</CardTitle>
+              <div className="flex space-x-2">
+                {formData.grupos.length > 1 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removerGrupo(grupo.id)}
+                  >
+                    <Trash2 size={16} className="mr-1" />
+                    Remover
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="ambiente">Ambiente</Label>
-              <Select value={formData.ambiente} onValueChange={(value) => handleInputChange('ambiente', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o ambiente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ambientes.map((ambiente) => (
-                    <SelectItem key={ambiente} value={ambiente}>
-                      {ambiente}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor={`ambiente-${grupo.id}`}>Ambiente</Label>
+                <Select 
+                  value={grupo.ambiente} 
+                  onValueChange={(value) => handleGrupoChange(grupo.id, 'ambiente', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o ambiente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ambientes.map((ambiente) => (
+                      <SelectItem key={ambiente} value={ambiente}>
+                        {ambiente}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor={`grupo-${grupo.id}`}>Grupo</Label>
+                <Select 
+                  value={grupo.grupo} 
+                  onValueChange={(value) => handleGrupoChange(grupo.id, 'grupo', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o grupo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {grupos.map((grupoOpcao) => (
+                      <SelectItem key={grupoOpcao} value={grupoOpcao}>
+                        {grupoOpcao}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor={`item-${grupo.id}`}>Item</Label>
+                <Input
+                  id={`item-${grupo.id}`}
+                  value={grupo.item}
+                  onChange={(e) => handleGrupoChange(grupo.id, 'item', e.target.value)}
+                  placeholder="Ex: 15.0 Sistema de automação..."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor={`status-${grupo.id}`}>Status</Label>
+                <Select 
+                  value={grupo.status} 
+                  onValueChange={(value) => handleGrupoChange(grupo.id, 'status', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
-              <Label htmlFor="grupo">Grupo</Label>
-              <Select value={formData.grupo} onValueChange={(value) => handleInputChange('grupo', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o grupo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {grupos.map((grupo) => (
-                    <SelectItem key={grupo} value={grupo}>
-                      {grupo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="item">Item</Label>
-              <Input
-                id="item"
-                value={formData.item}
-                onChange={(e) => handleInputChange('item', e.target.value)}
-                placeholder="Ex: 15.0 Sistema de automação (30 dias) > [01] Dados, Informática, Vídeo"
+              <Label htmlFor={`parecer-${grupo.id}`}>Parecer Técnico</Label>
+              <Textarea
+                id={`parecer-${grupo.id}`}
+                value={grupo.parecer}
+                onChange={(e) => handleGrupoChange(grupo.id, 'parecer', e.target.value)}
+                placeholder="Descreva o parecer técnico detalhado..."
+                className="min-h-[80px]"
               />
             </div>
 
+            {/* Upload de Fotos para este grupo (máximo 2) */}
             <div>
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Fotos da Vistoria (máximo 2)</Label>
+              <UploadFotos 
+                onFotosChange={(fotos, fotosComDescricao) => handleFotosChange(grupo.id, fotos, fotosComDescricao)}
+                maxFotos={2}
+                grupoId={grupo.id}
+              />
             </div>
           </CardContent>
         </Card>
+      ))}
+
+      {/* Botão para adicionar novo grupo */}
+      <div className="flex justify-center">
+        <Button onClick={adicionarGrupo} variant="outline" size="lg">
+          <Plus size={18} className="mr-2" />
+          Adicionar Novo Grupo de Vistoria
+        </Button>
       </div>
 
-      {/* Parecer e Observações */}
+      {/* Observações Gerais */}
       <Card>
         <CardHeader>
-          <CardTitle>Parecer Técnico e Observações</CardTitle>
+          <CardTitle>Observações Gerais</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="parecer">Parecer Técnico</Label>
-            <Textarea
-              id="parecer"
-              value={formData.parecer}
-              onChange={(e) => handleInputChange('parecer', e.target.value)}
-              placeholder="Descreva o parecer técnico detalhado..."
-              className="min-h-[100px]"
-            />
-          </div>
-
+        <CardContent>
           <div>
             <Label htmlFor="observacoes">Observações Gerais</Label>
             <Textarea
@@ -336,19 +435,6 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
               className="min-h-[80px]"
             />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Upload de Fotos */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Upload size={20} className="mr-2" />
-            Fotos da Vistoria
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <UploadFotos onFotosChange={handleFotosChange} />
         </CardContent>
       </Card>
     </div>
