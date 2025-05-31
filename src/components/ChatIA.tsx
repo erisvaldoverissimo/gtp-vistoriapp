@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Bot, User, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import AudioRecorder from './AudioRecorder';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  type?: 'text' | 'audio';
 }
 
 const ChatIA = () => {
@@ -62,9 +64,59 @@ const ChatIA = () => {
     return null;
   };
 
-  const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
+  const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
+    const apiInfo = detectApiProvider(config.apiKeyOpenAI);
+    
+    if (!apiInfo) {
+      throw new Error('API Key inválida');
+    }
 
+    // Para OpenAI, usar Whisper API
+    if (apiInfo.provider === 'openai') {
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audio.wav');
+      formData.append('model', 'whisper-1');
+      formData.append('language', 'pt');
+
+      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.apiKeyOpenAI}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro na transcrição: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.text;
+    } else {
+      // Para Groq, também usar Whisper
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audio.wav');
+      formData.append('model', 'whisper-large-v3');
+      formData.append('language', 'pt');
+
+      const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.apiKeyOpenAI}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro na transcrição: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.text;
+    }
+  };
+
+  const handleAudioRecorded = async (audioBlob: Blob) => {
     if (!config.enableAgente) {
       toast({
         title: "Agente IA Desabilitado",
@@ -83,6 +135,57 @@ const ChatIA = () => {
       return;
     }
 
+    setIsLoading(true);
+
+    try {
+      // Transcrever o áudio
+      const transcription = await transcribeAudio(audioBlob);
+      
+      if (!transcription || transcription.trim() === '') {
+        toast({
+          title: "Áudio Vazio",
+          description: "Não foi possível detectar fala no áudio. Tente novamente.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Criar mensagem do usuário com o texto transcrito
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: transcription,
+        timestamp: new Date(),
+        type: 'audio'
+      };
+
+      setMessages(prev => [...prev, userMessage]);
+
+      // Enviar para a IA
+      await sendMessageToAI(transcription);
+
+    } catch (error) {
+      console.error('Erro ao processar áudio:', error);
+      toast({
+        title: "Erro no Áudio",
+        description: "Não foi possível processar o áudio. Verifique sua conexão.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!inputMessage.trim()) return;
+    await sendMessageToAI(inputMessage);
+    setInputMessage('');
+  };
+
+  const sendMessageToAI = async (messageContent: string) => {
+    if (!config.enableAgente || !config.apiKeyOpenAI) return;
+
     const apiInfo = detectApiProvider(config.apiKeyOpenAI);
     if (!apiInfo) {
       toast({
@@ -93,15 +196,18 @@ const ChatIA = () => {
       return;
     }
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: inputMessage,
-      timestamp: new Date()
-    };
+    // Se não é uma mensagem de áudio, criar mensagem do usuário
+    if (!messages.find(m => m.content === messageContent && m.role === 'user')) {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: messageContent,
+        timestamp: new Date(),
+        type: 'text'
+      };
+      setMessages(prev => [...prev, userMessage]);
+    }
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
     setIsLoading(true);
 
     try {
@@ -130,7 +236,7 @@ const ChatIA = () => {
             })),
             {
               role: 'user',
-              content: inputMessage
+              content: messageContent
             }
           ],
           temperature: 0.7,
@@ -153,7 +259,8 @@ const ChatIA = () => {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.choices[0].message.content,
-        timestamp: new Date()
+        timestamp: new Date(),
+        type: 'text'
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -233,7 +340,7 @@ const ChatIA = () => {
                 <div className="text-center text-gray-500 py-8">
                   <Bot size={48} className="mx-auto mb-4 text-gray-300" />
                   <p>Inicie uma conversa com {config.nomeAgente}</p>
-                  <p className="text-sm mt-2">Digite sua mensagem abaixo para começar</p>
+                  <p className="text-sm mt-2">Digite sua mensagem ou grave um áudio</p>
                   {currentProvider && (
                     <p className="text-xs mt-2 text-gray-400">
                       Usando {currentProvider.provider.toUpperCase()} - {currentProvider.model}
@@ -263,11 +370,14 @@ const ChatIA = () => {
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{message.content}</p>
-                    <p className={`text-xs mt-2 ${
+                    <div className={`flex items-center justify-between mt-2 text-xs ${
                       message.role === 'user' ? 'text-teal-100' : 'text-gray-500'
                     }`}>
-                      {message.timestamp.toLocaleTimeString()}
-                    </p>
+                      <span>{message.timestamp.toLocaleTimeString()}</span>
+                      {message.type === 'audio' && (
+                        <span className="ml-2 opacity-75">🎤</span>
+                      )}
+                    </div>
                   </div>
                   
                   {message.role === 'user' && (
@@ -301,6 +411,10 @@ const ChatIA = () => {
               placeholder={`Digite sua mensagem para ${config.nomeAgente}...`}
               disabled={isLoading || !config.enableAgente}
               className="flex-1"
+            />
+            <AudioRecorder 
+              onAudioRecorded={handleAudioRecorded}
+              disabled={isLoading || !config.enableAgente}
             />
             <Button 
               onClick={sendMessage} 
