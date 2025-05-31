@@ -1,9 +1,12 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, ArrowLeft, Edit, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+interface FotoComDescricao extends File {
+  descricao?: string;
+}
 
 interface VistoriaData {
   condominio: string;
@@ -16,7 +19,7 @@ interface VistoriaData {
   parecer: string;
   observacoes: string;
   responsavel: string;
-  fotos: File[];
+  fotos: FotoComDescricao[];
 }
 
 interface PreviewPDFProps {
@@ -178,28 +181,36 @@ const PreviewPDF = ({ data, onBack }: PreviewPDFProps) => {
           {data.fotos.length > 0 && (
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4">Evidências Fotográficas</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {data.fotos.slice(0, 3).map((foto, index) => (
-                  <div key={index} className="border rounded-lg p-2">
-                    <img
-                      src={URL.createObjectURL(foto)}
-                      alt={`Foto ${index + 1}`}
-                      className="w-full h-32 object-cover rounded"
-                    />
-                    <p className="text-xs text-center mt-2 font-medium">
-                      Foto {String(index + 1).padStart(2, '0')}
-                    </p>
-                    <p className="text-xs text-center text-gray-600">
-                      Evidência fotográfica da vistoria
-                    </p>
-                  </div>
-                ))}
+              <div className="space-y-6">
+                {data.fotos.map((foto, index) => {
+                  // Buscar descrição da foto no estado do componente UploadFotos
+                  // Como não temos acesso direto, vamos usar uma estrutura que pode ser passada
+                  const fotoComDescricao = foto as File & { descricao?: string };
+                  
+                  return (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <img
+                            src={URL.createObjectURL(foto)}
+                            alt={`Foto ${index + 1}`}
+                            className="w-full h-64 object-cover rounded"
+                          />
+                          <p className="text-sm font-medium text-center mt-2">
+                            Foto {String(index + 1).padStart(2, '0')}
+                          </p>
+                        </div>
+                        <div className="flex flex-col justify-start">
+                          <h4 className="font-semibold text-sm mb-2">Descrição:</h4>
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            {fotoComDescricao.descricao || 'Evidência fotográfica da vistoria'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              {data.fotos.length > 3 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  + {data.fotos.length - 3} foto(s) adicional(is) serão incluída(s) nas próximas páginas
-                </p>
-              )}
             </div>
           )}
 

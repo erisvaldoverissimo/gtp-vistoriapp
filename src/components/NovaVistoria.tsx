@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,10 @@ import { Calendar, Upload, Save, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import UploadFotos from './UploadFotos';
 import { Condominio } from '@/hooks/useCondominios';
+
+interface FotoComDescricao extends File {
+  descricao?: string;
+}
 
 interface VistoriaData {
   condominio: string;
@@ -24,7 +27,7 @@ interface VistoriaData {
   parecer: string;
   observacoes: string;
   responsavel: string;
-  fotos: File[];
+  fotos: FotoComDescricao[];
 }
 
 interface NovaVistoriaProps {
@@ -81,8 +84,17 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
     }
   };
 
-  const handleFotosChange = (fotos: File[]) => {
-    setFormData(prev => ({ ...prev, fotos }));
+  const handleFotosChange = (fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => {
+    if (fotosComDescricao) {
+      const fotosComDescricaoExtendidas: FotoComDescricao[] = fotosComDescricao.map(item => {
+        const fotoExtendida = item.file as FotoComDescricao;
+        fotoExtendida.descricao = item.descricao;
+        return fotoExtendida;
+      });
+      setFormData(prev => ({ ...prev, fotos: fotosComDescricaoExtendidas }));
+    } else {
+      setFormData(prev => ({ ...prev, fotos }));
+    }
   };
 
   const handleSave = () => {

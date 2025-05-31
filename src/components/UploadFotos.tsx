@@ -14,7 +14,7 @@ interface FotoData {
 }
 
 interface UploadFotosProps {
-  onFotosChange: (fotos: File[]) => void;
+  onFotosChange: (fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => void;
 }
 
 const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
@@ -78,7 +78,13 @@ const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
   const handleRemoveFoto = (index: number) => {
     const updatedFotos = fotos.filter((_, i) => i !== index);
     setFotos(updatedFotos);
-    onFotosChange(updatedFotos.map(f => f.file));
+    
+    // Enviar fotos com descrições
+    const fotosComDescricao = updatedFotos.map(foto => ({
+      file: foto.file,
+      descricao: foto.descricao
+    }));
+    onFotosChange(updatedFotos.map(f => f.file), fotosComDescricao);
     
     // Liberar URL do preview
     URL.revokeObjectURL(fotos[index].preview);
@@ -92,6 +98,13 @@ const UploadFotos = ({ onFotosChange }: UploadFotosProps) => {
       i === index ? { ...foto, descricao: descricaoLimitada } : foto
     );
     setFotos(updatedFotos);
+    
+    // Enviar fotos com descrições atualizadas
+    const fotosComDescricao = updatedFotos.map(foto => ({
+      file: foto.file,
+      descricao: foto.descricao
+    }));
+    onFotosChange(updatedFotos.map(f => f.file), fotosComDescricao);
   };
 
   const handleDescriptionGenerated = (index: number, description: string) => {
