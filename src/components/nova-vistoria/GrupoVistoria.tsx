@@ -151,10 +151,9 @@ const GrupoVistoria = ({
           <Label>Fotos do Grupo</Label>
           {isEditing && grupo.fotos && grupo.fotos.length > 0 ? (
             <FotosVistoriaEditavel
-              grupoId={grupo.id || ''}
-              fotosExistentes={grupo.fotos}
+              fotos={grupo.fotos}
+              grupoNome={`${grupo.ambiente} - ${grupo.grupo}`}
               onFotosChange={onFotosExistentesChange}
-              onNovasFotosChange={(fotos, fotosComDescricao) => onFotosChange(index, fotos, fotosComDescricao)}
             />
           ) : (
             <UploadFotos
