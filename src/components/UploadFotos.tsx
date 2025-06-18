@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -80,7 +81,13 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
 
     const updatedFotos = [...fotos, ...newFotos];
     setFotos(updatedFotos);
-    onFotosChange(updatedFotos.map(f => f.file));
+    
+    // Enviar fotos com descrições
+    const fotosComDescricao = updatedFotos.map(foto => ({
+      file: foto.file,
+      descricao: foto.descricao
+    }));
+    onFotosChange(updatedFotos.map(f => f.file), fotosComDescricao);
     
     toast({
       title: "Fotos Adicionadas",
@@ -97,7 +104,7 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
     const updatedFotos = fotos.filter((_, i) => i !== index);
     setFotos(updatedFotos);
     
-    // Enviar fotos com descrições
+    // Enviar fotos com descrições atualizadas
     const fotosComDescricao = updatedFotos.map(foto => ({
       file: foto.file,
       descricao: foto.descricao

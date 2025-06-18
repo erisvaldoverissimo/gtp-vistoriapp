@@ -1,13 +1,15 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { VistoriaSupabase, GrupoVistoriaSupabase, useVistoriasSupabase } from '@/hooks/useVistoriasSupabase';
 import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
+import { useFotosSupabase, FotoUpload } from '@/hooks/useFotosSupabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useNovaVistoriaForm = (onBack?: () => void) => {
   const { toast } = useToast();
   const { condominios } = useCondominiosSupabase();
   const { salvarVistoria, obterProximoNumeroSequencial } = useVistoriasSupabase();
+  const { uploadFotos } = useFotosSupabase();
 
   const [formData, setFormData] = useState<VistoriaSupabase>({
     condominio_id: '',
@@ -28,7 +30,7 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
   });
 
   const [saving, setSaving] = useState(false);
-  const [grupoFotos, setGrupoFotos] = useState<{ [key: number]: File[] }>({});
+  const [grupoFotos, setGrupoFotos] = useState<{ [key: number]: FotoUpload[] }>({});
 
   const handleInputChange = useCallback((field: keyof VistoriaSupabase, value: string) => {
     if (field === 'observacoes_gerais' && value.length > 150) {
@@ -103,9 +105,10 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
   }, [formData.grupos.length]);
 
   const handleFotosChange = useCallback((grupoIndex: number, fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => {
+    const fotosUpload = fotosComDescricao || fotos.map(file => ({ file, descricao: '' }));
     setGrupoFotos(prev => ({
       ...prev,
-      [grupoIndex]: fotos
+      [grupoIndex]: fotosUpload
     }));
   }, []);
 
@@ -130,8 +133,49 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
 
     setSaving(true);
     try {
-      await salvarVistoria(formData);
+      console.log('Salvando vistoria com fotos...');
       
+      // Salvar vistoria primeiro
+      const vistoriaSalva = await salvarVistoria(formData);
+      
+      if (!vistoriaSalva || !vistoriaSalva.id) {
+        throw new Error('Erro ao salvar vistoria - ID não retornado');
+      }
+
+      console.log('Vistoria salva, iniciando upload de fotos...');
+
+      // Fazer upload das fotos para cada grupo que tem fotos
+      const totalFotos = Object.values(grupoFotos).reduce((total, fotos) => total + fotos.length, 0);
+      
+      if (totalFotos > 0) {
+        // Buscar os grupos salvos para obter os IDs
+        const { data: gruposSalvos, error: gruposError } = await supabase
+          .from('grupos_vistoria')
+          .select('id, ordem')
+          .eq('vistoria_id', vistoriaSalva.id)
+          .order('ordem');
+
+        if (gruposError) {
+          throw gruposError;
+        }
+
+        // Upload das fotos para cada grupo
+        for (const [grupoIndex, fotos] of Object.entries(grupoFotos)) {
+          if (fotos.length > 0) {
+            const grupoSalvo = gruposSalvos.find(g => g.ordem === parseInt(grupoIndex));
+            if (grupoSalvo) {
+              console.log(`Fazendo upload de ${fotos.length} fotos para grupo ${grupoSalvo.id}`);
+              await uploadFotos(grupoSalvo.id, fotos);
+            }
+          }
+        }
+
+        toast({
+          title: "Sucesso Completo",
+          description: `Vistoria ${formData.numero_interno} salva com ${totalFotos} foto(s).`,
+        });
+      }
+
       // Limpar formulário após salvar
       setFormData({
         condominio_id: '',
@@ -156,11 +200,12 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
         onBack();
       }
     } catch (error) {
-      // Erro já tratado no hook
+      console.error('Erro ao salvar vistoria:', error);
+      // Erro já tratado nos hooks
     } finally {
       setSaving(false);
     }
-  }, [formData, salvarVistoria, onBack, toast]);
+  }, [formData, grupoFotos, salvarVistoria, uploadFotos, onBack, toast]);
 
   const handlePreview = useCallback(() => {
     if (!formData.condominio_id) {
