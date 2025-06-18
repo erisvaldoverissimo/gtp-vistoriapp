@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Download, Calendar, Building, User, FileText } from 'lucide-react';
 import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 import FotosVistoria from './FotosVistoria';
+import PreviewPDFSupabase from './PreviewPDFSupabase';
 
 interface DetalhesVistoriaProps {
   vistoria: VistoriaSupabase;
@@ -14,6 +15,8 @@ interface DetalhesVistoriaProps {
 }
 
 const DetalhesVistoria = ({ vistoria, onBack }: DetalhesVistoriaProps) => {
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
@@ -34,6 +37,15 @@ const DetalhesVistoria = ({ vistoria, onBack }: DetalhesVistoriaProps) => {
     }
   };
 
+  if (showPDFPreview) {
+    return (
+      <PreviewPDFSupabase 
+        vistoria={vistoria} 
+        onBack={() => setShowPDFPreview(false)}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -50,7 +62,10 @@ const DetalhesVistoria = ({ vistoria, onBack }: DetalhesVistoriaProps) => {
             <p className="text-gray-600">Vistoria #{vistoria.numero_interno}</p>
           </div>
         </div>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          onClick={() => setShowPDFPreview(true)}
+        >
           <Download size={16} className="mr-2" />
           Gerar PDF
         </Button>
