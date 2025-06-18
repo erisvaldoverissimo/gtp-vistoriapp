@@ -80,6 +80,25 @@ const UploadFotos = ({
     }
   }, [grupoId, fotosExistentes]);
 
+  // Função para notificar mudanças nas fotos
+  const notifyFotosChange = (novasFotos: FotoData[]) => {
+    console.log('Notificando mudança de fotos:', novasFotos.length);
+    
+    // Criar array com os arquivos
+    const arquivos = novasFotos.map(foto => foto.file);
+    
+    // Criar array com arquivos e descrições
+    const fotosComDescricao = novasFotos.map(foto => ({
+      file: foto.file,
+      descricao: foto.descricao
+    }));
+    
+    console.log('Arquivos sendo enviados:', arquivos);
+    console.log('Fotos com descrição:', fotosComDescricao);
+    
+    onFotosChange(arquivos, fotosComDescricao);
+  };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     
@@ -133,14 +152,8 @@ const UploadFotos = ({
     const updatedFotos = [...fotos, ...newFotos];
     setFotos(updatedFotos);
     
-    // Enviar fotos com descrições
-    const fotosComDescricao = updatedFotos.map(foto => ({
-      file: foto.file,
-      descricao: foto.descricao
-    }));
-    
-    console.log('Enviando fotos para o formulário:', fotosComDescricao);
-    onFotosChange(updatedFotos.map(f => f.file), fotosComDescricao);
+    // Notificar as mudanças
+    notifyFotosChange(updatedFotos);
     
     toast({
       title: "Fotos Adicionadas",
@@ -158,14 +171,8 @@ const UploadFotos = ({
     const updatedFotos = fotos.filter((_, i) => i !== index);
     setFotos(updatedFotos);
     
-    // Enviar fotos com descrições atualizadas
-    const fotosComDescricao = updatedFotos.map(foto => ({
-      file: foto.file,
-      descricao: foto.descricao
-    }));
-    
-    console.log('Enviando fotos atualizadas para o formulário:', fotosComDescricao);
-    onFotosChange(updatedFotos.map(f => f.file), fotosComDescricao);
+    // Notificar as mudanças
+    notifyFotosChange(updatedFotos);
     
     // Liberar URL do preview
     URL.revokeObjectURL(fotos[index].preview);
@@ -188,14 +195,8 @@ const UploadFotos = ({
     );
     setFotos(updatedFotos);
     
-    // Enviar fotos com descrições atualizadas
-    const fotosComDescricao = updatedFotos.map(foto => ({
-      file: foto.file,
-      descricao: foto.descricao
-    }));
-    
-    console.log('Enviando descrições atualizadas para o formulário:', fotosComDescricao);
-    onFotosChange(updatedFotos.map(f => f.file), fotosComDescricao);
+    // Notificar as mudanças
+    notifyFotosChange(updatedFotos);
   };
 
   const handleDescricaoExistenteChange = (index: number, descricao: string) => {
