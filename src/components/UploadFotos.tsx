@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -80,45 +79,45 @@ const UploadFotos = ({
     }
   }, [grupoId, fotosExistentes]);
 
-  // Função para notificar mudanças nas fotos - VERSÃO CORRIGIDA
+  // Função para notificar mudanças nas fotos - VERSÃO SIMPLIFICADA E CORRIGIDA
   const notifyFotosChange = (novasFotos: FotoData[]) => {
-    console.log('=== NOTIFICANDO MUDANÇA DE FOTOS ===');
-    console.log('Novas fotos no estado:', novasFotos.length);
+    console.log('=== NOTIFICANDO MUDANÇA DE FOTOS (SIMPLIFICADA) ===');
+    console.log('Quantidade de fotos:', novasFotos.length);
     
-    // Verificar e filtrar apenas arquivos válidos
-    const fotosValidas = novasFotos.filter(foto => {
-      const isValid = foto.file instanceof File && foto.file.size > 0 && foto.file.name;
-      console.log(`Validando foto ${foto.file?.name}: válida=${isValid}`, {
-        isFile: foto.file instanceof File,
-        size: foto.file?.size,
-        name: foto.file?.name,
-        hasPreview: !!foto.preview
-      });
-      return isValid;
-    });
-    
-    console.log(`Fotos válidas encontradas: ${fotosValidas.length}/${novasFotos.length}`);
-    
-    if (fotosValidas.length === 0) {
-      console.log('Nenhuma foto válida, chamando onFotosChange com arrays vazios');
+    if (novasFotos.length === 0) {
+      console.log('Nenhuma foto, enviando arrays vazios');
       onFotosChange([], []);
       return;
     }
     
-    // Extrair arquivos e criar array com descrições
-    const arquivos = fotosValidas.map(foto => foto.file);
-    const fotosComDescricao = fotosValidas.map(foto => ({
-      file: foto.file,
-      descricao: foto.descricao || ''
-    }));
+    // CRÍTICO: Manter referências diretas dos arquivos File
+    const arquivosOriginais: File[] = [];
+    const fotosComDescricao: Array<{file: File, descricao: string}> = [];
     
-    console.log('Enviando para onFotosChange:', {
-      totalArquivos: arquivos.length,
-      arquivos: arquivos.map(f => ({ name: f.name, size: f.size, type: f.type })),
+    novasFotos.forEach((fotoData, index) => {
+      console.log(`Processando foto ${index + 1}:`, {
+        fileName: fotoData.file.name,
+        fileSize: fotoData.file.size,
+        fileType: fotoData.file.type,
+        isFileInstance: fotoData.file instanceof File,
+        descricao: fotoData.descricao
+      });
+      
+      // Usar referência direta do arquivo original
+      arquivosOriginais.push(fotoData.file);
+      fotosComDescricao.push({
+        file: fotoData.file, // Referência direta sem cópia
+        descricao: fotoData.descricao
+      });
+    });
+    
+    console.log('Enviando para callback:', {
+      arquivos: arquivosOriginais.length,
       fotosComDescricao: fotosComDescricao.length
     });
     
-    onFotosChange(arquivos, fotosComDescricao);
+    // Chamar callback com arrays construídos
+    onFotosChange(arquivosOriginais, fotosComDescricao);
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,16 +125,8 @@ const UploadFotos = ({
     
     if (files.length === 0) return;
 
-    console.log('=== ARQUIVOS SELECIONADOS ===');
-    console.log('Quantidade:', files.length);
-    files.forEach((file, index) => {
-      console.log(`Arquivo ${index + 1}:`, {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        isFile: file instanceof File
-      });
-    });
+    console.log('=== SELEÇÃO DE ARQUIVOS ===');
+    console.log('Arquivos selecionados:', files.length);
 
     const totalFotosAtuais = fotos.length + fotosExistentesState.length;
 
@@ -174,37 +165,24 @@ const UploadFotos = ({
       return;
     }
 
-    console.log('Criando objetos FotoData...');
-
-    // Criar objetos FotoData mantendo referência dos arquivos originais
-    const newFotos: FotoData[] = [];
-    
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      console.log(`Processando arquivo ${i + 1}: ${file.name}`);
+    // Criar FotoData com referências diretas dos arquivos
+    const newFotos: FotoData[] = files.map((file, index) => {
+      console.log(`Criando FotoData ${index + 1} para:`, file.name);
       
-      try {
-        const preview = URL.createObjectURL(file);
-        const fotoData: FotoData = {
-          file: file, // Referência direta ao arquivo
-          preview: preview,
-          descricao: ''
-        };
-        
-        newFotos.push(fotoData);
-        console.log(`FotoData ${i + 1} criada com sucesso`);
-      } catch (error) {
-        console.error(`Erro ao criar preview para arquivo ${i + 1}:`, error);
-      }
-    }
+      return {
+        file: file, // Referência direta - NUNCA copiar ou clonar
+        preview: URL.createObjectURL(file),
+        descricao: ''
+      };
+    });
 
-    console.log(`Total de FotoData criadas: ${newFotos.length}`);
+    console.log(`FotoData criadas: ${newFotos.length}`);
 
     // Atualizar estado
     const updatedFotos = [...fotos, ...newFotos];
     setFotos(updatedFotos);
     
-    console.log('Estado atualizado, notificando mudanças...');
+    // Notificar imediatamente
     notifyFotosChange(updatedFotos);
     
     toast({

@@ -116,60 +116,123 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
   }, [formData.grupos.length]);
 
   const handleFotosChange = useCallback((grupoIndex: number, fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => {
-    console.log(`=== handleFotosChange NOVA VISTORIA ===`);
+    console.log(`=== handleFotosChange CORRIGIDA ===`);
     console.log(`Grupo: ${grupoIndex}`);
-    console.log(`Arquivos recebidos:`, fotos);
-    console.log(`FotosComDescricao:`, fotosComDescricao);
+    console.log(`Arquivos recebidos:`, fotos?.length || 0);
     
-    // Validar que todos os arquivos são File válidos
-    const arquivosValidos = fotos.filter(file => {
-      const isValid = file instanceof File && file.size > 0 && file.name;
-      console.log(`Arquivo ${file.name}: válido=${isValid}, size=${file.size}, type=${file.type}`);
+    // Validação inicial
+    if (!fotos || fotos.length === 0) {
+      console.log('Nenhum arquivo recebido, limpando estado do grupo');
+      setGrupoFotos(prev => {
+        const updated = { ...prev };
+        delete updated[grupoIndex];
+        return updated;
+      });
+      return;
+    }
+
+    // Log detalhado dos arquivos recebidos
+    fotos.forEach((file, index) => {
+      console.log(`Arquivo ${index + 1}:`, {
+        name: file?.name || 'UNDEFINED',
+        size: file?.size || 'UNDEFINED', 
+        type: file?.type || 'UNDEFINED',
+        isFile: file instanceof File,
+        constructor: file?.constructor?.name || 'UNDEFINED'
+      });
+    });
+
+    // Filtrar apenas arquivos File válidos
+    const arquivosValidos = fotos.filter((file): file is File => {
+      const isValid = file instanceof File && 
+                     file.size > 0 && 
+                     file.name && 
+                     file.name.length > 0;
+      
+      if (!isValid) {
+        console.error('Arquivo inválido encontrado:', {
+          isFile: file instanceof File,
+          size: file?.size,
+          name: file?.name,
+          type: file?.type
+        });
+      }
+      
       return isValid;
     });
 
     console.log(`Arquivos válidos: ${arquivosValidos.length}/${fotos.length}`);
 
     if (arquivosValidos.length === 0) {
-      console.warn('Nenhum arquivo válido encontrado');
+      console.warn('Nenhum arquivo válido encontrado após filtro');
+      setGrupoFotos(prev => {
+        const updated = { ...prev };
+        delete updated[grupoIndex];
+        return updated;
+      });
       return;
     }
 
-    // Criar FotoUpload array
-    let fotosUpload: FotoUpload[];
+    // Criar FotoUpload usando arquivos válidos
+    let fotosParaUpload: FotoUpload[];
     
     if (fotosComDescricao && fotosComDescricao.length === arquivosValidos.length) {
-      // Usar descrições fornecidas
-      fotosUpload = fotosComDescricao.filter(foto => 
-        foto.file instanceof File && foto.file.size > 0
-      );
-      console.log('Usando fotos com descrições fornecidas:', fotosUpload.length);
+      // Usar fotosComDescricao se disponível e compatível
+      fotosParaUpload = fotosComDescricao
+        .filter(item => item.file instanceof File && item.file.size > 0)
+        .map(item => ({
+          file: item.file,
+          descricao: item.descricao || ''
+        }));
+      
+      console.log('Usando fotosComDescricao fornecidas:', fotosParaUpload.length);
     } else {
       // Criar com descrições vazias
-      fotosUpload = arquivosValidos.map(file => ({
-        file,
+      fotosParaUpload = arquivosValidos.map(file => ({
+        file: file,
         descricao: ''
       }));
-      console.log('Criando fotos com descrições vazias:', fotosUpload.length);
+      
+      console.log('Criando fotosParaUpload com descrições vazias:', fotosParaUpload.length);
     }
 
-    // Validação final
-    const fotosFinais = fotosUpload.filter(foto => {
-      const isValid = foto.file instanceof File && foto.file.size > 0;
+    // Validação final antes de salvar no estado
+    const fotosFinaisValidas = fotosParaUpload.filter(foto => {
+      const isValid = foto.file instanceof File && 
+                     foto.file.size > 0 && 
+                     foto.file.name;
+      
       if (!isValid) {
-        console.error('Foto inválida encontrada:', foto);
+        console.error('FotoUpload inválida encontrada:', {
+          hasFile: !!foto.file,
+          isFile: foto.file instanceof File,
+          size: foto.file?.size,
+          name: foto.file?.name
+        });
       }
+      
       return isValid;
     });
 
-    console.log(`Fotos finais válidas: ${fotosFinais.length}`);
+    console.log(`Fotos finais válidas: ${fotosFinaisValidas.length}`);
 
+    if (fotosFinaisValidas.length === 0) {
+      console.warn('Nenhuma foto final válida após validação');
+      return;
+    }
+
+    // Atualizar estado
     setGrupoFotos(prev => {
       const updated = {
         ...prev,
-        [grupoIndex]: fotosFinais
+        [grupoIndex]: fotosFinaisValidas
       };
-      console.log(`Estado grupoFotos atualizado para grupo ${grupoIndex}:`, updated[grupoIndex]);
+      
+      console.log(`Estado atualizado para grupo ${grupoIndex}:`, {
+        totalFotos: fotosFinaisValidas.length,
+        primeiraFoto: fotosFinaisValidas[0]?.file?.name || 'N/A'
+      });
+      
       return updated;
     });
   }, []);
