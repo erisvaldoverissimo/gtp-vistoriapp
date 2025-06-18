@@ -83,18 +83,42 @@ const UploadFotos = ({
   // Função para notificar mudanças nas fotos
   const notifyFotosChange = (novasFotos: FotoData[]) => {
     console.log('Notificando mudança de fotos:', novasFotos.length);
+    console.log('Fotos detalhes:', novasFotos.map(f => ({ 
+      name: f.file.name, 
+      size: f.file.size, 
+      type: f.file.type,
+      file: f.file
+    })));
     
-    // Criar array com os arquivos
-    const arquivos = novasFotos.map(foto => foto.file);
+    // Verificar se os arquivos são válidos
+    const arquivosValidos = novasFotos.filter(foto => 
+      foto.file && 
+      foto.file instanceof File && 
+      foto.file.size > 0
+    );
+    
+    if (arquivosValidos.length !== novasFotos.length) {
+      console.error('Alguns arquivos são inválidos!', {
+        total: novasFotos.length,
+        validos: arquivosValidos.length
+      });
+    }
+    
+    // Criar array com os arquivos válidos
+    const arquivos = arquivosValidos.map(foto => foto.file);
     
     // Criar array com arquivos e descrições
-    const fotosComDescricao = novasFotos.map(foto => ({
+    const fotosComDescricao = arquivosValidos.map(foto => ({
       file: foto.file,
       descricao: foto.descricao
     }));
     
-    console.log('Arquivos sendo enviados:', arquivos);
-    console.log('Fotos com descrição:', fotosComDescricao);
+    console.log('Arquivos sendo enviados:', arquivos.map(f => ({ 
+      name: f.name, 
+      size: f.size, 
+      type: f.type 
+    })));
+    console.log('Fotos com descrição:', fotosComDescricao.length);
     
     onFotosChange(arquivos, fotosComDescricao);
   };
@@ -103,6 +127,12 @@ const UploadFotos = ({
     const files = Array.from(event.target.files || []);
     
     if (files.length === 0) return;
+
+    console.log('Arquivos selecionados:', files.map(f => ({ 
+      name: f.name, 
+      size: f.size, 
+      type: f.type 
+    })));
 
     const totalFotosAtuais = fotos.length + fotosExistentesState.length;
 
@@ -143,16 +173,27 @@ const UploadFotos = ({
 
     console.log(`Adicionando ${files.length} fotos...`);
 
-    const newFotos: FotoData[] = files.map(file => ({
-      file,
-      preview: URL.createObjectURL(file),
-      descricao: ''
-    }));
+    // Criar novos objetos FotoData mantendo referência correta aos arquivos
+    const newFotos: FotoData[] = files.map(file => {
+      console.log('Criando FotoData para:', file.name);
+      return {
+        file: file, // Manter a referência direta ao arquivo
+        preview: URL.createObjectURL(file),
+        descricao: ''
+      };
+    });
+
+    console.log('Novas fotos criadas:', newFotos.map(f => ({ 
+      name: f.file.name, 
+      hasFile: !!f.file,
+      fileSize: f.file.size
+    })));
 
     const updatedFotos = [...fotos, ...newFotos];
     setFotos(updatedFotos);
     
-    // Notificar as mudanças
+    // Notificar as mudanças imediatamente
+    console.log('Chamando notifyFotosChange com fotos atualizadas...');
     notifyFotosChange(updatedFotos);
     
     toast({
