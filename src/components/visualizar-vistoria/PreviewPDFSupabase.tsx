@@ -251,8 +251,25 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           className="w-full aspect-square object-cover rounded mb-2"
           crossOrigin="anonymous"
           loading="eager"
-          onLoad={() => console.log(`Imagem carregada: ${foto.arquivo_url}`)}
-          onError={(e) => console.error(`Erro ao carregar imagem: ${foto.arquivo_url}`, e)}
+          style={{
+            maxWidth: '100%',
+            height: 'auto',
+            display: 'block'
+          }}
+          onLoad={(e) => {
+            console.log(`Imagem carregada com sucesso: ${foto.arquivo_url}`);
+            e.currentTarget.setAttribute('data-loaded', 'true');
+          }}
+          onError={(e) => {
+            console.error(`Erro ao carregar imagem: ${foto.arquivo_url}`, e);
+            e.currentTarget.setAttribute('data-error', 'true');
+            // Tentar carregar novamente após um delay
+            setTimeout(() => {
+              if (!e.currentTarget.getAttribute('data-loaded')) {
+                e.currentTarget.src = foto.arquivo_url + '?t=' + Date.now();
+              }
+            }, 1000);
+          }}
         />
         <div>
           <p className="text-xs font-medium mb-1">
