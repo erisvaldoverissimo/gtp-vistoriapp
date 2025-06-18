@@ -115,44 +115,69 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     }
   }, [formData.grupos.length]);
 
-  // Função corrigida para receber fotos
   const handleFotosChange = useCallback((grupoIndex: number, fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => {
-    console.log(`=== handleFotosChange chamada ===`);
+    console.log(`=== handleFotosChange NOVA VISTORIA ===`);
     console.log(`Grupo: ${grupoIndex}`);
-    console.log(`Arquivos recebidos:`, fotos.length);
-    console.log(`Fotos com descrição:`, fotosComDescricao?.length || 0);
+    console.log(`Arquivos recebidos:`, fotos);
+    console.log(`FotosComDescricao:`, fotosComDescricao);
     
-    // Log detalhado dos arquivos
-    fotos.forEach((file, index) => {
-      console.log(`Arquivo ${index}:`, {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        isFile: file instanceof File
-      });
+    // Validar que todos os arquivos são File válidos
+    const arquivosValidos = fotos.filter(file => {
+      const isValid = file instanceof File && file.size > 0 && file.name;
+      console.log(`Arquivo ${file.name}: válido=${isValid}, size=${file.size}, type=${file.type}`);
+      return isValid;
     });
 
-    // Usar fotosComDescricao se disponível, senão criar com descrição vazia
-    const fotosUpload: FotoUpload[] = fotosComDescricao && fotosComDescricao.length === fotos.length 
-      ? fotosComDescricao 
-      : fotos.map(file => ({ file, descricao: '' }));
+    console.log(`Arquivos válidos: ${arquivosValidos.length}/${fotos.length}`);
 
-    console.log(`Fotos para upload processadas:`, fotosUpload.length);
+    if (arquivosValidos.length === 0) {
+      console.warn('Nenhum arquivo válido encontrado');
+      return;
+    }
+
+    // Criar FotoUpload array
+    let fotosUpload: FotoUpload[];
     
+    if (fotosComDescricao && fotosComDescricao.length === arquivosValidos.length) {
+      // Usar descrições fornecidas
+      fotosUpload = fotosComDescricao.filter(foto => 
+        foto.file instanceof File && foto.file.size > 0
+      );
+      console.log('Usando fotos com descrições fornecidas:', fotosUpload.length);
+    } else {
+      // Criar com descrições vazias
+      fotosUpload = arquivosValidos.map(file => ({
+        file,
+        descricao: ''
+      }));
+      console.log('Criando fotos com descrições vazias:', fotosUpload.length);
+    }
+
+    // Validação final
+    const fotosFinais = fotosUpload.filter(foto => {
+      const isValid = foto.file instanceof File && foto.file.size > 0;
+      if (!isValid) {
+        console.error('Foto inválida encontrada:', foto);
+      }
+      return isValid;
+    });
+
+    console.log(`Fotos finais válidas: ${fotosFinais.length}`);
+
     setGrupoFotos(prev => {
       const updated = {
         ...prev,
-        [grupoIndex]: fotosUpload
+        [grupoIndex]: fotosFinais
       };
-      console.log(`Estado grupoFotos atualizado:`, updated);
+      console.log(`Estado grupoFotos atualizado para grupo ${grupoIndex}:`, updated[grupoIndex]);
       return updated;
     });
   }, []);
 
   const handleSave = useCallback(async () => {
-    console.log('=== INICIANDO SALVAMENTO ===');
-    console.log('Dados da vistoria:', formData);
-    console.log('Fotos por grupo:', grupoFotos);
+    console.log('=== INICIANDO SALVAMENTO NOVA VISTORIA ===');
+    console.log('FormData:', formData);
+    console.log('GrupoFotos estado atual:', grupoFotos);
     
     if (!formData.condominio_id) {
       toast({
@@ -175,24 +200,21 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     setSaving(true);
     try {
       console.log('Salvando vistoria...');
-      
-      // Salvar vistoria primeiro
       const vistoriaSalva = await salvarVistoria(formData);
       
       if (!vistoriaSalva || !vistoriaSalva.id) {
         throw new Error('Erro ao salvar vistoria - ID não retornado');
       }
 
-      console.log('Vistoria salva com sucesso:', vistoriaSalva.id);
+      console.log('Vistoria salva com ID:', vistoriaSalva.id);
 
       // Verificar se há fotos para upload
-      const totalFotos = Object.values(grupoFotos).reduce((total, fotos) => total + fotos.length, 0);
-      console.log(`Total de fotos para upload: ${totalFotos}`);
+      const gruposComFotos = Object.entries(grupoFotos).filter(([_, fotos]) => fotos.length > 0);
+      console.log(`Grupos com fotos: ${gruposComFotos.length}`);
       
-      if (totalFotos > 0) {
-        console.log('Buscando grupos salvos...');
+      if (gruposComFotos.length > 0) {
+        console.log('Buscando grupos salvos no banco...');
         
-        // Buscar os grupos salvos para obter os IDs
         const { data: gruposSalvos, error: gruposError } = await supabase
           .from('grupos_vistoria')
           .select('id, ordem')
@@ -206,43 +228,63 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
 
         console.log('Grupos salvos encontrados:', gruposSalvos);
 
-        // Upload das fotos para cada grupo
-        for (const [grupoIndexStr, fotos] of Object.entries(grupoFotos)) {
+        // Upload das fotos
+        let totalFotosUpload = 0;
+        for (const [grupoIndexStr, fotos] of gruposComFotos) {
           const grupoIndex = parseInt(grupoIndexStr);
+          const grupoSalvo = gruposSalvos?.find(g => g.ordem === grupoIndex);
           
-          if (fotos.length > 0) {
-            const grupoSalvo = gruposSalvos?.find(g => g.ordem === grupoIndex);
-            if (grupoSalvo) {
-              console.log(`Fazendo upload de ${fotos.length} fotos para grupo ${grupoSalvo.id} (ordem ${grupoIndex})`);
-              
-              // Validar que os arquivos estão corretos antes do upload
-              const fotosValidas = fotos.filter(foto => 
-                foto.file instanceof File && foto.file.size > 0
-              );
-              
-              console.log(`Fotos válidas para upload: ${fotosValidas.length}/${fotos.length}`);
-              
-              if (fotosValidas.length > 0) {
-                try {
-                  await uploadFotos(grupoSalvo.id, fotosValidas);
-                  console.log(`Upload concluído para grupo ${grupoSalvo.id}`);
-                } catch (uploadError) {
-                  console.error(`Erro no upload de fotos para grupo ${grupoSalvo.id}:`, uploadError);
-                  // Continuar com outros grupos mesmo se um falhar
-                }
-              } else {
-                console.warn(`Nenhuma foto válida encontrada para grupo ${grupoIndex}`);
-              }
-            } else {
-              console.warn(`Grupo salvo não encontrado para ordem ${grupoIndex}`);
+          if (!grupoSalvo) {
+            console.warn(`Grupo salvo não encontrado para ordem ${grupoIndex}`);
+            continue;
+          }
+
+          console.log(`Fazendo upload de ${fotos.length} fotos para grupo ${grupoSalvo.id} (ordem ${grupoIndex})`);
+          
+          // Validação final das fotos antes do upload
+          const fotosParaUpload = fotos.filter(foto => {
+            const isValid = foto.file instanceof File && foto.file.size > 0 && foto.file.name;
+            if (!isValid) {
+              console.error('Foto inválida detectada no upload:', {
+                hasFile: !!foto.file,
+                isFile: foto.file instanceof File,
+                size: foto.file?.size,
+                name: foto.file?.name
+              });
+            }
+            return isValid;
+          });
+
+          console.log(`Fotos válidas para upload no grupo ${grupoIndex}: ${fotosParaUpload.length}/${fotos.length}`);
+
+          if (fotosParaUpload.length > 0) {
+            try {
+              await uploadFotos(grupoSalvo.id, fotosParaUpload);
+              totalFotosUpload += fotosParaUpload.length;
+              console.log(`Upload concluído para grupo ${grupoSalvo.id}: ${fotosParaUpload.length} fotos`);
+            } catch (uploadError) {
+              console.error(`Erro no upload de fotos para grupo ${grupoSalvo.id}:`, uploadError);
+              toast({
+                title: "Erro no Upload",
+                description: `Erro ao enviar fotos do grupo ${grupoIndex + 1}. Algumas fotos podem não ter sido salvas.`,
+                variant: "destructive",
+              });
             }
           }
         }
 
-        toast({
-          title: "Sucesso Completo",
-          description: `Vistoria ${formData.numero_interno} salva com ${totalFotos} foto(s).`,
-        });
+        if (totalFotosUpload > 0) {
+          toast({
+            title: "Sucesso Completo",
+            description: `Vistoria ${formData.numero_interno} salva com ${totalFotosUpload} foto(s).`,
+          });
+        } else {
+          toast({
+            title: "Vistoria Salva",
+            description: `Vistoria ${formData.numero_interno} salva, mas nenhuma foto foi processada.`,
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Vistoria Salva",
@@ -250,7 +292,7 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
         });
       }
 
-      // Limpar formulário após salvar
+      // Limpar formulário
       setFormData({
         condominio_id: '',
         numero_interno: '',
