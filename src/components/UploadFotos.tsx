@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -72,17 +73,23 @@ const UploadFotos = ({
     }
   }, [fotosExistentes]);
 
-  // Reset fotos quando o grupoId muda (novo grupo)
+  // Reset fotos quando o grupoId muda (novo grupo) - CORRIGIDO
   useEffect(() => {
+    // Só limpar se não há fotos existentes E não é uma nova vistoria
     if (!fotosExistentes || fotosExistentes.length === 0) {
-      setFotos([]);
+      // Para nova vistoria (sem grupoId), manter as fotos no estado
+      if (grupoId) {
+        console.log('Limpando fotos para novo grupo com ID:', grupoId);
+        setFotos([]);
+      }
     }
   }, [grupoId, fotosExistentes]);
 
-  // Função para notificar mudanças nas fotos - VERSÃO SIMPLIFICADA E CORRIGIDA
+  // Função para notificar mudanças nas fotos
   const notifyFotosChange = (novasFotos: FotoData[]) => {
-    console.log('=== NOTIFICANDO MUDANÇA DE FOTOS (SIMPLIFICADA) ===');
+    console.log('=== NOTIFICANDO MUDANÇA DE FOTOS ===');
     console.log('Quantidade de fotos:', novasFotos.length);
+    console.log('GrupoId atual:', grupoId);
     
     if (novasFotos.length === 0) {
       console.log('Nenhuma foto, enviando arrays vazios');
@@ -90,7 +97,7 @@ const UploadFotos = ({
       return;
     }
     
-    // CRÍTICO: Manter referências diretas dos arquivos File
+    // Manter referências diretas dos arquivos File
     const arquivosOriginais: File[] = [];
     const fotosComDescricao: Array<{file: File, descricao: string}> = [];
     
@@ -106,7 +113,7 @@ const UploadFotos = ({
       // Usar referência direta do arquivo original
       arquivosOriginais.push(fotoData.file);
       fotosComDescricao.push({
-        file: fotoData.file, // Referência direta sem cópia
+        file: fotoData.file,
         descricao: fotoData.descricao
       });
     });
@@ -116,7 +123,6 @@ const UploadFotos = ({
       fotosComDescricao: fotosComDescricao.length
     });
     
-    // Chamar callback com arrays construídos
     onFotosChange(arquivosOriginais, fotosComDescricao);
   };
 
@@ -170,7 +176,7 @@ const UploadFotos = ({
       console.log(`Criando FotoData ${index + 1} para:`, file.name);
       
       return {
-        file: file, // Referência direta - NUNCA copiar ou clonar
+        file: file, // Referência direta
         preview: URL.createObjectURL(file),
         descricao: ''
       };
@@ -405,16 +411,18 @@ const UploadFotos = ({
         </div>
       )}
 
-      {/* Preview das Fotos Novas */}
+      {/* Preview das Fotos Novas - SEMPRE RENDERIZAR quando há fotos */}
       {fotos.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Novas Fotos ({fotos.length}/{maxFotos})</h3>
+          <h3 className="text-lg font-medium">
+            {grupoId ? `Novas Fotos (${fotos.length}/${maxFotos})` : `Fotos Adicionadas (${fotos.length}/${maxFotos})`}
+          </h3>
           
           {/* Grid de previews */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {fotos.map((foto, index) => (
               <FotoPreview
-                key={index}
+                key={`preview-${index}`}
                 foto={foto}
                 index={index}
                 onRemove={() => handleRemoveFoto(index)}
@@ -425,13 +433,15 @@ const UploadFotos = ({
 
           {/* Descrições das fotos novas */}
           <div className="space-y-4">
-            <h4 className="font-medium">Descrições das Novas Fotos</h4>
+            <h4 className="font-medium">
+              {grupoId ? 'Descrições das Novas Fotos' : 'Descrições das Fotos'}
+            </h4>
             {fotos.map((foto, index) => (
-              <Card key={index} className="p-4">
+              <Card key={`desc-${index}`} className="p-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <Label htmlFor={`descricao-${index}`}>
-                      Descrição da Nova Foto {index + 1} - {foto.file.name}
+                      Descrição da Foto {index + 1} - {foto.file.name}
                     </Label>
                     <span className={`text-xs ${foto.descricao.length > MAX_DESCRICAO_LENGTH ? 'text-red-500 font-semibold' : foto.descricao.length > MAX_DESCRICAO_LENGTH * 0.9 ? 'text-yellow-600' : 'text-gray-500'}`}>
                       {foto.descricao.length}/{MAX_DESCRICAO_LENGTH}

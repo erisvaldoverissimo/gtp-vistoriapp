@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -92,7 +91,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
   };
 
   const truncateText = (text: string, maxLength: number) => {
-    if (text.length <= maxLength) return text;
+    if (!text || text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
 
@@ -243,6 +242,15 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
 
   const renderFotoCard = (foto: any, fotoIndex: number, grupoIndex: number) => {
     const numeroFoto = fotoIndex + 1;
+    // CORRIGIDO: Garantir que a descrição seja exibida corretamente
+    const descricaoFoto = foto.descricao || 'Evidência fotográfica da vistoria';
+    
+    console.log(`Renderizando foto ${numeroFoto} do grupo ${grupoIndex + 1}:`, {
+      url: foto.arquivo_url,
+      nome: foto.arquivo_nome,
+      descricao: descricaoFoto,
+      descricaoOriginal: foto.descricao
+    });
     
     return (
       <div className="border rounded-lg p-2 flex-1">
@@ -276,7 +284,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
             Foto {String(numeroFoto).padStart(2, '0')} - Sistema {grupoIndex + 1}
           </p>
           <p className="text-xs text-gray-700 leading-relaxed break-words">
-            {truncateText(foto.descricao || 'Evidência fotográfica da vistoria', 200)}
+            {truncateText(descricaoFoto, 200)}
           </p>
         </div>
       </div>
