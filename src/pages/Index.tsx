@@ -1,52 +1,33 @@
 
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
-import NovaVistoria from '@/components/NovaVistoria';
-import ListaVistorias from '@/components/ListaVistorias';
+import NovaVistoriaSupabase from '@/components/NovaVistoriaSupabase';
+import ListaVistoriasSupabase from '@/components/ListaVistoriasSupabase';
 import PreviewPDF from '@/components/PreviewPDF';
 import Configuracoes from '@/components/Configuracoes';
 import GerenciarCondominios from '@/components/GerenciarCondominios';
 import GerenciarAmbientesGrupos from '@/components/GerenciarAmbientesGrupos';
 import ChatIA from '@/components/ChatIA';
 import GerenciarUsuarios from '@/components/GerenciarUsuarios';
-import { useCondominios } from '@/hooks/useCondominios';
-
-interface FotoComDescricao extends File {
-  descricao?: string;
-}
-
-interface GrupoVistoria {
-  id: string;
-  ambiente: string;
-  grupo: string;
-  item: string;
-  status: string;
-  parecer: string;
-  fotos: FotoComDescricao[];
-}
-
-interface VistoriaData {
-  condominio: string;
-  condominioId: string;
-  numeroInterno: string;
-  idSequencial: number;
-  dataVistoria: string;
-  observacoes: string;
-  responsavel: string;
-  grupos: GrupoVistoria[];
-}
+import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
+import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 
 const Index = () => {
   const [currentPage, setCurrentPage] = useState('vistorias');
-  const [previewData, setPreviewData] = useState<VistoriaData | null>(null);
-  const { condominios, atualizarCondominios, obterProximoNumero, incrementarNumero } = useCondominios();
+  const [previewData, setPreviewData] = useState<VistoriaSupabase | null>(null);
+  const { condominios } = useCondominiosSupabase();
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
     setPreviewData(null);
   };
 
-  const handlePreview = (data: VistoriaData) => {
+  const handleNovaVistoria = () => {
+    setCurrentPage('nova-vistoria');
+    setPreviewData(null);
+  };
+
+  const handlePreview = (data: VistoriaSupabase) => {
     setPreviewData(data);
     setCurrentPage('preview');
   };
@@ -56,9 +37,9 @@ const Index = () => {
     setCurrentPage('nova-vistoria');
   };
 
-  const handleEditFromPreview = () => {
-    setCurrentPage('nova-vistoria');
-    // Mantém os dados do previewData para serem editados
+  const handleBackFromNova = () => {
+    setCurrentPage('vistorias');
+    setPreviewData(null);
   };
 
   const renderContent = () => {
@@ -67,7 +48,7 @@ const Index = () => {
         <PreviewPDF 
           data={previewData} 
           onBack={handleBackFromPreview}
-          onEdit={handleEditFromPreview}
+          onEdit={() => setCurrentPage('nova-vistoria')}
         />
       );
     }
@@ -75,12 +56,9 @@ const Index = () => {
     switch (currentPage) {
       case 'nova-vistoria':
         return (
-          <NovaVistoria 
-            onPreview={handlePreview} 
-            condominios={condominios}
-            obterProximoNumero={obterProximoNumero}
-            incrementarNumero={incrementarNumero}
-            initialData={previewData}
+          <NovaVistoriaSupabase 
+            onPreview={handlePreview}
+            onBack={handleBackFromNova}
           />
         );
       case 'usuarios':
@@ -89,7 +67,7 @@ const Index = () => {
         return (
           <GerenciarCondominios 
             condominios={condominios}
-            onCondominiosChange={atualizarCondominios}
+            onCondominiosChange={() => {}}
           />
         );
       case 'ambientes-grupos':
@@ -104,7 +82,7 @@ const Index = () => {
         return <Configuracoes />;
       case 'vistorias':
       default:
-        return <ListaVistorias />;
+        return <ListaVistoriasSupabase onNovaVistoria={handleNovaVistoria} />;
     }
   };
 
