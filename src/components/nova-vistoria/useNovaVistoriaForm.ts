@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { VistoriaSupabase, GrupoVistoriaSupabase, useVistoriasSupabase } from '@/hooks/useVistoriasSupabase';
@@ -96,15 +97,27 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
         ...prev,
         grupos: prev.grupos.filter((_, index) => index !== grupoIndex)
       }));
+      // Remover fotos do grupo removido
       setGrupoFotos(prev => {
         const newFotos = { ...prev };
         delete newFotos[grupoIndex];
-        return newFotos;
+        // Re-indexar fotos dos grupos posteriores
+        const updatedFotos: { [key: number]: FotoUpload[] } = {};
+        Object.keys(newFotos).forEach(key => {
+          const numKey = parseInt(key);
+          if (numKey > grupoIndex) {
+            updatedFotos[numKey - 1] = newFotos[numKey];
+          } else {
+            updatedFotos[numKey] = newFotos[numKey];
+          }
+        });
+        return updatedFotos;
       });
     }
   }, [formData.grupos.length]);
 
   const handleFotosChange = useCallback((grupoIndex: number, fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => {
+    console.log(`Atualizando fotos para grupo ${grupoIndex}:`, fotos.length);
     const fotosUpload = fotosComDescricao || fotos.map(file => ({ file, descricao: '' }));
     setGrupoFotos(prev => ({
       ...prev,
@@ -113,6 +126,8 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
   }, []);
 
   const handleSave = useCallback(async () => {
+    console.log('Iniciando salvamento da vistoria...');
+    
     if (!formData.condominio_id) {
       toast({
         title: "Condomínio Obrigatório",
@@ -133,7 +148,8 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
 
     setSaving(true);
     try {
-      console.log('Salvando vistoria com fotos...');
+      console.log('Dados da vistoria para salvar:', formData);
+      console.log('Fotos por grupo:', grupoFotos);
       
       // Salvar vistoria primeiro
       const vistoriaSalva = await salvarVistoria(formData);
@@ -142,12 +158,14 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
         throw new Error('Erro ao salvar vistoria - ID não retornado');
       }
 
-      console.log('Vistoria salva, iniciando upload de fotos...');
+      console.log('Vistoria salva com sucesso:', vistoriaSalva);
 
       // Fazer upload das fotos para cada grupo que tem fotos
       const totalFotos = Object.values(grupoFotos).reduce((total, fotos) => total + fotos.length, 0);
       
       if (totalFotos > 0) {
+        console.log(`Iniciando upload de ${totalFotos} fotos...`);
+        
         // Buscar os grupos salvos para obter os IDs
         const { data: gruposSalvos, error: gruposError } = await supabase
           .from('grupos_vistoria')
@@ -156,16 +174,29 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
           .order('ordem');
 
         if (gruposError) {
+          console.error('Erro ao buscar grupos salvos:', gruposError);
           throw gruposError;
         }
 
+        console.log('Grupos salvos encontrados:', gruposSalvos);
+
         // Upload das fotos para cada grupo
-        for (const [grupoIndex, fotos] of Object.entries(grupoFotos)) {
+        for (const [grupoIndexStr, fotos] of Object.entries(grupoFotos)) {
+          const grupoIndex = parseInt(grupoIndexStr);
+          
           if (fotos.length > 0) {
-            const grupoSalvo = gruposSalvos.find(g => g.ordem === parseInt(grupoIndex));
+            const grupoSalvo = gruposSalvos?.find(g => g.ordem === grupoIndex);
             if (grupoSalvo) {
-              console.log(`Fazendo upload de ${fotos.length} fotos para grupo ${grupoSalvo.id}`);
-              await uploadFotos(grupoSalvo.id, fotos);
+              console.log(`Fazendo upload de ${fotos.length} fotos para grupo ${grupoSalvo.id} (índice ${grupoIndex})`);
+              try {
+                await uploadFotos(grupoSalvo.id, fotos);
+                console.log(`Upload concluído para grupo ${grupoSalvo.id}`);
+              } catch (uploadError) {
+                console.error(`Erro no upload de fotos para grupo ${grupoSalvo.id}:`, uploadError);
+                // Continuar com outros grupos mesmo se um falhar
+              }
+            } else {
+              console.warn(`Grupo salvo não encontrado para índice ${grupoIndex}`);
             }
           }
         }
@@ -173,6 +204,11 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
         toast({
           title: "Sucesso Completo",
           description: `Vistoria ${formData.numero_interno} salva com ${totalFotos} foto(s).`,
+        });
+      } else {
+        toast({
+          title: "Vistoria Salva",
+          description: `Vistoria ${formData.numero_interno} salva sem fotos.`,
         });
       }
 
@@ -201,7 +237,11 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
       }
     } catch (error) {
       console.error('Erro ao salvar vistoria:', error);
-      // Erro já tratado nos hooks
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar a vistoria. Verifique os dados e tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }

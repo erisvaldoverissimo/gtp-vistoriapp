@@ -11,7 +11,6 @@ import FotoPreview from './upload/FotoPreview';
 import FotoModal from './upload/FotoModal';
 import UploadProgress from './upload/UploadProgress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useFotosSupabase } from '@/hooks/useFotosSupabase';
 import { FotoVistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 
 interface FotoData {
@@ -33,11 +32,24 @@ interface UploadFotosProps {
   maxFotos?: number;
   grupoId?: string;
   fotosExistentes?: FotoVistoriaSupabase[];
+  uploading?: boolean;
+  uploadProgress?: {
+    current: number;
+    total: number;
+    currentFileName: string;
+    percentage: number;
+  } | null;
 }
 
-const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId, fotosExistentes = [] }: UploadFotosProps) => {
+const UploadFotos = ({ 
+  onFotosChange, 
+  maxFotos = 10, 
+  grupoId, 
+  fotosExistentes = [], 
+  uploading = false,
+  uploadProgress = null 
+}: UploadFotosProps) => {
   const { toast } = useToast();
-  const { uploading, uploadProgress } = useFotosSupabase();
   const [fotos, setFotos] = useState<FotoData[]>([]);
   const [fotosExistentesState, setFotosExistentesState] = useState<FotoExistente[]>([]);
   const [selectedFoto, setSelectedFoto] = useState<{ url: string; nome: string; descricao?: string } | null>(null);
@@ -110,6 +122,8 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId, fotosExistentes = 
       return;
     }
 
+    console.log(`Adicionando ${files.length} fotos...`);
+
     const newFotos: FotoData[] = files.map(file => ({
       file,
       preview: URL.createObjectURL(file),
@@ -124,6 +138,8 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId, fotosExistentes = 
       file: foto.file,
       descricao: foto.descricao
     }));
+    
+    console.log('Enviando fotos para o formulário:', fotosComDescricao);
     onFotosChange(updatedFotos.map(f => f.file), fotosComDescricao);
     
     toast({
@@ -138,6 +154,7 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId, fotosExistentes = 
   };
 
   const handleRemoveFoto = (index: number) => {
+    console.log(`Removendo foto ${index}...`);
     const updatedFotos = fotos.filter((_, i) => i !== index);
     setFotos(updatedFotos);
     
@@ -146,6 +163,8 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId, fotosExistentes = 
       file: foto.file,
       descricao: foto.descricao
     }));
+    
+    console.log('Enviando fotos atualizadas para o formulário:', fotosComDescricao);
     onFotosChange(updatedFotos.map(f => f.file), fotosComDescricao);
     
     // Liberar URL do preview
@@ -163,6 +182,7 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId, fotosExistentes = 
   };
 
   const handleDescricaoChange = (index: number, descricao: string) => {
+    console.log(`Atualizando descrição da foto ${index}:`, descricao);
     const updatedFotos = fotos.map((foto, i) => 
       i === index ? { ...foto, descricao } : foto
     );
@@ -173,6 +193,8 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId, fotosExistentes = 
       file: foto.file,
       descricao: foto.descricao
     }));
+    
+    console.log('Enviando descrições atualizadas para o formulário:', fotosComDescricao);
     onFotosChange(updatedFotos.map(f => f.file), fotosComDescricao);
   };
 
