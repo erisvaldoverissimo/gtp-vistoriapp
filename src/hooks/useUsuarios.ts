@@ -55,6 +55,27 @@ export const useUsuarios = () => {
     carregarUsuarios();
   }, []);
 
+  const adicionarUsuario = async (dadosUsuario: Omit<Usuario, 'id'>) => {
+    try {
+      // Como estamos trabalhando com profiles que são criados automaticamente
+      // quando um usuário se registra, esta função serve mais para demonstração
+      // Em um cenário real, novos usuários seriam criados através do registro
+      console.log('Adicionando usuário:', dadosUsuario);
+      
+      toast({
+        title: "Informação",
+        description: "Novos usuários devem se registrar através da página de autenticação.",
+      });
+    } catch (error) {
+      console.error('Erro ao adicionar usuário:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar o usuário.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const atualizarUsuario = async (id: string, dadosAtualizados: Partial<Usuario>) => {
     try {
       const { error } = await supabase
@@ -87,6 +108,35 @@ export const useUsuarios = () => {
     }
   };
 
+  const removerUsuario = async (id: string) => {
+    try {
+      // Em vez de deletar o perfil (que pode quebrar referências),
+      // vamos apenas desativar o usuário
+      const { error } = await supabase
+        .from('profiles')
+        .update({ ativo: false })
+        .eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      await carregarUsuarios();
+      
+      toast({
+        title: "Sucesso",
+        description: "Usuário desativado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao remover usuário:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o usuário.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const obterUsuariosAtivos = () => {
     return usuarios.filter(usuario => usuario.ativo);
   };
@@ -94,7 +144,9 @@ export const useUsuarios = () => {
   return {
     usuarios,
     loading,
+    adicionarUsuario,
     atualizarUsuario,
+    removerUsuario,
     obterUsuariosAtivos,
     recarregar: carregarUsuarios
   };
