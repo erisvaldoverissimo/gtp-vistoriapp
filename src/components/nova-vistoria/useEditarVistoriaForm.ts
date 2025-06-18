@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { VistoriaSupabase, GrupoVistoriaSupabase, useVistoriasSupabase } from '@/hooks/useVistoriasSupabase';
@@ -294,12 +295,18 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
         }
       }
 
+      // Aguardar um pouco para garantir que todas as operações foram processadas
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Recarregar os dados da vistoria para garantir que as mudanças sejam refletidas
       console.log('Recarregando dados da vistoria após salvar...');
       await carregarVistoria();
       
       // Recarregar lista de vistorias
       await recarregar();
+      
+      // Aguardar mais um pouco para garantir que os dados foram propagados
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Limpar fotos temporárias
       setGrupoFotos({});
@@ -310,7 +317,10 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
       });
 
       if (onBack) {
-        onBack();
+        // Aguardar antes de voltar para garantir que os dados estejam atualizados
+        setTimeout(() => {
+          onBack();
+        }, 1000);
       }
     } catch (error) {
       console.error('Erro ao atualizar vistoria:', error);

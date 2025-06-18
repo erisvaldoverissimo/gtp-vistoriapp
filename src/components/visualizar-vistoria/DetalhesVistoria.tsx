@@ -19,8 +19,9 @@ interface DetalhesVistoriaProps {
 const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: DetalhesVistoriaProps) => {
   const [showPDFPreview, setShowPDFPreview] = useState(false);
   const [vistoria, setVistoria] = useState(vistoriaInicial);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Recarregar dados da vistoria quando necessário
+  // Função para recarregar dados da vistoria
   const recarregarVistoria = async () => {
     try {
       console.log('Recarregando dados da vistoria:', vistoria.id);
@@ -73,6 +74,7 @@ const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: Detalhe
       };
 
       setVistoria(vistoriaAtualizada);
+      setReloadKey(prev => prev + 1); // Força rerender dos componentes filhos
       console.log('Vistoria recarregada com sucesso:', vistoriaAtualizada);
     } catch (error) {
       console.error('Erro ao recarregar vistoria:', error);
@@ -82,6 +84,7 @@ const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: Detalhe
   // Recarregar quando a vistoria inicial mudar
   useEffect(() => {
     setVistoria(vistoriaInicial);
+    setReloadKey(prev => prev + 1);
   }, [vistoriaInicial]);
 
   // Recarregar dados quando a página for focada (usuário voltar da edição)
@@ -90,8 +93,28 @@ const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: Detalhe
       recarregarVistoria();
     };
 
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        recarregarVistoria();
+      }
+    };
+
     window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [vistoria.id]);
+
+  // Recarregar periodicamente para capturar mudanças
+  useEffect(() => {
+    const interval = setInterval(() => {
+      recarregarVistoria();
+    }, 5000); // Recarrega a cada 5 segundos
+
+    return () => clearInterval(interval);
   }, [vistoria.id]);
 
   const formatDate = (dateString: string) => {
@@ -117,6 +140,7 @@ const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: Detalhe
   if (showPDFPreview) {
     return (
       <PreviewPDFSupabase 
+        key={`pdf-${reloadKey}`}
         vistoria={vistoria} 
         onBack={() => setShowPDFPreview(false)}
       />
@@ -124,7 +148,7 @@ const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: Detalhe
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" key={`detalhes-${reloadKey}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -151,7 +175,11 @@ const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: Detalhe
           )}
           <Button 
             variant="outline"
-            onClick={() => setShowPDFPreview(true)}
+            onClick={() => {
+              recarregarVistoria().then(() => {
+                setShowPDFPreview(true);
+              });
+            }}
           >
             <Download size={16} className="mr-2" />
             Gerar PDF
@@ -221,7 +249,7 @@ const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: Detalhe
         </h2>
         
         {vistoria.grupos.map((grupo, index) => (
-          <Card key={grupo.id || index}>
+          <Card key={`${grupo.id}-${reloadKey}-${index}`}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Grupo {index + 1}: {grupo.ambiente} - {grupo.grupo}</span>
@@ -250,6 +278,7 @@ const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: Detalhe
               <Separator />
               
               <FotosVistoria 
+                key={`fotos-${grupo.id}-${reloadKey}`}
                 fotos={grupo.fotos || []} 
                 grupoNome={`${grupo.ambiente} - ${grupo.grupo}`}
               />

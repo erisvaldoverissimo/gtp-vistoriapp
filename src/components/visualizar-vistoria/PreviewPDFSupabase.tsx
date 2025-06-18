@@ -1,19 +1,84 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, ArrowLeft, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 import { usePDFGenerator } from '@/hooks/usePDFGenerator';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PreviewPDFSupabaseProps {
   vistoria: VistoriaSupabase;
   onBack: () => void;
 }
 
-const PreviewPDFSupabase = ({ vistoria, onBack }: PreviewPDFSupabaseProps) => {
+const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSupabaseProps) => {
   const { toast } = useToast();
   const { reportRef, generatePDF } = usePDFGenerator();
+  const [vistoria, setVistoria] = useState(vistoriaInicial);
+
+  // Recarregar dados mais recentes quando o componente montar
+  useEffect(() => {
+    const carregarDadosAtualizados = async () => {
+      try {
+        console.log('Carregando dados atualizados para PDF:', vistoriaInicial.id);
+        
+        const { data: vistoriaData, error } = await supabase
+          .from('vistorias')
+          .select(`
+            *,
+            condominio:condominios(id, nome),
+            grupos_vistoria(
+              *,
+              fotos_vistoria(*)
+            )
+          `)
+          .eq('id', vistoriaInicial.id!)
+          .single();
+
+        if (error) {
+          console.error('Erro ao carregar dados atualizados:', error);
+          return;
+        }
+
+        // Formatar dados
+        const grupos = (vistoriaData.grupos_vistoria || []).map(grupo => ({
+          id: grupo.id,
+          vistoria_id: grupo.vistoria_id,
+          ambiente: grupo.ambiente,
+          grupo: grupo.grupo,
+          item: grupo.item,
+          status: grupo.status,
+          parecer: grupo.parecer || '',
+          ordem: grupo.ordem || 0,
+          fotos: grupo.fotos_vistoria || []
+        }));
+
+        const vistoriaAtualizada: VistoriaSupabase = {
+          id: vistoriaData.id,
+          condominio_id: vistoriaData.condominio_id,
+          user_id: vistoriaData.user_id,
+          numero_interno: vistoriaData.numero_interno,
+          id_sequencial: vistoriaData.id_sequencial,
+          data_vistoria: vistoriaData.data_vistoria,
+          observacoes_gerais: vistoriaData.observacoes_gerais,
+          responsavel: vistoriaData.responsavel,
+          status: vistoriaData.status,
+          created_at: vistoriaData.created_at,
+          updated_at: vistoriaData.updated_at,
+          condominio: Array.isArray(vistoriaData.condominio) ? vistoriaData.condominio[0] : vistoriaData.condominio,
+          grupos: grupos
+        };
+
+        setVistoria(vistoriaAtualizada);
+        console.log('Dados atualizados carregados para PDF:', vistoriaAtualizada);
+      } catch (error) {
+        console.error('Erro ao carregar dados atualizados:', error);
+      }
+    };
+
+    carregarDadosAtualizados();
+  }, [vistoriaInicial.id]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
