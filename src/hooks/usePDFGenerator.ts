@@ -23,24 +23,47 @@ export const usePDFGenerator = () => {
     try {
       console.log('=== INICIANDO GERAÇÃO DO PDF ===');
       console.log('Vistoria:', vistoria.numero_interno);
+      console.log('Grupos na vistoria:', vistoria.grupos?.length || 0);
+      
+      // Log da estrutura do DOM antes de começar
+      console.log('Estrutura inicial do reportRef:', {
+        children: reportRef.current.children.length,
+        className: reportRef.current.className,
+        scrollHeight: reportRef.current.scrollHeight,
+        innerHTML: reportRef.current.innerHTML.substring(0, 500) + '...'
+      });
       
       toast({
         title: "Gerando PDF",
         description: "Preparando conteúdo...",
       });
 
-      // Aguardar um momento para o DOM se estabilizar
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Aguardar mais tempo para o DOM se estabilizar
+      console.log('Aguardando estabilização do DOM...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Validar e buscar páginas
+      // Verificar se há conteúdo nos grupos
+      const gruposComFotos = vistoria.grupos?.filter(grupo => grupo.fotos && grupo.fotos.length > 0) || [];
+      console.log(`Grupos com fotos: ${gruposComFotos.length}`);
+      
+      if (gruposComFotos.length === 0) {
+        throw new Error('Nenhum grupo com fotos encontrado para gerar o PDF');
+      }
+
+      // Validar e buscar páginas com logs detalhados
+      console.log('Iniciando validação das páginas...');
       const pages = validatePages(reportRef.current);
+      console.log(`Páginas validadas: ${pages.length}`);
 
       toast({
         title: "Gerando PDF",
         description: "Carregando imagens...",
       });
 
+      // Pré-carregar imagens
+      console.log('Iniciando pré-carregamento de imagens...');
       await preloadImages(reportRef.current);
+      console.log('Pré-carregamento concluído');
 
       toast({
         title: "Gerando PDF",
@@ -51,42 +74,71 @@ export const usePDFGenerator = () => {
       let paginasProcessadas = 0;
       const errosPorPagina = [];
 
+      // Aguardar um pouco mais antes de começar o processamento
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       for (let i = 0; i < pages.length; i++) {
+        console.log(`=== PROCESSANDO PÁGINA ${i + 1}/${pages.length} ===`);
+        
         toast({
           title: "Gerando PDF",
           description: `Processando página ${i + 1} de ${pages.length}...`,
         });
 
         try {
-          const imageData = await processPageWithFallback(pages[i], i);
+          // Verificar se a página ainda existe e está visível
+          const page = pages[i];
+          const rect = page.getBoundingClientRect();
+          
+          console.log(`Página ${i + 1} antes do processamento:`, {
+            existe: !!page,
+            visivel: rect.width > 0 && rect.height > 0,
+            dimensoes: { width: rect.width, height: rect.height },
+            conteudo: (page.textContent?.trim().length || 0) > 0,
+            imagens: page.querySelectorAll('img').length
+          });
+          
+          if (rect.width === 0 || rect.height === 0) {
+            console.warn(`Página ${i + 1} não está visível, pulando...`);
+            continue;
+          }
+          
+          const imageData = await processPageWithFallback(page, i);
           addImageToPDF(pdf, imageData, i > 0);
           paginasProcessadas++;
-          console.log(`✅ Página ${i + 1} processada com sucesso (Total processadas: ${paginasProcessadas})`);
+          console.log(`✅ Página ${i + 1} processada com sucesso (Total: ${paginasProcessadas})`);
+          
         } catch (pageError) {
+          console.error(`❌ Erro na página ${i + 1}:`, pageError);
           errosPorPagina.push(`Página ${i + 1}: ${pageError.message}`);
           
           // Se é a primeira página e falhou, é erro crítico
           if (i === 0 && paginasProcessadas === 0) {
+            console.error('ERRO CRÍTICO: Primeira página falhou e nenhuma foi processada');
             throw pageError;
           }
         }
+        
+        // Pequena pausa entre páginas
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       if (paginasProcessadas === 0) {
         console.error('=== ERRO CRÍTICO ===');
-        console.error('Erros por página:', errosPorPagina);
-        throw new Error('Nenhuma página foi processada com sucesso. Erros: ' + errosPorPagina.join('; '));
+        console.error('Nenhuma página foi processada com sucesso!');
+        console.error('Erros detalhados:', errosPorPagina);
+        throw new Error('Nenhuma página foi processada com sucesso. Detalhes: ' + errosPorPagina.join('; '));
       }
 
       const fileName = `Relatorio-${vistoria.numero_interno}-${vistoria.condominio?.nome?.replace(/\s+/g, "-") || 'Vistoria'}.pdf`;
-      console.log('Salvando PDF:', fileName);
+      console.log('Finalizando PDF:', fileName);
       
-      console.log(`=== PDF FINALIZADO ===`);
-      console.log(`Total de páginas no PDF: ${pdf.getNumberOfPages()}`);
+      console.log(`=== PDF GERADO COM SUCESSO ===`);
+      console.log(`Páginas no PDF: ${pdf.getNumberOfPages()}`);
       console.log(`Páginas processadas: ${paginasProcessadas}/${pages.length}`);
       
       if (errosPorPagina.length > 0) {
-        console.warn('Páginas com erro:', errosPorPagina);
+        console.warn('Páginas com problemas:', errosPorPagina);
       }
       
       pdf.save(fileName);
@@ -97,15 +149,27 @@ export const usePDFGenerator = () => {
       });
 
     } catch (error) {
-      console.error('=== ERRO DETALHADO AO GERAR PDF ===');
-      console.error('Erro:', error);
-      console.error('Stack:', error.stack);
+      console.error('=== ERRO DETALHADO NA GERAÇÃO DO PDF ===');
+      console.error('Tipo do erro:', typeof error);
+      console.error('Mensagem:', error.message);
+      console.error('Stack completa:', error.stack);
+      console.error('Erro completo:', error);
+      
+      // Log do estado atual do DOM
+      if (reportRef.current) {
+        console.error('Estado do DOM no momento do erro:', {
+          children: reportRef.current.children.length,
+          className: reportRef.current.className,
+          scrollHeight: reportRef.current.scrollHeight,
+          visivel: reportRef.current.offsetWidth > 0 && reportRef.current.offsetHeight > 0
+        });
+      }
       
       const errorMessage = getErrorMessage(error);
       
       toast({
         title: "Erro na Geração do PDF",
-        description: errorMessage + " Se o problema persistir, tente recarregar a página ou contacte o suporte.",
+        description: errorMessage + " Verifique o console para mais detalhes.",
         variant: "destructive",
       });
     }
