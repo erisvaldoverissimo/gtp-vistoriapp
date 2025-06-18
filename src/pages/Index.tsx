@@ -52,6 +52,7 @@ const Index = () => {
         responsavel: previewData.responsavel,
         observacoes: previewData.observacoes_gerais || '',
         grupos: previewData.grupos.map(grupo => ({
+          id: grupo.id || '',
           ambiente: grupo.ambiente,
           grupo: grupo.grupo,
           item: grupo.item,

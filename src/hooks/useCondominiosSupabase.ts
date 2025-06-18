@@ -24,48 +24,40 @@ export const useCondominiosSupabase = () => {
 
   const carregarCondominios = async () => {
     try {
-      const { data, error } = await supabase
-        .from('condominios')
-        .select('*')
-        .eq('ativo', true);
-
-      if (error) {
-        console.log('Usando dados mock enquanto as tabelas não estão disponíveis');
-        // Dados mockados temporários
-        const dadosMock: CondominioSupabase[] = [
-          {
-            id: '1',
-            nome: 'Condomínio Edifício Artur Ramos',
-            endereco: 'Rua Artur Ramos, 123',
-            cidade: 'São Paulo',
-            estado: 'SP',
-            cep: '01234-567',
-            telefone: '(11) 1234-5678',
-            email: 'contato@arthur.com.br',
-            ativo: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: '2',
-            nome: 'Residencial Park View',
-            endereco: 'Av. das Flores, 456',
-            cidade: 'São Paulo',
-            estado: 'SP',
-            cep: '02345-678',
-            telefone: '(11) 2345-6789',
-            email: 'sindico@parkview.com.br',
-            ativo: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ];
-        setCondominios(dadosMock);
-        setLoading(false);
-        return;
-      }
-
-      setCondominios(data || []);
+      // Por enquanto, usar dados mockados já que as tabelas ainda não estão disponíveis
+      console.log('Usando dados mock enquanto as tabelas não estão disponíveis');
+      
+      // Dados mockados temporários
+      const dadosMock: CondominioSupabase[] = [
+        {
+          id: '1',
+          nome: 'Condomínio Edifício Artur Ramos',
+          endereco: 'Rua Artur Ramos, 123',
+          cidade: 'São Paulo',
+          estado: 'SP',
+          cep: '01234-567',
+          telefone: '(11) 1234-5678',
+          email: 'contato@arthur.com.br',
+          ativo: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          nome: 'Residencial Park View',
+          endereco: 'Av. das Flores, 456',
+          cidade: 'São Paulo',
+          estado: 'SP',
+          cep: '02345-678',
+          telefone: '(11) 2345-6789',
+          email: 'sindico@parkview.com.br',
+          ativo: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+      
+      setCondominios(dadosMock);
     } catch (error) {
       console.error('Erro ao carregar condomínios:', error);
       toast({
