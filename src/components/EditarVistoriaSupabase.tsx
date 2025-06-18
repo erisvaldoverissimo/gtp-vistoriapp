@@ -49,11 +49,6 @@ const EditarVistoriaSupabase = ({ vistoriaId, onPreview, onBack }: EditarVistori
     }
   };
 
-  const handleFotosExistentesChange = () => {
-    // Recarregar dados da vistoria quando fotos existentes forem alteradas
-    carregarVistoria();
-  };
-
   if (loading || loadingCondominios) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -119,7 +114,6 @@ const EditarVistoriaSupabase = ({ vistoriaId, onPreview, onBack }: EditarVistori
           onGrupoChange={handleGrupoChange}
           onRemoverGrupo={removerGrupo}
           onFotosChange={handleFotosChange}
-          onFotosExistentesChange={handleFotosExistentesChange}
         />
       ))}
 

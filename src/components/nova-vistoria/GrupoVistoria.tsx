@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
 import { GrupoVistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 import UploadFotos from '@/components/UploadFotos';
-import FotosVistoriaEditavel from '@/components/visualizar-vistoria/FotosVistoriaEditavel';
 
 interface GrupoVistoriaProps {
   grupo: GrupoVistoriaSupabase;
@@ -149,20 +148,12 @@ const GrupoVistoria = ({
         {/* Upload de Fotos */}
         <div className="space-y-2">
           <Label>Fotos do Grupo</Label>
-          {isEditing && grupo.fotos && grupo.fotos.length > 0 ? (
-            <FotosVistoriaEditavel
-              fotos={grupo.fotos}
-              grupoNome={`${grupo.ambiente} - ${grupo.grupo}`}
-              onFotosChange={onFotosExistentesChange}
-            />
-          ) : (
-            <UploadFotos
-              onFotosChange={(fotos, fotosComDescricao) => onFotosChange(index, fotos, fotosComDescricao)}
-              maxFotos={10}
-              grupoId={grupo.id}
-              fotosExistentes={grupo.fotos || []}
-            />
-          )}
+          <UploadFotos
+            onFotosChange={(fotos, fotosComDescricao) => onFotosChange(index, fotos, fotosComDescricao)}
+            maxFotos={10}
+            grupoId={grupo.id}
+            fotosExistentes={grupo.fotos || []}
+          />
         </div>
       </CardContent>
     </Card>
