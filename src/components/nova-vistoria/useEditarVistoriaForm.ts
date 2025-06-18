@@ -33,6 +33,7 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [grupoFotos, setGrupoFotos] = useState<{ [key: number]: FotoUpload[] }>({});
+  const [gruposOriginais, setGruposOriginais] = useState<GrupoVistoriaSupabase[]>([]);
 
   // Carregar dados da vistoria
   useEffect(() => {
@@ -61,6 +62,18 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
         console.log('Vistoria carregada:', vistoriaData);
 
         // Formatar dados para o formulário
+        const grupos = (vistoriaData.grupos_vistoria || []).map(grupo => ({
+          id: grupo.id,
+          vistoria_id: grupo.vistoria_id,
+          ambiente: grupo.ambiente,
+          grupo: grupo.grupo,
+          item: grupo.item,
+          status: grupo.status,
+          parecer: grupo.parecer || '',
+          ordem: grupo.ordem || 0,
+          fotos: grupo.fotos_vistoria || []
+        }));
+
         const vistoriaFormatada: VistoriaSupabase = {
           id: vistoriaData.id,
           condominio_id: vistoriaData.condominio_id,
@@ -74,20 +87,11 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
           created_at: vistoriaData.created_at,
           updated_at: vistoriaData.updated_at,
           condominio: Array.isArray(vistoriaData.condominio) ? vistoriaData.condominio[0] : vistoriaData.condominio,
-          grupos: (vistoriaData.grupos_vistoria || []).map(grupo => ({
-            id: grupo.id,
-            vistoria_id: grupo.vistoria_id,
-            ambiente: grupo.ambiente,
-            grupo: grupo.grupo,
-            item: grupo.item,
-            status: grupo.status,
-            parecer: grupo.parecer || '',
-            ordem: grupo.ordem || 0,
-            fotos: grupo.fotos_vistoria || []
-          }))
+          grupos: grupos
         };
 
         setFormData(vistoriaFormatada);
+        setGruposOriginais(grupos);
       } catch (error) {
         console.error('Erro ao carregar vistoria:', error);
         toast({
@@ -217,47 +221,74 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
         throw vistoriaError;
       }
 
-      // Deletar grupos existentes
-      const { error: deleteGruposError } = await supabase
-        .from('grupos_vistoria')
-        .delete()
-        .eq('vistoria_id', vistoriaId);
-
-      if (deleteGruposError) {
-        throw deleteGruposError;
-      }
-
-      // Inserir grupos atualizados
+      // Atualizar ou criar grupos
       if (grupos && grupos.length > 0) {
-        const gruposParaSalvar = grupos.map(grupo => ({
-          vistoria_id: vistoriaId,
-          ambiente: grupo.ambiente,
-          grupo: grupo.grupo,
-          item: grupo.item,
-          status: grupo.status,
-          parecer: grupo.parecer || '',
-          ordem: grupo.ordem || 0
-        }));
+        for (let i = 0; i < grupos.length; i++) {
+          const grupo = grupos[i];
+          const grupoOriginal = gruposOriginais[i];
+          
+          let grupoId = grupo.id;
 
-        const { data: gruposData, error: gruposError } = await supabase
-          .from('grupos_vistoria')
-          .insert(gruposParaSalvar)
-          .select();
+          if (grupoOriginal && grupoOriginal.id) {
+            // Atualizar grupo existente
+            const { error: updateError } = await supabase
+              .from('grupos_vistoria')
+              .update({
+                ambiente: grupo.ambiente,
+                grupo: grupo.grupo,
+                item: grupo.item,
+                status: grupo.status,
+                parecer: grupo.parecer || '',
+                ordem: i
+              })
+              .eq('id', grupoOriginal.id);
 
-        if (gruposError) {
-          throw gruposError;
+            if (updateError) {
+              throw updateError;
+            }
+            grupoId = grupoOriginal.id;
+          } else {
+            // Criar novo grupo
+            const { data: novoGrupo, error: createError } = await supabase
+              .from('grupos_vistoria')
+              .insert({
+                vistoria_id: vistoriaId,
+                ambiente: grupo.ambiente,
+                grupo: grupo.grupo,
+                item: grupo.item,
+                status: grupo.status,
+                parecer: grupo.parecer || '',
+                ordem: i
+              })
+              .select()
+              .single();
+
+            if (createError) {
+              throw createError;
+            }
+            grupoId = novoGrupo.id;
+          }
+
+          // Upload das novas fotos para este grupo
+          const novasFotos = grupoFotos[i];
+          if (novasFotos && novasFotos.length > 0) {
+            console.log(`Fazendo upload de ${novasFotos.length} novas fotos para grupo ${grupoId}`);
+            await uploadFotos(grupoId, novasFotos);
+          }
         }
 
-        // Upload das novas fotos para cada grupo
-        const totalFotos = Object.values(grupoFotos).reduce((total, fotos) => total + fotos.length, 0);
-        
-        if (totalFotos > 0) {
-          for (const [grupoIndex, fotos] of Object.entries(grupoFotos)) {
-            if (fotos.length > 0) {
-              const grupoSalvo = gruposData.find(g => g.ordem === parseInt(grupoIndex));
-              if (grupoSalvo) {
-                console.log(`Fazendo upload de ${fotos.length} fotos para grupo ${grupoSalvo.id}`);
-                await uploadFotos(grupoSalvo.id, fotos);
+        // Remover grupos que foram deletados (se houver menos grupos agora)
+        if (gruposOriginais.length > grupos.length) {
+          const gruposParaRemover = gruposOriginais.slice(grupos.length);
+          for (const grupoRemover of gruposParaRemover) {
+            if (grupoRemover.id) {
+              const { error: deleteError } = await supabase
+                .from('grupos_vistoria')
+                .delete()
+                .eq('id', grupoRemover.id);
+
+              if (deleteError) {
+                console.error('Erro ao remover grupo:', deleteError);
               }
             }
           }
@@ -284,7 +315,7 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
     } finally {
       setSaving(false);
     }
-  }, [formData, grupoFotos, vistoriaId, uploadFotos, onBack, toast, recarregar]);
+  }, [formData, grupoFotos, gruposOriginais, vistoriaId, uploadFotos, onBack, toast, recarregar]);
 
   const handlePreview = useCallback(() => {
     if (!formData.condominio_id) {
