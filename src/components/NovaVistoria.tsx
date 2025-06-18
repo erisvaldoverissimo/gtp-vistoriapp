@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import UploadFotos from './UploadFotos';
 import { Condominio } from '@/hooks/useCondominios';
 import { useUsuarios } from '@/hooks/useUsuarios';
+import { useAmbientesGrupos } from '@/hooks/useAmbientesGrupos';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface FotoComDescricao extends File {
@@ -48,6 +49,7 @@ interface NovaVistoriaProps {
 const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarNumero, initialData }: NovaVistoriaProps) => {
   const { toast } = useToast();
   const { obterUsuariosAtivos } = useUsuarios();
+  const { obterAmbientesPorCondominio, obterGruposPorCondominio } = useAmbientesGrupos();
   const usuariosAtivos = obterUsuariosAtivos();
   
   const [formData, setFormData] = useState<VistoriaData>({
@@ -76,15 +78,10 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
     }
   }, [initialData]);
 
-  const ambientes = ['Térreo', '1º Andar', '2º Andar', '3º Andar', 'Subsolo', 'Cobertura', 'Área Externa'];
-  const grupos = [
-    'Inspeção Predial (PMUO) [ABNT NBR 5674]',
-    'Estrutural',
-    'Instalações Elétricas',
-    'Instalações Hidráulicas',
-    'Vedações',
-    'Cobertura'
-  ];
+  // Obter ambientes e grupos baseados no condomínio selecionado
+  const ambientesDisponiveis = obterAmbientesPorCondominio(formData.condominioId);
+  const gruposDisponiveis = obterGruposPorCondominio(formData.condominioId);
+
   const statusOptions = ['N/A', 'Conforme', 'Não Conforme', 'Requer Atenção'];
 
   const handleInputChange = (field: keyof VistoriaData, value: string) => {
@@ -356,9 +353,9 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
                     <SelectValue placeholder="Selecione o ambiente" />
                   </SelectTrigger>
                   <SelectContent>
-                    {ambientes.map((ambiente) => (
-                      <SelectItem key={ambiente} value={ambiente}>
-                        {ambiente}
+                    {ambientesDisponiveis.map((ambiente) => (
+                      <SelectItem key={ambiente.id} value={ambiente.nome}>
+                        {ambiente.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -375,9 +372,9 @@ const NovaVistoria = ({ onPreview, condominios, obterProximoNumero, incrementarN
                     <SelectValue placeholder="Selecione o grupo" />
                   </SelectTrigger>
                   <SelectContent>
-                    {grupos.map((grupoOpcao) => (
-                      <SelectItem key={grupoOpcao} value={grupoOpcao}>
-                        {grupoOpcao}
+                    {gruposDisponiveis.map((grupoOpcao) => (
+                      <SelectItem key={grupoOpcao.id} value={grupoOpcao.nome}>
+                        {grupoOpcao.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import NovaVistoria from '@/components/NovaVistoria';
@@ -5,6 +6,7 @@ import ListaVistorias from '@/components/ListaVistorias';
 import PreviewPDF from '@/components/PreviewPDF';
 import Configuracoes from '@/components/Configuracoes';
 import GerenciarCondominios from '@/components/GerenciarCondominios';
+import GerenciarAmbientesGrupos from '@/components/GerenciarAmbientesGrupos';
 import ChatIA from '@/components/ChatIA';
 import GerenciarUsuarios from '@/components/GerenciarUsuarios';
 import { useCondominios } from '@/hooks/useCondominios';
@@ -88,6 +90,12 @@ const Index = () => {
           <GerenciarCondominios 
             condominios={condominios}
             onCondominiosChange={atualizarCondominios}
+          />
+        );
+      case 'ambientes-grupos':
+        return (
+          <GerenciarAmbientesGrupos 
+            condominios={condominios}
           />
         );
       case 'chat-ia':
