@@ -24,40 +24,21 @@ export const useCondominiosSupabase = () => {
 
   const carregarCondominios = async () => {
     try {
-      // Por enquanto, usar dados mockados já que as tabelas ainda não estão disponíveis
-      console.log('Usando dados mock enquanto as tabelas não estão disponíveis');
+      console.log('Carregando condomínios do Supabase...');
       
-      // Dados mockados temporários
-      const dadosMock: CondominioSupabase[] = [
-        {
-          id: '1',
-          nome: 'Condomínio Edifício Artur Ramos',
-          endereco: 'Rua Artur Ramos, 123',
-          cidade: 'São Paulo',
-          estado: 'SP',
-          cep: '01234-567',
-          telefone: '(11) 1234-5678',
-          email: 'contato@arthur.com.br',
-          ativo: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          nome: 'Residencial Park View',
-          endereco: 'Av. das Flores, 456',
-          cidade: 'São Paulo',
-          estado: 'SP',
-          cep: '02345-678',
-          telefone: '(11) 2345-6789',
-          email: 'sindico@parkview.com.br',
-          ativo: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
-      
-      setCondominios(dadosMock);
+      const { data, error } = await supabase
+        .from('condominios')
+        .select('*')
+        .eq('ativo', true)
+        .order('nome');
+
+      if (error) {
+        console.error('Erro ao carregar condomínios:', error);
+        throw error;
+      }
+
+      console.log('Condomínios carregados:', data);
+      setCondominios(data || []);
     } catch (error) {
       console.error('Erro ao carregar condomínios:', error);
       toast({
@@ -76,23 +57,28 @@ export const useCondominiosSupabase = () => {
 
   const adicionarCondominio = async (dadosCondominio: Omit<CondominioSupabase, 'id' | 'created_at' | 'updated_at' | 'ativo'>) => {
     try {
-      // Por enquanto, simular adição com dados locais
-      const novoCondominio: CondominioSupabase = {
-        ...dadosCondominio,
-        id: Date.now().toString(),
-        ativo: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      console.log('Adicionando condomínio:', dadosCondominio);
       
-      setCondominios(prev => [...prev, novoCondominio]);
+      const { data, error } = await supabase
+        .from('condominios')
+        .insert([dadosCondominio])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao adicionar condomínio:', error);
+        throw error;
+      }
+
+      console.log('Condomínio adicionado:', data);
+      setCondominios(prev => [...prev, data]);
       
       toast({
         title: "Sucesso",
         description: "Condomínio adicionado com sucesso.",
       });
 
-      return novoCondominio;
+      return data;
     } catch (error) {
       console.error('Erro ao adicionar condomínio:', error);
       toast({
@@ -106,12 +92,23 @@ export const useCondominiosSupabase = () => {
 
   const atualizarCondominio = async (id: string, dadosAtualizados: Partial<CondominioSupabase>) => {
     try {
+      console.log('Atualizando condomínio:', id, dadosAtualizados);
+      
+      const { data, error } = await supabase
+        .from('condominios')
+        .update(dadosAtualizados)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar condomínio:', error);
+        throw error;
+      }
+
+      console.log('Condomínio atualizado:', data);
       setCondominios(prev => 
-        prev.map(cond => 
-          cond.id === id 
-            ? { ...cond, ...dadosAtualizados, updated_at: new Date().toISOString() }
-            : cond
-        )
+        prev.map(cond => cond.id === id ? data : cond)
       );
       
       toast({
@@ -130,13 +127,20 @@ export const useCondominiosSupabase = () => {
 
   const removerCondominio = async (id: string) => {
     try {
-      setCondominios(prev => 
-        prev.map(cond => 
-          cond.id === id 
-            ? { ...cond, ativo: false, updated_at: new Date().toISOString() }
-            : cond
-        ).filter(cond => cond.ativo)
-      );
+      console.log('Removendo condomínio:', id);
+      
+      const { error } = await supabase
+        .from('condominios')
+        .update({ ativo: false })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Erro ao remover condomínio:', error);
+        throw error;
+      }
+
+      console.log('Condomínio removido:', id);
+      setCondominios(prev => prev.filter(cond => cond.id !== id));
       
       toast({
         title: "Sucesso",

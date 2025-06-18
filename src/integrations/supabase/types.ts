@@ -9,6 +9,136 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      condominios: {
+        Row: {
+          ativo: boolean | null
+          cep: string | null
+          cidade: string | null
+          created_at: string | null
+          email: string | null
+          endereco: string
+          estado: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string | null
+          email?: string | null
+          endereco: string
+          estado?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string | null
+          email?: string | null
+          endereco?: string
+          estado?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      fotos_vistoria: {
+        Row: {
+          arquivo_nome: string
+          arquivo_url: string
+          created_at: string | null
+          descricao: string | null
+          grupo_vistoria_id: string
+          id: string
+          tamanho_bytes: number | null
+          tipo_mime: string | null
+        }
+        Insert: {
+          arquivo_nome: string
+          arquivo_url: string
+          created_at?: string | null
+          descricao?: string | null
+          grupo_vistoria_id: string
+          id?: string
+          tamanho_bytes?: number | null
+          tipo_mime?: string | null
+        }
+        Update: {
+          arquivo_nome?: string
+          arquivo_url?: string
+          created_at?: string | null
+          descricao?: string | null
+          grupo_vistoria_id?: string
+          id?: string
+          tamanho_bytes?: number | null
+          tipo_mime?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fotos_vistoria_grupo_vistoria_id_fkey"
+            columns: ["grupo_vistoria_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_vistoria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grupos_vistoria: {
+        Row: {
+          ambiente: string
+          created_at: string | null
+          grupo: string
+          id: string
+          item: string
+          ordem: number | null
+          parecer: string | null
+          status: string
+          updated_at: string | null
+          vistoria_id: string
+        }
+        Insert: {
+          ambiente: string
+          created_at?: string | null
+          grupo: string
+          id?: string
+          item: string
+          ordem?: number | null
+          parecer?: string | null
+          status: string
+          updated_at?: string | null
+          vistoria_id: string
+        }
+        Update: {
+          ambiente?: string
+          created_at?: string | null
+          grupo?: string
+          id?: string
+          item?: string
+          ordem?: number | null
+          parecer?: string | null
+          status?: string
+          updated_at?: string | null
+          vistoria_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupos_vistoria_vistoria_id_fkey"
+            columns: ["vistoria_id"]
+            isOneToOne: false
+            referencedRelation: "vistorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ativo: boolean | null
@@ -41,6 +171,56 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      vistorias: {
+        Row: {
+          condominio_id: string
+          created_at: string | null
+          data_vistoria: string
+          id: string
+          id_sequencial: number
+          numero_interno: string
+          observacoes_gerais: string | null
+          responsavel: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          condominio_id: string
+          created_at?: string | null
+          data_vistoria: string
+          id?: string
+          id_sequencial: number
+          numero_interno: string
+          observacoes_gerais?: string | null
+          responsavel: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          condominio_id?: string
+          created_at?: string | null
+          data_vistoria?: string
+          id?: string
+          id_sequencial?: number
+          numero_interno?: string
+          observacoes_gerais?: string | null
+          responsavel?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vistorias_condominio_id_fkey"
+            columns: ["condominio_id"]
+            isOneToOne: false
+            referencedRelation: "condominios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
