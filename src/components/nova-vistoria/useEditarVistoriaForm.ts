@@ -350,6 +350,7 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
     removerGrupo,
     handleFotosChange,
     handleSave,
-    handlePreview
+    handlePreview,
+    carregarVistoria
   };
 };

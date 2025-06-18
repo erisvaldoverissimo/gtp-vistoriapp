@@ -34,7 +34,8 @@ const EditarVistoriaSupabase = ({ vistoriaId, onPreview, onBack }: EditarVistori
     removerGrupo,
     handleFotosChange,
     handleSave,
-    handlePreview
+    handlePreview,
+    carregarVistoria
   } = useEditarVistoriaForm(vistoriaId, onBack);
 
   // Obter ambientes e grupos baseados no condomínio selecionado
@@ -46,6 +47,11 @@ const EditarVistoriaSupabase = ({ vistoriaId, onPreview, onBack }: EditarVistori
     if (handlePreview() && onPreview) {
       onPreview(formData);
     }
+  };
+
+  const handleFotosExistentesChange = () => {
+    // Recarregar dados da vistoria quando fotos existentes forem alteradas
+    carregarVistoria();
   };
 
   if (loading || loadingCondominios) {
@@ -109,9 +115,11 @@ const EditarVistoriaSupabase = ({ vistoriaId, onPreview, onBack }: EditarVistori
           gruposDisponiveis={gruposDisponiveis}
           statusOptions={statusOptions}
           canRemove={formData.grupos.length > 1}
+          isEditing={true}
           onGrupoChange={handleGrupoChange}
           onRemoverGrupo={removerGrupo}
           onFotosChange={handleFotosChange}
+          onFotosExistentesChange={handleFotosExistentesChange}
         />
       ))}
 

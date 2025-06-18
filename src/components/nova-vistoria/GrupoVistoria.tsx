@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Trash2 } from 'lucide-react';
 import { GrupoVistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 import UploadFotos from '../UploadFotos';
+import FotosVistoriaEditavel from '../visualizar-vistoria/FotosVistoriaEditavel';
 
 interface GrupoVistoriaProps {
   grupo: GrupoVistoriaSupabase;
@@ -16,9 +17,11 @@ interface GrupoVistoriaProps {
   gruposDisponiveis: string[];
   statusOptions: string[];
   canRemove: boolean;
+  isEditing?: boolean;
   onGrupoChange: (index: number, field: keyof GrupoVistoriaSupabase, value: string) => void;
   onRemoverGrupo: (index: number) => void;
   onFotosChange: (grupoIndex: number, fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => void;
+  onFotosExistentesChange?: () => void;
 }
 
 const GrupoVistoria = ({
@@ -28,9 +31,11 @@ const GrupoVistoria = ({
   gruposDisponiveis,
   statusOptions,
   canRemove,
+  isEditing = false,
   onGrupoChange,
   onRemoverGrupo,
-  onFotosChange
+  onFotosChange,
+  onFotosExistentesChange
 }: GrupoVistoriaProps) => {
   return (
     <Card>
@@ -155,15 +160,30 @@ const GrupoVistoria = ({
           </div>
         </div>
 
-        {/* Upload de Fotos */}
-        <div>
-          <Label>Fotos do Grupo</Label>
-          <UploadFotos
-            onFotosChange={(fotos, fotosComDescricao) => onFotosChange(index, fotos, fotosComDescricao)}
-            maxFotos={10}
-            grupoId={`grupo-${index}`}
-            fotosExistentes={grupo.fotos || []}
-          />
+        {/* Fotos */}
+        <div className="space-y-4">
+          {/* Fotos existentes (apenas em modo de edição) */}
+          {isEditing && grupo.fotos && grupo.fotos.length > 0 && (
+            <div>
+              <Label>Fotos Existentes</Label>
+              <FotosVistoriaEditavel
+                fotos={grupo.fotos}
+                grupoNome={`${grupo.ambiente} - ${grupo.grupo}`}
+                onFotosChange={onFotosExistentesChange}
+              />
+            </div>
+          )}
+
+          {/* Upload de novas fotos */}
+          <div>
+            <Label>{isEditing ? 'Adicionar Novas Fotos' : 'Fotos do Grupo'}</Label>
+            <UploadFotos
+              onFotosChange={(fotos, fotosComDescricao) => onFotosChange(index, fotos, fotosComDescricao)}
+              maxFotos={10}
+              grupoId={`grupo-${index}`}
+              fotosExistentes={isEditing ? [] : (grupo.fotos || [])}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
