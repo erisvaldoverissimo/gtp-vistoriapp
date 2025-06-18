@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,6 +56,7 @@ const PreviewPDFSupabase = ({ vistoria, onBack }: PreviewPDFSupabaseProps) => {
             src="/lovable-uploads/9e07dcd0-b996-4996-9028-7daeb90e3140.png" 
             alt="Logo GTP Esquerda" 
             className="w-20 h-20 object-contain"
+            crossOrigin="anonymous"
           />
         </div>
         <div className="text-center">
@@ -68,6 +68,7 @@ const PreviewPDFSupabase = ({ vistoria, onBack }: PreviewPDFSupabaseProps) => {
             src="/lovable-uploads/bfe02df4-f545-4232-ad0a-e69690083a38.png" 
             alt="Logo GTP Direita" 
             className="w-20 h-20 object-contain"
+            crossOrigin="anonymous"
           />
         </div>
       </div>
@@ -184,6 +185,9 @@ const PreviewPDFSupabase = ({ vistoria, onBack }: PreviewPDFSupabaseProps) => {
           alt={`Foto ${numeroFoto} - Sistema ${grupoIndex + 1}`}
           className="w-full aspect-square object-cover rounded mb-2"
           crossOrigin="anonymous"
+          loading="eager"
+          onLoad={() => console.log(`Imagem carregada: ${foto.arquivo_url}`)}
+          onError={(e) => console.error(`Erro ao carregar imagem: ${foto.arquivo_url}`, e)}
         />
         <div>
           <p className="text-xs font-medium mb-1">
