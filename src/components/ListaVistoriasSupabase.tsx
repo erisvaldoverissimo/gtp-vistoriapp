@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Eye, Download, Calendar, Building, FileText, Loader2, Plus } from 'lucide-react';
 import { useVistoriasSupabase } from '@/hooks/useVistoriasSupabase';
 import { useIsMobile } from '@/hooks/use-mobile';
+import DetalhesVistoria from '@/components/visualizar-vistoria/DetalhesVistoria';
 
 interface ListaVistoriasSupabaseProps {
   onNovaVistoria?: () => void;
@@ -14,6 +15,7 @@ interface ListaVistoriasSupabaseProps {
 
 const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [vistoriaSelecionada, setVistoriaSelecionada] = useState<string | null>(null);
   const { vistorias, loading } = useVistoriasSupabase();
   const isMobile = useIsMobile();
 
@@ -42,6 +44,22 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const handleVisualizarVistoria = (vistoriaId: string) => {
+    setVistoriaSelecionada(vistoriaId);
+  };
+
+  const handleVoltarLista = () => {
+    setVistoriaSelecionada(null);
+  };
+
+  // Se uma vistoria está selecionada, mostrar os detalhes
+  if (vistoriaSelecionada) {
+    const vistoria = vistorias.find(v => v.id === vistoriaSelecionada);
+    if (vistoria) {
+      return <DetalhesVistoria vistoria={vistoria} onBack={handleVoltarLista} />;
+    }
+  }
 
   if (loading) {
     return (
@@ -187,7 +205,12 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
                   </div>
                   
                   <div className={`flex space-x-2 ${isMobile ? 'w-full' : 'ml-4'}`}>
-                    <Button variant="outline" size="sm" className={isMobile ? 'flex-1' : ''}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={isMobile ? 'flex-1' : ''}
+                      onClick={() => handleVisualizarVistoria(vistoria.id!)}
+                    >
                       <Eye size={16} className={isMobile ? '' : 'mr-2'} />
                       {!isMobile && 'Visualizar'}
                     </Button>

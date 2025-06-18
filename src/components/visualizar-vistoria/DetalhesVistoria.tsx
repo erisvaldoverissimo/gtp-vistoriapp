@@ -1,0 +1,161 @@
+
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, Download, Calendar, Building, User, FileText } from 'lucide-react';
+import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
+import FotosVistoria from './FotosVistoria';
+
+interface DetalhesVistoriaProps {
+  vistoria: VistoriaSupabase;
+  onBack: () => void;
+}
+
+const DetalhesVistoria = ({ vistoria, onBack }: DetalhesVistoriaProps) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Conforme':
+        return 'bg-green-100 text-green-800';
+      case 'Não Conforme':
+        return 'bg-red-100 text-red-800';
+      case 'Requer Atenção':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Em Andamento':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft size={16} className="mr-2" />
+            Voltar
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {vistoria.condominio?.nome}
+            </h1>
+            <p className="text-gray-600">Vistoria #{vistoria.numero_interno}</p>
+          </div>
+        </div>
+        <Button variant="outline">
+          <Download size={16} className="mr-2" />
+          Gerar PDF
+        </Button>
+      </div>
+
+      {/* Informações Básicas */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <FileText className="mr-2" size={20} />
+            Informações Básicas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="flex items-center space-x-3">
+              <Calendar className="text-teal-600" size={20} />
+              <div>
+                <p className="text-sm font-medium text-gray-600">Data da Vistoria</p>
+                <p className="text-gray-900">{formatDate(vistoria.data_vistoria)}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <User className="text-teal-600" size={20} />
+              <div>
+                <p className="text-sm font-medium text-gray-600">Responsável</p>
+                <p className="text-gray-900">{vistoria.responsavel}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <Building className="text-teal-600" size={20} />
+              <div>
+                <p className="text-sm font-medium text-gray-600">ID Sequencial</p>
+                <p className="text-gray-900">{vistoria.id_sequencial}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Status</p>
+                <Badge className={getStatusColor(vistoria.status)}>
+                  {vistoria.status}
+                </Badge>
+              </div>
+            </div>
+          </div>
+          
+          {vistoria.observacoes_gerais && (
+            <div className="mt-6">
+              <h4 className="font-medium text-gray-900 mb-2">Observações Gerais</h4>
+              <p className="text-gray-700 bg-gray-50 p-3 rounded">
+                {vistoria.observacoes_gerais}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Grupos de Vistoria */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-gray-900">
+          Grupos de Vistoria ({vistoria.grupos.length})
+        </h2>
+        
+        {vistoria.grupos.map((grupo, index) => (
+          <Card key={grupo.id || index}>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Grupo {index + 1}: {grupo.ambiente} - {grupo.grupo}</span>
+                <Badge className={getStatusColor(grupo.status)}>
+                  {grupo.status}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Item</p>
+                  <p className="text-gray-900">{grupo.item}</p>
+                </div>
+              </div>
+              
+              {grupo.parecer && (
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-2">Parecer Técnico</p>
+                  <p className="text-gray-700 bg-gray-50 p-3 rounded">
+                    {grupo.parecer}
+                  </p>
+                </div>
+              )}
+              
+              <Separator />
+              
+              <FotosVistoria 
+                fotos={grupo.fotos || []} 
+                grupoNome={`${grupo.ambiente} - ${grupo.grupo}`}
+              />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default DetalhesVistoria;
