@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -263,7 +264,6 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           onError={(e) => {
             console.error(`Erro ao carregar imagem: ${foto.arquivo_url}`, e);
             e.currentTarget.setAttribute('data-error', 'true');
-            // Tentar carregar novamente após um delay
             setTimeout(() => {
               if (!e.currentTarget.getAttribute('data-loaded')) {
                 e.currentTarget.src = foto.arquivo_url + '?t=' + Date.now();
@@ -313,7 +313,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
             let currentPageNumber = 0;
             
             return vistoria.grupos.map((grupo, grupoIndex) => (
-              <React.Fragment key={grupo.id}>
+              <div key={grupo.id}>
                 {(grupo.fotos || []).map((foto, idx) => {
                   const isFirstOfPair = idx % 2 === 0;
                   const isLastOfPair = idx % 2 === 1 || idx === (grupo.fotos || []).length - 1;
@@ -323,7 +323,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                   }
 
                   return (
-                    <React.Fragment key={idx}>
+                    <div key={`${grupo.id}-${idx}`}>
                       {isFirstOfPair && (
                         <div className="page flex flex-col gap-3 min-h-screen">
                           {/* Cabeçalho + tabela só no idx === 0 */}
@@ -337,12 +337,12 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                               Evidências Fotográficas - Sistema {grupoIndex + 1}
                             </h4>
                           ) : (
-                            <>
+                            <div>
                               {renderCabecalho()}
                               <h4 className="text-sm font-semibold mb-3 text-brand-purple">
                                 Evidências Fotográficas - Sistema {grupoIndex + 1} (Continuação)
                               </h4>
-                            </>
+                            </div>
                           )}
                           
                           <div className="flex gap-4 mb-4 flex-1">
@@ -356,10 +356,10 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                           {renderRodape(currentPageNumber)}
                         </div>
                       )}
-                    </React.Fragment>
+                    </div>
                   );
                 })}
-              </React.Fragment>
+              </div>
             ));
           })()}
         </div>
