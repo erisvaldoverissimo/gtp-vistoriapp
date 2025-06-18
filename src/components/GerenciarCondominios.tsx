@@ -5,72 +5,49 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, Edit, Trash2, Building } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-
-interface Condominio {
-  id: string;
-  nome: string;
-  endereco: string;
-  responsavel: string;
-  telefone: string;
-  dataCadastro: string;
-  proximoNumero: number;
-}
+import { useCondominiosSupabase, CondominioSupabase } from '@/hooks/useCondominiosSupabase';
 
 interface GerenciarCondominiosProps {
-  condominios: Condominio[];
-  onCondominiosChange: (condominios: Condominio[]) => void;
+  condominios: CondominioSupabase[];
+  onCondominiosChange: (condominios: CondominioSupabase[]) => void;
 }
 
-const GerenciarCondominios = ({ condominios, onCondominiosChange }: GerenciarCondominiosProps) => {
-  const { toast } = useToast();
+const GerenciarCondominios = ({ condominios: propCondominios, onCondominiosChange }: GerenciarCondominiosProps) => {
+  const { condominios, adicionarCondominio, removerCondominio } = useCondominiosSupabase();
   const [editando, setEditando] = useState<string | null>(null);
   const [novoCondominio, setNovoCondominio] = useState({
     nome: '',
     endereco: '',
-    responsavel: '',
-    telefone: ''
+    cidade: '',
+    estado: 'SP',
+    cep: '',
+    telefone: '',
+    email: ''
   });
 
-  const adicionarCondominio = () => {
+  const handleAdicionarCondominio = async () => {
     if (!novoCondominio.nome.trim()) {
-      toast({
-        title: "Nome Obrigatório",
-        description: "Por favor, informe o nome do condomínio.",
-        variant: "destructive",
-      });
       return;
     }
 
-    const condominio: Condominio = {
-      id: Date.now().toString(),
-      nome: novoCondominio.nome,
-      endereco: novoCondominio.endereco,
-      responsavel: novoCondominio.responsavel,
-      telefone: novoCondominio.telefone,
-      dataCadastro: new Date().toISOString(),
-      proximoNumero: 1
-    };
-
-    const novosCondominios = [...condominios, condominio];
-    onCondominiosChange(novosCondominios);
-    
-    setNovoCondominio({ nome: '', endereco: '', responsavel: '', telefone: '' });
-    
-    toast({
-      title: "Condomínio Cadastrado",
-      description: "Condomínio adicionado com sucesso.",
-    });
+    try {
+      await adicionarCondominio(novoCondominio);
+      setNovoCondominio({ 
+        nome: '', 
+        endereco: '', 
+        cidade: '', 
+        estado: 'SP', 
+        cep: '', 
+        telefone: '', 
+        email: '' 
+      });
+    } catch (error) {
+      // Erro já tratado no hook
+    }
   };
 
-  const removerCondominio = (id: string) => {
-    const novosCondominios = condominios.filter(c => c.id !== id);
-    onCondominiosChange(novosCondominios);
-    
-    toast({
-      title: "Condomínio Removido",
-      description: "Condomínio removido com sucesso.",
-    });
+  const handleRemoverCondominio = async (id: string) => {
+    await removerCondominio(id);
   };
 
   return (
@@ -110,12 +87,12 @@ const GerenciarCondominios = ({ condominios, onCondominiosChange }: GerenciarCon
             </div>
             
             <div>
-              <Label htmlFor="responsavel">Responsável/Síndico</Label>
+              <Label htmlFor="cidade">Cidade</Label>
               <Input
-                id="responsavel"
-                value={novoCondominio.responsavel}
-                onChange={(e) => setNovoCondominio(prev => ({ ...prev, responsavel: e.target.value }))}
-                placeholder="Nome do responsável"
+                id="cidade"
+                value={novoCondominio.cidade}
+                onChange={(e) => setNovoCondominio(prev => ({ ...prev, cidade: e.target.value }))}
+                placeholder="São Paulo"
               />
             </div>
             
@@ -130,7 +107,7 @@ const GerenciarCondominios = ({ condominios, onCondominiosChange }: GerenciarCon
             </div>
           </div>
           
-          <Button onClick={adicionarCondominio} className="bg-teal-600 hover:bg-teal-700">
+          <Button onClick={handleAdicionarCondominio} className="bg-teal-600 hover:bg-teal-700">
             <Plus size={18} className="mr-2" />
             Cadastrar Condomínio
           </Button>
@@ -165,9 +142,9 @@ const GerenciarCondominios = ({ condominios, onCondominiosChange }: GerenciarCon
                           <span className="font-medium">Endereço:</span> {condominio.endereco}
                         </div>
                       )}
-                      {condominio.responsavel && (
+                      {condominio.cidade && (
                         <div>
-                          <span className="font-medium">Responsável:</span> {condominio.responsavel}
+                          <span className="font-medium">Cidade:</span> {condominio.cidade}
                         </div>
                       )}
                       {condominio.telefone && (
@@ -175,10 +152,6 @@ const GerenciarCondominios = ({ condominios, onCondominiosChange }: GerenciarCon
                           <span className="font-medium">Telefone:</span> {condominio.telefone}
                         </div>
                       )}
-                    </div>
-                    
-                    <div className="mt-2 text-sm text-gray-500">
-                      <span className="font-medium">Próximo nº de vistoria:</span> {condominio.proximoNumero}
                     </div>
                   </div>
                   
@@ -190,7 +163,7 @@ const GerenciarCondominios = ({ condominios, onCondominiosChange }: GerenciarCon
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => removerCondominio(condominio.id)}
+                      onClick={() => handleRemoverCondominio(condominio.id)}
                     >
                       <Trash2 size={16} className="mr-2" />
                       Remover
