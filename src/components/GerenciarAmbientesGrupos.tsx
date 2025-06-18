@@ -9,6 +9,7 @@ import { Plus, Trash2, MapPin, Tag } from 'lucide-react';
 import { useAmbientesGrupos } from '@/hooks/useAmbientesGrupos';
 import { useToast } from '@/hooks/use-toast';
 import { Condominio } from '@/hooks/useCondominios';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface GerenciarAmbientesGruposProps {
   condominios: Condominio[];
@@ -16,6 +17,7 @@ interface GerenciarAmbientesGruposProps {
 
 const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps) => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const {
     ambientes,
     grupos,
@@ -96,22 +98,24 @@ const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-4 md:space-y-6 ${isMobile ? 'px-2' : ''}`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Gerenciar Ambientes e Grupos</h2>
+        <h2 className={`font-bold text-gray-900 ${isMobile ? 'text-xl' : 'text-2xl'}`}>
+          Gerenciar Ambientes e Grupos
+        </h2>
       </div>
 
       {/* Adicionar Ambiente */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <MapPin size={20} className="mr-2" />
+          <CardTitle className={`flex items-center ${isMobile ? 'text-lg' : ''}`}>
+            <MapPin size={isMobile ? 18 : 20} className="mr-2" />
             Adicionar Ambiente
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
+          <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`}>
+            <div className={isMobile ? '' : 'md:col-span-2'}>
               <Label htmlFor="nomeAmbiente">Nome do Ambiente *</Label>
               <Input
                 id="nomeAmbiente"
@@ -142,7 +146,7 @@ const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps
             </div>
           </div>
           
-          <Button onClick={handleAdicionarAmbiente} className="bg-teal-600 hover:bg-teal-700">
+          <Button onClick={handleAdicionarAmbiente} className="bg-teal-600 hover:bg-teal-700 w-full md:w-auto">
             <Plus size={18} className="mr-2" />
             Adicionar Ambiente
           </Button>
@@ -152,14 +156,14 @@ const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps
       {/* Adicionar Grupo */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Tag size={20} className="mr-2" />
+          <CardTitle className={`flex items-center ${isMobile ? 'text-lg' : ''}`}>
+            <Tag size={isMobile ? 18 : 20} className="mr-2" />
             Adicionar Grupo
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
+          <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`}>
+            <div className={isMobile ? '' : 'md:col-span-2'}>
               <Label htmlFor="nomeGrupo">Nome do Grupo *</Label>
               <Input
                 id="nomeGrupo"
@@ -190,7 +194,7 @@ const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps
             </div>
           </div>
           
-          <Button onClick={handleAdicionarGrupo} className="bg-teal-600 hover:bg-teal-700">
+          <Button onClick={handleAdicionarGrupo} className="bg-teal-600 hover:bg-teal-700 w-full md:w-auto">
             <Plus size={18} className="mr-2" />
             Adicionar Grupo
           </Button>
@@ -200,15 +204,17 @@ const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps
       {/* Lista de Ambientes */}
       <Card>
         <CardHeader>
-          <CardTitle>Ambientes Cadastrados ({ambientes.length})</CardTitle>
+          <CardTitle className={isMobile ? 'text-lg' : ''}>
+            Ambientes Cadastrados ({ambientes.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             {ambientes.map((ambiente) => (
-              <div key={ambiente.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <span className="font-medium">{ambiente.nome}</span>
-                  <span className="text-sm text-gray-500 ml-2">
+              <div key={ambiente.id} className={`flex items-center justify-between p-3 border rounded-lg ${isMobile ? 'flex-col items-start space-y-2' : ''}`}>
+                <div className={isMobile ? 'w-full' : ''}>
+                  <span className={`font-medium ${isMobile ? 'block' : ''}`}>{ambiente.nome}</span>
+                  <span className={`text-sm text-gray-500 ${isMobile ? 'block' : 'ml-2'}`}>
                     ({getCondominioNome(ambiente.condominioId)})
                   </span>
                 </div>
@@ -216,9 +222,11 @@ const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className={isMobile ? 'w-full' : ''}
                     onClick={() => handleRemoverAmbiente(ambiente.id)}
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={16} className={isMobile ? 'mr-2' : ''} />
+                    {isMobile && 'Remover'}
                   </Button>
                 )}
               </div>
@@ -230,15 +238,17 @@ const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps
       {/* Lista de Grupos */}
       <Card>
         <CardHeader>
-          <CardTitle>Grupos Cadastrados ({grupos.length})</CardTitle>
+          <CardTitle className={isMobile ? 'text-lg' : ''}>
+            Grupos Cadastrados ({grupos.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             {grupos.map((grupo) => (
-              <div key={grupo.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <span className="font-medium">{grupo.nome}</span>
-                  <span className="text-sm text-gray-500 ml-2">
+              <div key={grupo.id} className={`flex items-center justify-between p-3 border rounded-lg ${isMobile ? 'flex-col items-start space-y-2' : ''}`}>
+                <div className={isMobile ? 'w-full' : ''}>
+                  <span className={`font-medium ${isMobile ? 'block' : ''}`}>{grupo.nome}</span>
+                  <span className={`text-sm text-gray-500 ${isMobile ? 'block' : 'ml-2'}`}>
                     ({getCondominioNome(grupo.condominioId)})
                   </span>
                 </div>
@@ -246,9 +256,11 @@ const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className={isMobile ? 'w-full' : ''}
                     onClick={() => handleRemoverGrupo(grupo.id)}
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={16} className={isMobile ? 'mr-2' : ''} />
+                    {isMobile && 'Remover'}
                   </Button>
                 )}
               </div>
