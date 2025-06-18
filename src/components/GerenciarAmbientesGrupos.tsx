@@ -129,13 +129,13 @@ const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps
               <Label htmlFor="condominioAmbiente">Condomínio (Opcional)</Label>
               <Select 
                 value={novoAmbiente.condominioId} 
-                onValueChange={(value) => setNovoAmbiente(prev => ({ ...prev, condominioId: value }))}
+                onValueChange={(value) => setNovoAmbiente(prev => ({ ...prev, condominioId: value === 'geral' ? '' : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Geral para todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Geral para todos</SelectItem>
+                  <SelectItem value="geral">Geral para todos</SelectItem>
                   {condominios.map((condominio) => (
                     <SelectItem key={condominio.id} value={condominio.id}>
                       {condominio.nome}
@@ -177,13 +177,13 @@ const GerenciarAmbientesGrupos = ({ condominios }: GerenciarAmbientesGruposProps
               <Label htmlFor="condominioGrupo">Condomínio (Opcional)</Label>
               <Select 
                 value={novoGrupo.condominioId} 
-                onValueChange={(value) => setNovoGrupo(prev => ({ ...prev, condominioId: value }))}
+                onValueChange={(value) => setNovoGrupo(prev => ({ ...prev, condominioId: value === 'geral' ? '' : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Geral para todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Geral para todos</SelectItem>
+                  <SelectItem value="geral">Geral para todos</SelectItem>
                   {condominios.map((condominio) => (
                     <SelectItem key={condominio.id} value={condominio.id}>
                       {condominio.nome}
