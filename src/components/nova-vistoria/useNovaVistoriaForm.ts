@@ -9,7 +9,7 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
   const { toast } = useToast();
   const { condominios } = useCondominiosSupabase();
   const { salvarVistoria, obterProximoNumeroSequencial } = useVistoriasSupabase();
-  const { uploadFotos } = useFotosSupabase();
+  const { uploadFotos, uploading, uploadProgress } = useFotosSupabase();
 
   const [formData, setFormData] = useState<VistoriaSupabase>({
     condominio_id: '',
@@ -223,6 +223,8 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     formData,
     saving,
     grupoFotos,
+    uploading,
+    uploadProgress,
     handleInputChange,
     handleCondominioChange,
     handleGrupoChange,

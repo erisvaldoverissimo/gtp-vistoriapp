@@ -4,10 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DescricaoAutomatica from './DescricaoAutomatica';
+import FotoPreview from './upload/FotoPreview';
+import FotoModal from './upload/FotoModal';
+import UploadProgress from './upload/UploadProgress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useFotosSupabase } from '@/hooks/useFotosSupabase';
 
 interface FotoData {
   file: File;
@@ -23,7 +27,9 @@ interface UploadFotosProps {
 
 const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps) => {
   const { toast } = useToast();
+  const { uploading, uploadProgress } = useFotosSupabase();
   const [fotos, setFotos] = useState<FotoData[]>([]);
+  const [selectedFoto, setSelectedFoto] = useState<{ url: string; nome: string; descricao?: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_DESCRICAO_LENGTH = 200;
@@ -135,7 +141,42 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
     handleDescricaoChange(index, descricaoLimitada);
   };
 
+  const handlePreviewFoto = (foto: FotoData) => {
+    setSelectedFoto({
+      url: foto.preview,
+      nome: foto.file.name,
+      descricao: foto.descricao
+    });
+  };
+
   const fotosRestantes = maxFotos - fotos.length;
+
+  // Mostrar progresso de upload se estiver fazendo upload
+  if (uploading && uploadProgress) {
+    return (
+      <div className="space-y-4">
+        <UploadProgress progress={uploadProgress} />
+        
+        {/* Mostrar fotos já adicionadas em modo somente leitura */}
+        {fotos.length > 0 && (
+          <div className="opacity-50">
+            <h3 className="text-lg font-medium mb-4">Fotos Preparadas ({fotos.length})</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {fotos.map((foto, index) => (
+                <div key={index} className="aspect-square">
+                  <img
+                    src={foto.preview}
+                    alt={`Foto ${index + 1}`}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -169,32 +210,34 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
         />
       </div>
 
-      {/* Lista de Fotos */}
+      {/* Preview das Fotos */}
       {fotos.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Fotos Adicionadas ({fotos.length}/{maxFotos})</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h3 className="text-lg font-medium">Preview das Fotos ({fotos.length}/{maxFotos})</h3>
+          
+          {/* Grid de previews */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {fotos.map((foto, index) => (
+              <FotoPreview
+                key={index}
+                foto={foto}
+                index={index}
+                onRemove={() => handleRemoveFoto(index)}
+                onPreview={() => handlePreviewFoto(foto)}
+              />
+            ))}
+          </div>
+
+          {/* Descrições das fotos */}
+          <div className="space-y-4">
+            <h4 className="font-medium">Descrições das Fotos</h4>
             {fotos.map((foto, index) => (
               <Card key={index} className="p-4">
-                <div className="relative">
-                  <img
-                    src={foto.preview}
-                    alt={`Foto ${index + 1}`}
-                    className="w-full aspect-square object-cover rounded-lg"
-                  />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => handleRemoveFoto(index)}
-                  >
-                    <X size={16} />
-                  </Button>
-                </div>
-                
-                <div className="mt-3 space-y-2">
+                <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label htmlFor={`descricao-${index}`}>Descrição da Foto {index + 1}</Label>
+                    <Label htmlFor={`descricao-${index}`}>
+                      Descrição da Foto {index + 1} - {foto.file.name}
+                    </Label>
                     <span className={`text-xs ${foto.descricao.length > MAX_DESCRICAO_LENGTH ? 'text-red-500 font-semibold' : foto.descricao.length > MAX_DESCRICAO_LENGTH * 0.9 ? 'text-yellow-600' : 'text-gray-500'}`}>
                       {foto.descricao.length}/{MAX_DESCRICAO_LENGTH}
                     </span>
@@ -231,6 +274,17 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
           <p>Nenhuma foto adicionada ainda.</p>
           <p className="text-sm">Máximo {maxFotos} fotos por grupo de vistoria.</p>
         </div>
+      )}
+
+      {/* Modal de preview */}
+      {selectedFoto && (
+        <FotoModal
+          isOpen={!!selectedFoto}
+          onClose={() => setSelectedFoto(null)}
+          fotoUrl={selectedFoto.url}
+          fotoNome={selectedFoto.nome}
+          descricao={selectedFoto.descricao}
+        />
       )}
     </div>
   );

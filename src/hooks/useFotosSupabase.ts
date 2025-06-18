@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -18,8 +17,16 @@ export interface FotoSalva {
   tipo_mime: string;
 }
 
+export interface UploadProgress {
+  current: number;
+  total: number;
+  currentFileName: string;
+  percentage: number;
+}
+
 export const useFotosSupabase = () => {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -36,6 +43,13 @@ export const useFotosSupabase = () => {
     }
 
     setUploading(true);
+    setUploadProgress({
+      current: 0,
+      total: fotos.length,
+      currentFileName: '',
+      percentage: 0
+    });
+
     const fotosUploadadas: FotoSalva[] = [];
 
     try {
@@ -45,6 +59,14 @@ export const useFotosSupabase = () => {
         const foto = fotos[i];
         const timestamp = Date.now();
         const nomeArquivo = `${user.id}/${grupoVistoriaId}/${timestamp}_${i}_${foto.file.name}`;
+
+        // Atualizar progresso
+        setUploadProgress({
+          current: i + 1,
+          total: fotos.length,
+          currentFileName: foto.file.name,
+          percentage: Math.round(((i + 1) / fotos.length) * 100)
+        });
 
         console.log(`Uploading foto ${i + 1}:`, nomeArquivo);
 
@@ -117,6 +139,7 @@ export const useFotosSupabase = () => {
       throw error;
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -164,6 +187,7 @@ export const useFotosSupabase = () => {
   return {
     uploadFotos,
     removerFoto,
-    uploading
+    uploading,
+    uploadProgress
   };
 };
