@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import { useVistoriasSupabase, VistoriaSupabase, GrupoVistoriaSupabase } from '@
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useAmbientesGrupos } from '@/hooks/useAmbientesGrupos';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import UploadFotos from '@/components/UploadFotos';
 
 interface NovaVistoriaSupabaseProps {
   onPreview?: (data: VistoriaSupabase) => void;
@@ -46,6 +46,7 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
   });
 
   const [saving, setSaving] = useState(false);
+  const [grupoFotos, setGrupoFotos] = useState<{ [key: number]: File[] }>({});
 
   // Obter ambientes e grupos baseados no condomínio selecionado
   const ambientesDisponiveis = obterAmbientesPorCondominio(formData.condominio_id);
@@ -117,7 +118,20 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
         ...prev,
         grupos: prev.grupos.filter((_, index) => index !== grupoIndex)
       }));
+      // Remover fotos associadas ao grupo removido
+      setGrupoFotos(prev => {
+        const newFotos = { ...prev };
+        delete newFotos[grupoIndex];
+        return newFotos;
+      });
     }
+  };
+
+  const handleFotosChange = (grupoIndex: number, fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => {
+    setGrupoFotos(prev => ({
+      ...prev,
+      [grupoIndex]: fotos
+    }));
   };
 
   const handleSave = async () => {
@@ -161,6 +175,7 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
           ordem: 0
         }]
       });
+      setGrupoFotos({});
 
       if (onBack) {
         onBack();
@@ -425,6 +440,16 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Upload de Fotos */}
+            <div>
+              <Label>Fotos do Grupo {index + 1}</Label>
+              <UploadFotos
+                onFotosChange={(fotos, fotosComDescricao) => handleFotosChange(index, fotos, fotosComDescricao)}
+                maxFotos={10}
+                grupoId={`grupo-${index}`}
+              />
             </div>
           </CardContent>
         </Card>
