@@ -38,8 +38,8 @@ const EditarVistoriaSupabase = ({ vistoriaId, onPreview, onBack }: EditarVistori
   } = useEditarVistoriaForm(vistoriaId, onBack);
 
   // Obter ambientes e grupos baseados no condomínio selecionado
-  const ambientesDisponiveis = obterAmbientesPorCondominio(formData.condominio_id);
-  const gruposDisponiveis = obterGruposPorCondominio(formData.condominio_id);
+  const ambientesDisponiveis = obterAmbientesPorCondominio(formData.condominio_id).map(ambiente => ambiente.nome);
+  const gruposDisponiveis = obterGruposPorCondominio(formData.condominio_id).map(grupo => grupo.nome);
   const statusOptions = ['N/A', 'Conforme', 'Não Conforme', 'Requer Atenção'];
 
   const handlePreviewClick = () => {

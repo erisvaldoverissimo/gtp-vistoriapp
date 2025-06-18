@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Save, Eye, Plus } from 'lucide-react';
+import { Save, Eye, Plus, ArrowLeft } from 'lucide-react';
 import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
 import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 import { useUsuarios } from '@/hooks/useUsuarios';
@@ -36,8 +36,8 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
   } = useNovaVistoriaForm(onBack);
 
   // Obter ambientes e grupos baseados no condomínio selecionado
-  const ambientesDisponiveis = obterAmbientesPorCondominio(formData.condominio_id);
-  const gruposDisponiveis = obterGruposPorCondominio(formData.condominio_id);
+  const ambientesDisponiveis = obterAmbientesPorCondominio(formData.condominio_id).map(ambiente => ambiente.nome);
+  const gruposDisponiveis = obterGruposPorCondominio(formData.condominio_id).map(grupo => grupo.nome);
   const statusOptions = ['N/A', 'Conforme', 'Não Conforme', 'Requer Atenção'];
 
   const handlePreviewClick = () => {
@@ -51,7 +51,7 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
+          <p className="mt-4 text-gray-600">Carregando dados...</p>
         </div>
       </div>
     );
@@ -60,20 +60,21 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Nova Vistoria</h2>
+        <div className="flex items-center space-x-4">
+          <Button onClick={onBack} variant="outline">
+            <ArrowLeft size={16} className="mr-2" />
+            Voltar
+          </Button>
+          <h2 className="text-2xl font-bold text-gray-900">Nova Vistoria</h2>
+        </div>
         <div className="flex space-x-2">
-          {onBack && (
-            <Button onClick={onBack} variant="outline">
-              Voltar
-            </Button>
-          )}
           <Button 
             onClick={handleSave} 
             disabled={saving}
             className="bg-teal-600 hover:bg-teal-700"
           >
             <Save size={18} className="mr-2" />
-            {saving ? 'Salvando...' : 'Salvar'}
+            {saving ? 'Salvando...' : 'Salvar Vistoria'}
           </Button>
           {onPreview && (
             <Button onClick={handlePreviewClick} variant="outline">
