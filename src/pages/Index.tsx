@@ -58,7 +58,19 @@ const Index = () => {
           item: grupo.item,
           status: grupo.status,
           parecer: grupo.parecer,
-          fotos: grupo.fotos || []
+          // Converter FotoVistoriaSupabase para o formato File esperado pelo PreviewPDF
+          fotos: (grupo.fotos || []).map(foto => {
+            // Criar um File mock para compatibilidade com o PreviewPDF
+            const file = new File([''], foto.arquivo_nome, { 
+              type: foto.tipo_mime || 'image/jpeg'
+            });
+            // Adicionar propriedades customizadas
+            Object.defineProperty(file, 'descricao', {
+              value: foto.descricao || '',
+              writable: true
+            });
+            return file as File & { descricao?: string };
+          })
         }))
       };
 
