@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -119,7 +120,7 @@ const PreviewPDF = ({ data, onBack, onEdit }: PreviewPDFProps) => {
         <div className="flex items-center justify-center">
           <img 
             src="/lovable-uploads/9e07dcd0-b996-4996-9028-7daeb90e3140.png" 
-            alt="GTP Logo Left" 
+            alt="Logo GTP Esquerda" 
             className="w-20 h-20 object-contain"
           />
         </div>
@@ -130,7 +131,7 @@ const PreviewPDF = ({ data, onBack, onEdit }: PreviewPDFProps) => {
         <div className="flex items-center justify-center">
           <img 
             src="/lovable-uploads/bfe02df4-f545-4232-ad0a-e69690083a38.png" 
-            alt="GTP Logo Right" 
+            alt="Logo GTP Direita" 
             className="w-20 h-20 object-contain"
           />
         </div>
@@ -272,7 +273,7 @@ const PreviewPDF = ({ data, onBack, onEdit }: PreviewPDFProps) => {
             <ArrowLeft size={18} className="mr-2" />
             Voltar
           </Button>
-          <h2 className="text-2xl font-bold text-gray-900">Preview do Relatório</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Visualizar Relatório</h2>
         </div>
         <div className="flex space-x-2">
           <Button onClick={handleEdit} variant="outline">
