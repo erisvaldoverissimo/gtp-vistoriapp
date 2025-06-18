@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { VistoriaSupabase, GrupoVistoriaSupabase, useVistoriasSupabase } from '@/hooks/useVistoriasSupabase';
@@ -115,14 +116,15 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     }
   }, [formData.grupos.length]);
 
+  // Função simplificada - VERSÃO CORRIGIDA
   const handleFotosChange = useCallback((grupoIndex: number, fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => {
-    console.log(`=== handleFotosChange CORRIGIDA ===`);
+    console.log(`=== handleFotosChange NOVA VISTORIA (SIMPLIFICADA) ===`);
     console.log(`Grupo: ${grupoIndex}`);
     console.log(`Arquivos recebidos:`, fotos?.length || 0);
     
-    // Validação inicial
+    // Se não há fotos, limpar estado
     if (!fotos || fotos.length === 0) {
-      console.log('Nenhum arquivo recebido, limpando estado do grupo');
+      console.log('Nenhuma foto, limpando estado do grupo');
       setGrupoFotos(prev => {
         const updated = { ...prev };
         delete updated[grupoIndex];
@@ -131,110 +133,28 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
       return;
     }
 
-    // Log detalhado dos arquivos recebidos
-    fotos.forEach((file, index) => {
-      console.log(`Arquivo ${index + 1}:`, {
-        name: file?.name || 'UNDEFINED',
-        size: file?.size || 'UNDEFINED', 
-        type: file?.type || 'UNDEFINED',
-        isFile: file instanceof File,
-        constructor: file?.constructor?.name || 'UNDEFINED'
+    // Criar FotoUpload diretamente - SEM VALIDAÇÕES EXCESSIVAS
+    const fotosParaEstado: FotoUpload[] = fotos.map((file, index) => {
+      const descricao = fotosComDescricao?.[index]?.descricao || '';
+      console.log(`Criando FotoUpload ${index + 1}:`, {
+        nome: file.name,
+        tamanho: file.size,
+        descricao: descricao
       });
-    });
-
-    // Filtrar apenas arquivos File válidos
-    const arquivosValidos = fotos.filter((file): file is File => {
-      const isValid = file instanceof File && 
-                     file.size > 0 && 
-                     file.name && 
-                     file.name.length > 0;
       
-      if (!isValid) {
-        console.error('Arquivo inválido encontrado:', {
-          isFile: file instanceof File,
-          size: file?.size,
-          name: file?.name,
-          type: file?.type
-        });
-      }
-      
-      return isValid;
-    });
-
-    console.log(`Arquivos válidos: ${arquivosValidos.length}/${fotos.length}`);
-
-    if (arquivosValidos.length === 0) {
-      console.warn('Nenhum arquivo válido encontrado após filtro');
-      setGrupoFotos(prev => {
-        const updated = { ...prev };
-        delete updated[grupoIndex];
-        return updated;
-      });
-      return;
-    }
-
-    // Criar FotoUpload usando arquivos válidos
-    let fotosParaUpload: FotoUpload[];
-    
-    if (fotosComDescricao && fotosComDescricao.length === arquivosValidos.length) {
-      // Usar fotosComDescricao se disponível e compatível
-      fotosParaUpload = fotosComDescricao
-        .filter(item => item.file instanceof File && item.file.size > 0)
-        .map(item => ({
-          file: item.file,
-          descricao: item.descricao || ''
-        }));
-      
-      console.log('Usando fotosComDescricao fornecidas:', fotosParaUpload.length);
-    } else {
-      // Criar com descrições vazias
-      fotosParaUpload = arquivosValidos.map(file => ({
-        file: file,
-        descricao: ''
-      }));
-      
-      console.log('Criando fotosParaUpload com descrições vazias:', fotosParaUpload.length);
-    }
-
-    // Validação final antes de salvar no estado
-    const fotosFinaisValidas = fotosParaUpload.filter(foto => {
-      const isValid = foto.file instanceof File && 
-                     foto.file.size > 0 && 
-                     foto.file.name;
-      
-      if (!isValid) {
-        console.error('FotoUpload inválida encontrada:', {
-          hasFile: !!foto.file,
-          isFile: foto.file instanceof File,
-          size: foto.file?.size,
-          name: foto.file?.name
-        });
-      }
-      
-      return isValid;
-    });
-
-    console.log(`Fotos finais válidas: ${fotosFinaisValidas.length}`);
-
-    if (fotosFinaisValidas.length === 0) {
-      console.warn('Nenhuma foto final válida após validação');
-      return;
-    }
-
-    // Atualizar estado
-    setGrupoFotos(prev => {
-      const updated = {
-        ...prev,
-        [grupoIndex]: fotosFinaisValidas
+      return {
+        file: file, // Referência direta do arquivo
+        descricao: descricao
       };
-      
-      console.log(`Estado atualizado para grupo ${grupoIndex}:`, {
-        totalFotos: fotosFinaisValidas.length,
-        primeiraFoto: fotosFinaisValidas[0]?.file?.name || 'N/A'
-      });
-      
-      return updated;
     });
+
+    console.log(`Salvando ${fotosParaEstado.length} fotos no estado para grupo ${grupoIndex}`);
+
+    // Atualizar estado diretamente
+    setGrupoFotos(prev => ({
+      ...prev,
+      [grupoIndex]: fotosParaEstado
+    }));
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -272,7 +192,7 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
       console.log('Vistoria salva com ID:', vistoriaSalva.id);
 
       // Verificar se há fotos para upload
-      const gruposComFotos = Object.entries(grupoFotos).filter(([_, fotos]) => fotos.length > 0);
+      const gruposComFotos = Object.entries(grupoFotos).filter(([_, fotos]) => fotos && fotos.length > 0);
       console.log(`Grupos com fotos: ${gruposComFotos.length}`);
       
       if (gruposComFotos.length > 0) {
@@ -304,35 +224,29 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
 
           console.log(`Fazendo upload de ${fotos.length} fotos para grupo ${grupoSalvo.id} (ordem ${grupoIndex})`);
           
-          // Validação final das fotos antes do upload
-          const fotosParaUpload = fotos.filter(foto => {
-            const isValid = foto.file instanceof File && foto.file.size > 0 && foto.file.name;
-            if (!isValid) {
-              console.error('Foto inválida detectada no upload:', {
-                hasFile: !!foto.file,
-                isFile: foto.file instanceof File,
-                size: foto.file?.size,
-                name: foto.file?.name
-              });
-            }
-            return isValid;
+          // Log detalhado das fotos antes do upload
+          fotos.forEach((foto, fotoIndex) => {
+            console.log(`Foto ${fotoIndex + 1} para upload:`, {
+              hasFile: !!foto.file,
+              fileName: foto.file?.name,
+              fileSize: foto.file?.size,
+              fileType: foto.file?.type,
+              isFileInstance: foto.file instanceof File,
+              descricao: foto.descricao
+            });
           });
 
-          console.log(`Fotos válidas para upload no grupo ${grupoIndex}: ${fotosParaUpload.length}/${fotos.length}`);
-
-          if (fotosParaUpload.length > 0) {
-            try {
-              await uploadFotos(grupoSalvo.id, fotosParaUpload);
-              totalFotosUpload += fotosParaUpload.length;
-              console.log(`Upload concluído para grupo ${grupoSalvo.id}: ${fotosParaUpload.length} fotos`);
-            } catch (uploadError) {
-              console.error(`Erro no upload de fotos para grupo ${grupoSalvo.id}:`, uploadError);
-              toast({
-                title: "Erro no Upload",
-                description: `Erro ao enviar fotos do grupo ${grupoIndex + 1}. Algumas fotos podem não ter sido salvas.`,
-                variant: "destructive",
-              });
-            }
+          try {
+            await uploadFotos(grupoSalvo.id, fotos);
+            totalFotosUpload += fotos.length;
+            console.log(`Upload concluído para grupo ${grupoSalvo.id}: ${fotos.length} fotos`);
+          } catch (uploadError) {
+            console.error(`Erro no upload de fotos para grupo ${grupoSalvo.id}:`, uploadError);
+            toast({
+              title: "Erro no Upload",
+              description: `Erro ao enviar fotos do grupo ${grupoIndex + 1}. Algumas fotos podem não ter sido salvas.`,
+              variant: "destructive",
+            });
           }
         }
 
