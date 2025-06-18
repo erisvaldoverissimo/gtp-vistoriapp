@@ -12,6 +12,7 @@ import FotoModal from './upload/FotoModal';
 import UploadProgress from './upload/UploadProgress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useFotosSupabase } from '@/hooks/useFotosSupabase';
+import { FotoVistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 
 interface FotoData {
   file: File;
@@ -19,36 +20,66 @@ interface FotoData {
   descricao: string;
 }
 
+interface FotoExistente {
+  id: string;
+  url: string;
+  nome: string;
+  descricao: string;
+  isExisting: true;
+}
+
 interface UploadFotosProps {
   onFotosChange: (fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => void;
   maxFotos?: number;
   grupoId?: string;
+  fotosExistentes?: FotoVistoriaSupabase[];
 }
 
-const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps) => {
+const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId, fotosExistentes = [] }: UploadFotosProps) => {
   const { toast } = useToast();
   const { uploading, uploadProgress } = useFotosSupabase();
   const [fotos, setFotos] = useState<FotoData[]>([]);
+  const [fotosExistentesState, setFotosExistentesState] = useState<FotoExistente[]>([]);
   const [selectedFoto, setSelectedFoto] = useState<{ url: string; nome: string; descricao?: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_DESCRICAO_LENGTH = 200;
 
+  // Carregar fotos existentes quando o componente monta ou fotosExistentes muda
+  useEffect(() => {
+    if (fotosExistentes && fotosExistentes.length > 0) {
+      const fotosFormatadas: FotoExistente[] = fotosExistentes.map(foto => ({
+        id: foto.id || '',
+        url: foto.arquivo_url,
+        nome: foto.arquivo_nome,
+        descricao: foto.descricao || '',
+        isExisting: true
+      }));
+      setFotosExistentesState(fotosFormatadas);
+    } else {
+      setFotosExistentesState([]);
+    }
+  }, [fotosExistentes]);
+
   // Reset fotos quando o grupoId muda (novo grupo)
   useEffect(() => {
-    setFotos([]);
-  }, [grupoId]);
+    if (!fotosExistentes || fotosExistentes.length === 0) {
+      setFotos([]);
+    }
+  }, [grupoId, fotosExistentes]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     
     if (files.length === 0) return;
 
+    const totalFotosAtuais = fotos.length + fotosExistentesState.length;
+
     // Verificar se não vai ultrapassar o limite
-    if (fotos.length + files.length > maxFotos) {
+    if (totalFotosAtuais + files.length > maxFotos) {
       toast({
         title: "Limite de Fotos Atingido",
-        description: `Você pode adicionar no máximo ${maxFotos} fotos por grupo. Fotos restantes: ${maxFotos - fotos.length}`,
+        description: `Você pode adicionar no máximo ${maxFotos} fotos por grupo. Fotos restantes: ${maxFotos - totalFotosAtuais}`,
         variant: "destructive",
       });
       return;
@@ -121,6 +152,16 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
     URL.revokeObjectURL(fotos[index].preview);
   };
 
+  const handleRemoveFotoExistente = (index: number) => {
+    const updatedFotosExistentes = fotosExistentesState.filter((_, i) => i !== index);
+    setFotosExistentesState(updatedFotosExistentes);
+    
+    toast({
+      title: "Foto Removida",
+      description: "A foto existente foi marcada para remoção.",
+    });
+  };
+
   const handleDescricaoChange = (index: number, descricao: string) => {
     const updatedFotos = fotos.map((foto, i) => 
       i === index ? { ...foto, descricao } : foto
@@ -135,21 +176,37 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
     onFotosChange(updatedFotos.map(f => f.file), fotosComDescricao);
   };
 
+  const handleDescricaoExistenteChange = (index: number, descricao: string) => {
+    const updatedFotosExistentes = fotosExistentesState.map((foto, i) => 
+      i === index ? { ...foto, descricao } : foto
+    );
+    setFotosExistentesState(updatedFotosExistentes);
+  };
+
   const handleDescriptionGenerated = (index: number, description: string) => {
     // Limitar a descrição gerada automaticamente também
     const descricaoLimitada = description.slice(0, MAX_DESCRICAO_LENGTH);
     handleDescricaoChange(index, descricaoLimitada);
   };
 
-  const handlePreviewFoto = (foto: FotoData) => {
-    setSelectedFoto({
-      url: foto.preview,
-      nome: foto.file.name,
-      descricao: foto.descricao
-    });
+  const handlePreviewFoto = (foto: FotoData | FotoExistente) => {
+    if ('isExisting' in foto) {
+      setSelectedFoto({
+        url: foto.url,
+        nome: foto.nome,
+        descricao: foto.descricao
+      });
+    } else {
+      setSelectedFoto({
+        url: foto.preview,
+        nome: foto.file.name,
+        descricao: foto.descricao
+      });
+    }
   };
 
-  const fotosRestantes = maxFotos - fotos.length;
+  const totalFotos = fotos.length + fotosExistentesState.length;
+  const fotosRestantes = maxFotos - totalFotos;
 
   // Mostrar progresso de upload se estiver fazendo upload
   if (uploading && uploadProgress) {
@@ -158,12 +215,21 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
         <UploadProgress progress={uploadProgress} />
         
         {/* Mostrar fotos já adicionadas em modo somente leitura */}
-        {fotos.length > 0 && (
+        {totalFotos > 0 && (
           <div className="opacity-50">
-            <h3 className="text-lg font-medium mb-4">Fotos Preparadas ({fotos.length})</h3>
+            <h3 className="text-lg font-medium mb-4">Fotos Preparadas ({totalFotos})</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {fotosExistentesState.map((foto, index) => (
+                <div key={`existing-${index}`} className="aspect-square">
+                  <img
+                    src={foto.url}
+                    alt={foto.nome}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
+              ))}
               {fotos.map((foto, index) => (
-                <div key={index} className="aspect-square">
+                <div key={`new-${index}`} className="aspect-square">
                   <img
                     src={foto.preview}
                     alt={`Foto ${index + 1}`}
@@ -210,10 +276,87 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
         />
       </div>
 
-      {/* Preview das Fotos */}
+      {/* Preview das Fotos Existentes */}
+      {fotosExistentesState.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Fotos Existentes ({fotosExistentesState.length})</h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {fotosExistentesState.map((foto, index) => (
+              <Card key={`existing-${index}`} className="overflow-hidden">
+                <div className="relative aspect-square">
+                  <img
+                    src={foto.url}
+                    alt={foto.nome}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-2 right-2 flex space-x-1">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handlePreviewFoto(foto)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Eye size={14} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleRemoveFotoExistente(index)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X size={14} />
+                    </Button>
+                  </div>
+                </div>
+                <div className="p-2">
+                  <p className="text-xs text-gray-600 truncate">{foto.nome}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Descrições das fotos existentes */}
+          <div className="space-y-4">
+            <h4 className="font-medium">Descrições das Fotos Existentes</h4>
+            {fotosExistentesState.map((foto, index) => (
+              <Card key={`desc-existing-${index}`} className="p-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor={`descricao-existing-${index}`}>
+                      Descrição - {foto.nome}
+                    </Label>
+                    <span className={`text-xs ${foto.descricao.length > MAX_DESCRICAO_LENGTH ? 'text-red-500 font-semibold' : foto.descricao.length > MAX_DESCRICAO_LENGTH * 0.9 ? 'text-yellow-600' : 'text-gray-500'}`}>
+                      {foto.descricao.length}/{MAX_DESCRICAO_LENGTH}
+                    </span>
+                  </div>
+                  <Textarea
+                    id={`descricao-existing-${index}`}
+                    value={foto.descricao}
+                    onChange={(e) => handleDescricaoExistenteChange(index, e.target.value)}
+                    placeholder="Descreva o que mostra esta foto..."
+                    className={`min-h-[100px] ${foto.descricao.length > MAX_DESCRICAO_LENGTH ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    rows={4}
+                  />
+                  {foto.descricao.length > MAX_DESCRICAO_LENGTH && (
+                    <Alert variant="warning">
+                      <AlertDescription>
+                        A descrição excede o limite de {MAX_DESCRICAO_LENGTH} caracteres e será truncada no PDF ({foto.descricao.length - MAX_DESCRICAO_LENGTH} caracteres excedentes).
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Preview das Fotos Novas */}
       {fotos.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Preview das Fotos ({fotos.length}/{maxFotos})</h3>
+          <h3 className="text-lg font-medium">Novas Fotos ({fotos.length}/{maxFotos})</h3>
           
           {/* Grid de previews */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -228,15 +371,15 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
             ))}
           </div>
 
-          {/* Descrições das fotos */}
+          {/* Descrições das fotos novas */}
           <div className="space-y-4">
-            <h4 className="font-medium">Descrições das Fotos</h4>
+            <h4 className="font-medium">Descrições das Novas Fotos</h4>
             {fotos.map((foto, index) => (
               <Card key={index} className="p-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <Label htmlFor={`descricao-${index}`}>
-                      Descrição da Foto {index + 1} - {foto.file.name}
+                      Descrição da Nova Foto {index + 1} - {foto.file.name}
                     </Label>
                     <span className={`text-xs ${foto.descricao.length > MAX_DESCRICAO_LENGTH ? 'text-red-500 font-semibold' : foto.descricao.length > MAX_DESCRICAO_LENGTH * 0.9 ? 'text-yellow-600' : 'text-gray-500'}`}>
                       {foto.descricao.length}/{MAX_DESCRICAO_LENGTH}
@@ -268,7 +411,7 @@ const UploadFotos = ({ onFotosChange, maxFotos = 10, grupoId }: UploadFotosProps
         </div>
       )}
 
-      {fotos.length === 0 && (
+      {totalFotos === 0 && (
         <div className="text-center text-gray-500 py-6">
           <ImageIcon size={48} className="mx-auto mb-3 text-gray-300" />
           <p>Nenhuma foto adicionada ainda.</p>
