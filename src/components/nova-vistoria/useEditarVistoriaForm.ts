@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { VistoriaSupabase, GrupoVistoriaSupabase, useVistoriasSupabase } from '@/hooks/useVistoriasSupabase';
@@ -35,79 +34,79 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
   const [grupoFotos, setGrupoFotos] = useState<{ [key: number]: FotoUpload[] }>({});
   const [gruposOriginais, setGruposOriginais] = useState<GrupoVistoriaSupabase[]>([]);
 
-  // Carregar dados da vistoria
-  useEffect(() => {
-    const carregarVistoria = async () => {
-      try {
-        console.log('Carregando vistoria para edição:', vistoriaId);
-        
-        const { data: vistoriaData, error } = await supabase
-          .from('vistorias')
-          .select(`
+  // Função para carregar dados atualizados da vistoria
+  const carregarVistoria = useCallback(async () => {
+    try {
+      console.log('Carregando vistoria para edição:', vistoriaId);
+      
+      const { data: vistoriaData, error } = await supabase
+        .from('vistorias')
+        .select(`
+          *,
+          condominio:condominios(id, nome),
+          grupos_vistoria(
             *,
-            condominio:condominios(id, nome),
-            grupos_vistoria(
-              *,
-              fotos_vistoria(*)
-            )
-          `)
-          .eq('id', vistoriaId)
-          .single();
+            fotos_vistoria(*)
+          )
+        `)
+        .eq('id', vistoriaId)
+        .single();
 
-        if (error) {
-          console.error('Erro ao carregar vistoria:', error);
-          throw error;
-        }
-
-        console.log('Vistoria carregada:', vistoriaData);
-
-        // Formatar dados para o formulário
-        const grupos = (vistoriaData.grupos_vistoria || []).map(grupo => ({
-          id: grupo.id,
-          vistoria_id: grupo.vistoria_id,
-          ambiente: grupo.ambiente,
-          grupo: grupo.grupo,
-          item: grupo.item,
-          status: grupo.status,
-          parecer: grupo.parecer || '',
-          ordem: grupo.ordem || 0,
-          fotos: grupo.fotos_vistoria || []
-        }));
-
-        const vistoriaFormatada: VistoriaSupabase = {
-          id: vistoriaData.id,
-          condominio_id: vistoriaData.condominio_id,
-          user_id: vistoriaData.user_id,
-          numero_interno: vistoriaData.numero_interno,
-          id_sequencial: vistoriaData.id_sequencial,
-          data_vistoria: vistoriaData.data_vistoria,
-          observacoes_gerais: vistoriaData.observacoes_gerais,
-          responsavel: vistoriaData.responsavel,
-          status: vistoriaData.status,
-          created_at: vistoriaData.created_at,
-          updated_at: vistoriaData.updated_at,
-          condominio: Array.isArray(vistoriaData.condominio) ? vistoriaData.condominio[0] : vistoriaData.condominio,
-          grupos: grupos
-        };
-
-        setFormData(vistoriaFormatada);
-        setGruposOriginais(grupos);
-      } catch (error) {
+      if (error) {
         console.error('Erro ao carregar vistoria:', error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar a vistoria para edição.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+        throw error;
       }
-    };
 
-    if (vistoriaId) {
-      carregarVistoria();
+      console.log('Vistoria carregada:', vistoriaData);
+
+      // Formatar dados para o formulário
+      const grupos = (vistoriaData.grupos_vistoria || []).map(grupo => ({
+        id: grupo.id,
+        vistoria_id: grupo.vistoria_id,
+        ambiente: grupo.ambiente,
+        grupo: grupo.grupo,
+        item: grupo.item,
+        status: grupo.status,
+        parecer: grupo.parecer || '',
+        ordem: grupo.ordem || 0,
+        fotos: grupo.fotos_vistoria || []
+      }));
+
+      const vistoriaFormatada: VistoriaSupabase = {
+        id: vistoriaData.id,
+        condominio_id: vistoriaData.condominio_id,
+        user_id: vistoriaData.user_id,
+        numero_interno: vistoriaData.numero_interno,
+        id_sequencial: vistoriaData.id_sequencial,
+        data_vistoria: vistoriaData.data_vistoria,
+        observacoes_gerais: vistoriaData.observacoes_gerais,
+        responsavel: vistoriaData.responsavel,
+        status: vistoriaData.status,
+        created_at: vistoriaData.created_at,
+        updated_at: vistoriaData.updated_at,
+        condominio: Array.isArray(vistoriaData.condominio) ? vistoriaData.condominio[0] : vistoriaData.condominio,
+        grupos: grupos
+      };
+
+      setFormData(vistoriaFormatada);
+      setGruposOriginais(grupos);
+    } catch (error) {
+      console.error('Erro ao carregar vistoria:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar a vistoria para edição.",
+        variant: "destructive",
+      });
     }
   }, [vistoriaId, toast]);
+
+  // Carregar dados da vistoria
+  useEffect(() => {
+    if (vistoriaId) {
+      setLoading(true);
+      carregarVistoria().finally(() => setLoading(false));
+    }
+  }, [vistoriaId, carregarVistoria]);
 
   const handleInputChange = useCallback((field: keyof VistoriaSupabase, value: string) => {
     if (field === 'observacoes_gerais' && value.length > 150) {
@@ -295,7 +294,15 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
         }
       }
 
+      // Recarregar os dados da vistoria para garantir que as mudanças sejam refletidas
+      console.log('Recarregando dados da vistoria após salvar...');
+      await carregarVistoria();
+      
+      // Recarregar lista de vistorias
       await recarregar();
+      
+      // Limpar fotos temporárias
+      setGrupoFotos({});
       
       toast({
         title: "Sucesso",
@@ -315,7 +322,7 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
     } finally {
       setSaving(false);
     }
-  }, [formData, grupoFotos, gruposOriginais, vistoriaId, uploadFotos, onBack, toast, recarregar]);
+  }, [formData, grupoFotos, gruposOriginais, vistoriaId, uploadFotos, onBack, toast, recarregar, carregarVistoria]);
 
   const handlePreview = useCallback(() => {
     if (!formData.condominio_id) {

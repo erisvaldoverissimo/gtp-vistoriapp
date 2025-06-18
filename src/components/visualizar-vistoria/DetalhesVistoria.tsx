@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Download, Calendar, Building, User, FileText, Edit } from 'lucide-react';
 import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
+import { supabase } from '@/integrations/supabase/client';
 import FotosVistoria from './FotosVistoria';
 import PreviewPDFSupabase from './PreviewPDFSupabase';
 
@@ -14,8 +16,83 @@ interface DetalhesVistoriaProps {
   onEdit?: (vistoriaId: string) => void;
 }
 
-const DetalhesVistoria = ({ vistoria, onBack, onEdit }: DetalhesVistoriaProps) => {
+const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: DetalhesVistoriaProps) => {
   const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [vistoria, setVistoria] = useState(vistoriaInicial);
+
+  // Recarregar dados da vistoria quando necessário
+  const recarregarVistoria = async () => {
+    try {
+      console.log('Recarregando dados da vistoria:', vistoria.id);
+      
+      const { data: vistoriaData, error } = await supabase
+        .from('vistorias')
+        .select(`
+          *,
+          condominio:condominios(id, nome),
+          grupos_vistoria(
+            *,
+            fotos_vistoria(*)
+          )
+        `)
+        .eq('id', vistoria.id!)
+        .single();
+
+      if (error) {
+        console.error('Erro ao recarregar vistoria:', error);
+        return;
+      }
+
+      // Formatar dados
+      const grupos = (vistoriaData.grupos_vistoria || []).map(grupo => ({
+        id: grupo.id,
+        vistoria_id: grupo.vistoria_id,
+        ambiente: grupo.ambiente,
+        grupo: grupo.grupo,
+        item: grupo.item,
+        status: grupo.status,
+        parecer: grupo.parecer || '',
+        ordem: grupo.ordem || 0,
+        fotos: grupo.fotos_vistoria || []
+      }));
+
+      const vistoriaAtualizada: VistoriaSupabase = {
+        id: vistoriaData.id,
+        condominio_id: vistoriaData.condominio_id,
+        user_id: vistoriaData.user_id,
+        numero_interno: vistoriaData.numero_interno,
+        id_sequencial: vistoriaData.id_sequencial,
+        data_vistoria: vistoriaData.data_vistoria,
+        observacoes_gerais: vistoriaData.observacoes_gerais,
+        responsavel: vistoriaData.responsavel,
+        status: vistoriaData.status,
+        created_at: vistoriaData.created_at,
+        updated_at: vistoriaData.updated_at,
+        condominio: Array.isArray(vistoriaData.condominio) ? vistoriaData.condominio[0] : vistoriaData.condominio,
+        grupos: grupos
+      };
+
+      setVistoria(vistoriaAtualizada);
+      console.log('Vistoria recarregada com sucesso:', vistoriaAtualizada);
+    } catch (error) {
+      console.error('Erro ao recarregar vistoria:', error);
+    }
+  };
+
+  // Recarregar quando a vistoria inicial mudar
+  useEffect(() => {
+    setVistoria(vistoriaInicial);
+  }, [vistoriaInicial]);
+
+  // Recarregar dados quando a página for focada (usuário voltar da edição)
+  useEffect(() => {
+    const handleFocus = () => {
+      recarregarVistoria();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [vistoria.id]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
