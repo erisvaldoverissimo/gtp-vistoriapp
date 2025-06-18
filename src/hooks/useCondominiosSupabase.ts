@@ -26,10 +26,10 @@ export const useCondominiosSupabase = () => {
     try {
       console.log('Carregando condomínios do Supabase...');
       
+      // Com RLS, só vemos condomínios ativos
       const { data, error } = await supabase
         .from('condominios')
         .select('*')
-        .eq('ativo', true)
         .order('nome');
 
       if (error) {

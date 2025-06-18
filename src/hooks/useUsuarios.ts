@@ -20,9 +20,11 @@ export const useUsuarios = () => {
   // Carregar usuários do Supabase
   const carregarUsuarios = async () => {
     try {
+      // Com RLS, só conseguimos ver perfis ativos de outros usuários
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
+        .eq('ativo', true)
         .order('nome');
 
       if (error) {
