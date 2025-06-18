@@ -19,8 +19,8 @@ export const usePDFGenerator = () => {
       
       const timeout = setTimeout(() => {
         console.warn('Timeout ao carregar imagem, continuando mesmo assim:', img.src);
-        resolve(); // Continue mesmo com timeout
-      }, 15000); // Aumentar timeout para 15 segundos
+        resolve();
+      }, 20000);
 
       img.onload = () => {
         console.log('Imagem carregada com sucesso:', img.src);
@@ -31,7 +31,7 @@ export const usePDFGenerator = () => {
       img.onerror = (error) => {
         console.error('Erro ao carregar imagem, continuando mesmo assim:', img.src, error);
         clearTimeout(timeout);
-        resolve(); // Continue mesmo com erro na imagem
+        resolve();
       };
     });
   };
@@ -46,19 +46,16 @@ export const usePDFGenerator = () => {
       return;
     }
 
-    // Configurar todas as imagens com crossOrigin
     images.forEach((img, index) => {
       console.log(`Configurando imagem ${index + 1}:`, img.src);
       img.crossOrigin = 'anonymous';
       
-      // Se a URL não tem parâmetros de cache, adicionar
       if (!img.src.includes('?t=')) {
         const separator = img.src.includes('?') ? '&' : '?';
         img.src = img.src + separator + 't=' + Date.now();
       }
     });
 
-    // Aguardar todas as imagens carregarem em paralelo
     const imagePromises = images.map(async (img, index) => {
       console.log(`Aguardando carregamento da imagem ${index + 1}/${images.length}`);
       await waitForImage(img);
@@ -72,9 +69,8 @@ export const usePDFGenerator = () => {
       console.warn('Erro durante pré-carregamento, mas continuando:', error);
     }
     
-    // Aguardar tempo adicional para renderização
     console.log('Aguardando tempo adicional para renderização...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
     console.log('Pré-carregamento concluído');
   };
 
@@ -97,18 +93,31 @@ export const usePDFGenerator = () => {
         description: "Preparando imagens...",
       });
 
-      // Verificar se há páginas para processar
+      // Aguardar um momento para o DOM se estabilizar
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Buscar páginas com mais precisão
       const pages = Array.from(
         reportRef.current.querySelectorAll(".page")
       ) as HTMLElement[];
 
-      console.log(`Páginas encontradas: ${pages.length}`);
+      console.log(`=== PÁGINAS DETECTADAS: ${pages.length} ===`);
+      
+      // Log detalhado das páginas encontradas
+      pages.forEach((page, index) => {
+        console.log(`Página ${index + 1}:`, {
+          height: page.scrollHeight,
+          width: page.scrollWidth,
+          children: page.children.length,
+          className: page.className
+        });
+      });
 
       if (pages.length === 0) {
+        console.error('ERRO: Nenhuma página encontrada!');
         throw new Error('Nenhuma página encontrada para processar. Verifique se o conteúdo foi carregado corretamente.');
       }
 
-      // Pré-carregar todas as imagens
       await preloadImages(reportRef.current);
 
       toast({
@@ -133,24 +142,31 @@ export const usePDFGenerator = () => {
         });
 
         try {
-          // Aguardar um pouco antes de processar cada página
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Aguardar mais tempo entre páginas
+          await new Promise(resolve => setTimeout(resolve, 1500));
           
-          console.log('Iniciando captura da página...');
+          console.log('Iniciando captura da página...', {
+            scrollWidth: pages[i].scrollWidth,
+            scrollHeight: pages[i].scrollHeight,
+            offsetWidth: pages[i].offsetWidth,
+            offsetHeight: pages[i].offsetHeight
+          });
+
           const canvas = await html2canvas(pages[i], {
-            scale: 1.2, // Escala moderada para qualidade vs performance
+            scale: 1.5,
             useCORS: true,
             allowTaint: false,
             backgroundColor: "#ffffff",
             foreignObjectRendering: false,
-            logging: false,
-            imageTimeout: 20000, // Timeout maior para imagens
+            logging: true, // Ativar logs do html2canvas
+            imageTimeout: 30000,
             removeContainer: true,
             width: pages[i].scrollWidth,
             height: pages[i].scrollHeight,
+            windowWidth: pages[i].scrollWidth,
+            windowHeight: pages[i].scrollHeight,
             onclone: (clonedDoc) => {
               console.log('Clonando documento para captura...');
-              // Garantir que todas as imagens no clone tenham configurações corretas
               const clonedImages = clonedDoc.querySelectorAll('img');
               clonedImages.forEach((img, idx) => {
                 img.crossOrigin = 'anonymous';
@@ -159,11 +175,16 @@ export const usePDFGenerator = () => {
             }
           });
           
-          console.log('Canvas criado com sucesso, dimensões:', canvas.width, 'x', canvas.height);
+          console.log(`Canvas da página ${i + 1} criado:`, {
+            width: canvas.width,
+            height: canvas.height,
+            dataLength: canvas.toDataURL("image/jpeg", 0.85).length
+          });
           
-          const img = canvas.toDataURL("image/jpeg", 0.85); // JPEG com qualidade boa
+          const img = canvas.toDataURL("image/jpeg", 0.85);
           
           if (i > 0) {
+            console.log(`Adicionando nova página ${i + 1} ao PDF`);
             pdf.addPage();
           }
           
@@ -179,12 +200,11 @@ export const usePDFGenerator = () => {
           );
 
           paginasProcessadas++;
-          console.log(`Página ${i + 1} processada com sucesso`);
+          console.log(`✅ Página ${i + 1} processada com sucesso (Total processadas: ${paginasProcessadas})`);
           
         } catch (pageError) {
-          console.error(`Erro ao processar página ${i + 1}:`, pageError);
+          console.error(`❌ Erro ao processar página ${i + 1}:`, pageError);
           
-          // Se apenas uma página falhou mas outras foram processadas, continuar
           if (paginasProcessadas > 0) {
             console.log('Continuando processamento apesar do erro na página');
             continue;
@@ -200,9 +220,13 @@ export const usePDFGenerator = () => {
 
       const fileName = `Relatorio-${vistoria.numero_interno}-${vistoria.condominio?.nome?.replace(/\s+/g, "-") || 'Vistoria'}.pdf`;
       console.log('Salvando PDF:', fileName);
+      
+      console.log(`=== PDF FINALIZADO ===`);
+      console.log(`Total de páginas no PDF: ${pdf.getNumberOfPages()}`);
+      console.log(`Páginas processadas: ${paginasProcessadas}`);
+      
       pdf.save(fileName);
 
-      console.log(`PDF gerado com sucesso - ${paginasProcessadas} páginas`);
       toast({
         title: "PDF Gerado",
         description: `Relatório gerado com ${paginasProcessadas} página(s) e baixado com sucesso.`,
