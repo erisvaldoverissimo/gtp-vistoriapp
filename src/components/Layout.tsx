@@ -1,8 +1,17 @@
 
 import React from 'react';
-import { Building2, FileImage, List, Settings, Building, MessageCircle, Users, Menu, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { 
+  Home, 
+  FileText, 
+  Users, 
+  Building, 
+  Settings, 
+  MessageSquare,
+  Layers,
+  LogOut
+} from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,80 +20,68 @@ interface LayoutProps {
 }
 
 const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
-  const isMobile = useIsMobile();
-  
-  const navigation = [
-    { id: 'vistorias', label: 'Vistorias', icon: List },
-    { id: 'nova-vistoria', label: 'Nova Vistoria', icon: FileImage },
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
+  const menuItems = [
+    { id: 'vistorias', label: 'Vistorias', icon: Home },
+    { id: 'nova-vistoria', label: 'Nova Vistoria', icon: FileText },
     { id: 'usuarios', label: 'Usuários', icon: Users },
     { id: 'condominios', label: 'Condomínios', icon: Building },
-    { id: 'ambientes-grupos', label: 'Ambientes/Grupos', icon: MapPin },
-    { id: 'chat-ia', label: 'Chat IA', icon: MessageCircle },
+    { id: 'ambientes-grupos', label: 'Ambientes e Grupos', icon: Layers },
+    { id: 'chat-ia', label: 'Chat IA', icon: MessageSquare },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-brand-purple text-white shadow-lg">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Building2 size={isMobile ? 24 : 32} />
-              <div>
-                <h1 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>VistoriaApp</h1>
-                <p className={`text-purple-200 ${isMobile ? 'text-xs' : 'text-sm'}`}>Sistema de Relatórios de Vistorias</p>
-              </div>
-            </div>
-            {!isMobile && (
-              <div className="hidden md:flex space-x-2">
-                {navigation.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Button
-                      key={item.id}
-                      variant={currentPage === item.id ? "secondary" : "ghost"}
-                      onClick={() => onNavigate(item.id)}
-                      className={`text-white ${currentPage === item.id ? 'bg-brand-green hover:bg-brand-green' : 'hover:bg-brand-purple-light'}`}
-                    >
-                      <Icon size={18} className="mr-2" />
-                      {item.label}
-                    </Button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <div className="w-64 bg-white shadow-lg">
+        <div className="p-6">
+          <h1 className="text-xl font-bold text-gray-900">Sistema de Vistorias</h1>
+          <p className="text-sm text-gray-600 mt-1">Relatórios Técnicos</p>
         </div>
-      </header>
-
-      {/* Mobile Navigation */}
-      {isMobile && (
-        <nav className="bg-brand-purple-light text-white overflow-x-auto">
-          <div className="flex min-w-max px-2 py-2">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  onClick={() => onNavigate(item.id)}
-                  className={`flex-shrink-0 mx-1 text-white ${currentPage === item.id ? 'bg-brand-green' : 'hover:bg-brand-purple'}`}
-                  size="sm"
-                >
-                  <Icon size={16} className="mr-1" />
-                  <span className="text-xs whitespace-nowrap">{item.label}</span>
-                </Button>
-              );
-            })}
+        
+        <nav className="px-4 pb-4">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Button
+                key={item.id}
+                variant={currentPage === item.id ? "default" : "ghost"}
+                className={`w-full justify-start mb-2 ${
+                  currentPage === item.id 
+                    ? 'bg-teal-600 hover:bg-teal-700 text-white' 
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+                onClick={() => onNavigate(item.id)}
+              >
+                <Icon className="mr-3 h-4 w-4" />
+                {item.label}
+              </Button>
+            );
+          })}
+          
+          <div className="border-t pt-4 mt-4">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-3 h-4 w-4" />
+              Sair
+            </Button>
           </div>
         </nav>
-      )}
+      </div>
 
-      {/* Main Content */}
-      <main className={`container mx-auto ${isMobile ? 'px-2 py-4' : 'px-4 py-6'}`}>
+      {/* Main content */}
+      <div className="flex-1 p-6">
         {children}
-      </main>
+      </div>
     </div>
   );
 };
