@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Download, Calendar, Building, User, FileText } from 'lucide-react';
+import { ArrowLeft, Download, Calendar, Building, User, FileText, Edit } from 'lucide-react';
 import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 import FotosVistoria from './FotosVistoria';
 import PreviewPDFSupabase from './PreviewPDFSupabase';
@@ -12,9 +11,10 @@ import PreviewPDFSupabase from './PreviewPDFSupabase';
 interface DetalhesVistoriaProps {
   vistoria: VistoriaSupabase;
   onBack: () => void;
+  onEdit?: (vistoriaId: string) => void;
 }
 
-const DetalhesVistoria = ({ vistoria, onBack }: DetalhesVistoriaProps) => {
+const DetalhesVistoria = ({ vistoria, onBack, onEdit }: DetalhesVistoriaProps) => {
   const [showPDFPreview, setShowPDFPreview] = useState(false);
 
   const formatDate = (dateString: string) => {
@@ -62,13 +62,24 @@ const DetalhesVistoria = ({ vistoria, onBack }: DetalhesVistoriaProps) => {
             <p className="text-gray-600">Vistoria #{vistoria.numero_interno}</p>
           </div>
         </div>
-        <Button 
-          variant="outline"
-          onClick={() => setShowPDFPreview(true)}
-        >
-          <Download size={16} className="mr-2" />
-          Gerar PDF
-        </Button>
+        <div className="flex space-x-2">
+          {onEdit && vistoria.id && (
+            <Button 
+              variant="outline"
+              onClick={() => onEdit(vistoria.id!)}
+            >
+              <Edit size={16} className="mr-2" />
+              Editar
+            </Button>
+          )}
+          <Button 
+            variant="outline"
+            onClick={() => setShowPDFPreview(true)}
+          >
+            <Download size={16} className="mr-2" />
+            Gerar PDF
+          </Button>
+        </div>
       </div>
 
       {/* Informações Básicas */}

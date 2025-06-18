@@ -1,28 +1,28 @@
-
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, Eye, Download, Calendar, Building, FileText, Loader2, Plus } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Calendar, Building, User } from 'lucide-react';
 import { useVistoriasSupabase } from '@/hooks/useVistoriasSupabase';
-import { useIsMobile } from '@/hooks/use-mobile';
-import DetalhesVistoria from '@/components/visualizar-vistoria/DetalhesVistoria';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import DetalhesVistoria from './visualizar-vistoria/DetalhesVistoria';
+import EditarVistoriaSupabase from './EditarVistoriaSupabase';
 
 interface ListaVistoriasSupabaseProps {
-  onNovaVistoria?: () => void;
+  onNovaVistoria: () => void;
 }
 
 const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const { vistorias, loading, excluirVistoria } = useVistoriasSupabase();
+  const [filtro, setFiltro] = useState('');
   const [vistoriaSelecionada, setVistoriaSelecionada] = useState<string | null>(null);
-  const { vistorias, loading } = useVistoriasSupabase();
-  const isMobile = useIsMobile();
+  const [modoEdicao, setModoEdicao] = useState(false);
 
-  const filteredVistorias = vistorias.filter(vistoria =>
-    vistoria.condominio?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vistoria.numero_interno.includes(searchTerm) ||
-    vistoria.responsavel.toLowerCase().includes(searchTerm.toLowerCase())
+  const vistoriasFiltradas = vistorias.filter(vistoria =>
+    vistoria.numero_interno.toLowerCase().includes(filtro.toLowerCase()) ||
+    vistoria.condominio?.nome.toLowerCase().includes(filtro.toLowerCase()) ||
+    vistoria.responsavel.toLowerCase().includes(filtro.toLowerCase())
   );
 
   const formatDate = (dateString: string) => {
@@ -45,186 +45,202 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
     }
   };
 
-  const handleVisualizarVistoria = (vistoriaId: string) => {
+  const handleExcluir = async (id: string) => {
+    await excluirVistoria(id);
+  };
+
+  const handleVerDetalhes = (vistoriaId: string) => {
     setVistoriaSelecionada(vistoriaId);
+    setModoEdicao(false);
   };
 
-  const handleVoltarLista = () => {
+  const handleEditar = (vistoriaId: string) => {
+    setVistoriaSelecionada(vistoriaId);
+    setModoEdicao(true);
+  };
+
+  const handleVoltar = () => {
     setVistoriaSelecionada(null);
+    setModoEdicao(false);
   };
 
-  // Se uma vistoria está selecionada, mostrar os detalhes
   if (vistoriaSelecionada) {
     const vistoria = vistorias.find(v => v.id === vistoriaSelecionada);
-    if (vistoria) {
-      return <DetalhesVistoria vistoria={vistoria} onBack={handleVoltarLista} />;
+    
+    if (!vistoria) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Vistoria não encontrada.</p>
+          <Button onClick={handleVoltar} className="mt-4">
+            Voltar à Lista
+          </Button>
+        </div>
+      );
     }
+
+    if (modoEdicao) {
+      return (
+        <EditarVistoriaSupabase 
+          vistoriaId={vistoriaSelecionada}
+          onBack={handleVoltar}
+        />
+      );
+    }
+
+    return (
+      <DetalhesVistoria 
+        vistoria={vistoria} 
+        onBack={handleVoltar}
+        onEdit={handleEditar}
+      />
+    );
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
-        <span className="ml-2 text-gray-600">Carregando vistorias...</span>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando vistorias...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-center justify-between'}`}>
-        <h2 className={`font-bold text-gray-900 ${isMobile ? 'text-xl' : 'text-2xl'}`}>Vistorias Realizadas</h2>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <Input
-              placeholder={isMobile ? "Buscar..." : "Buscar por condomínio, número ou responsável..."}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={`pl-10 ${isMobile ? 'w-full' : 'w-80'}`}
-            />
-          </div>
-          {onNovaVistoria && (
-            <Button onClick={onNovaVistoria} className="bg-teal-600 hover:bg-teal-700">
-              <Plus size={18} className="mr-2" />
-              Nova Vistoria
-            </Button>
-          )}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Vistorias</h2>
+        <Button onClick={onNovaVistoria} className="bg-teal-600 hover:bg-teal-700">
+          <Plus size={18} className="mr-2" />
+          Nova Vistoria
+        </Button>
+      </div>
+
+      <div className="flex items-center space-x-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Input
+            placeholder="Buscar por número, condomínio ou responsável..."
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            className="pl-10"
+          />
         </div>
       </div>
 
-      {/* Estatísticas */}
-      <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-4'} gap-4`}>
-        <Card>
-          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
-            <div className="flex items-center">
-              <FileText className={`text-teal-600 ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`} />
-              <div className="ml-4">
-                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Total</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{vistorias.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
-            <div className="flex items-center">
-              <Building className={`text-green-600 ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`} />
-              <div className="ml-4">
-                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Conformes</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
-                  {vistorias.filter(v => v.status === 'Conforme').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
-            <div className="flex items-center">
-              <Calendar className={`text-red-600 ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`} />
-              <div className="ml-4">
-                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Não Conformes</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
-                  {vistorias.filter(v => v.status === 'Não Conforme').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
-            <div className="flex items-center">
-              <Eye className={`text-blue-600 ${isMobile ? 'h-6 w-6' : 'h-8 w-8'}`} />
-              <div className="ml-4">
-                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Em Andamento</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
-                  {vistorias.filter(v => v.status === 'Em Andamento').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Lista de Vistorias */}
-      <div className="space-y-4">
-        {filteredVistorias.length === 0 ? (
-          <Card>
-            <CardContent className={`text-center ${isMobile ? 'p-6' : 'p-8'}`}>
-              <FileText size={isMobile ? 32 : 48} className="mx-auto text-gray-300 mb-4" />
-              <h3 className={`font-medium text-gray-900 mb-2 ${isMobile ? 'text-base' : 'text-lg'}`}>
-                {searchTerm ? 'Nenhuma vistoria encontrada' : 'Nenhuma vistoria cadastrada'}
-              </h3>
-              <p className={`text-gray-600 mb-4 ${isMobile ? 'text-sm' : ''}`}>
-                {searchTerm ? 'Tente ajustar os filtros de busca.' : 'Comece criando uma nova vistoria.'}
-              </p>
-              {!searchTerm && onNovaVistoria && (
-                <Button onClick={onNovaVistoria} className="bg-teal-600 hover:bg-teal-700">
-                  <Plus size={18} className="mr-2" />
-                  Criar Nova Vistoria
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          filteredVistorias.map((vistoria) => (
+      {vistoriasFiltradas.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-400 mb-4">
+            <Building size={48} className="mx-auto mb-4" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {vistorias.length === 0 ? 'Nenhuma vistoria encontrada' : 'Nenhuma vistoria corresponde ao filtro'}
+          </h3>
+          <p className="text-gray-500 mb-6">
+            {vistorias.length === 0 
+              ? 'Comece criando sua primeira vistoria.' 
+              : 'Tente ajustar os filtros de busca.'}
+          </p>
+          {vistorias.length === 0 && (
+            <Button onClick={onNovaVistoria} className="bg-teal-600 hover:bg-teal-700">
+              <Plus size={18} className="mr-2" />
+              Criar Primeira Vistoria
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-6">
+          {vistoriasFiltradas.map((vistoria) => (
             <Card key={vistoria.id} className="hover:shadow-md transition-shadow">
-              <CardContent className={isMobile ? 'p-4' : 'p-6'}>
-                <div className={`${isMobile ? 'space-y-4' : 'flex items-center justify-between'}`}>
-                  <div className="flex-1">
-                    <div className={`flex items-center mb-2 ${isMobile ? 'flex-wrap gap-2' : 'space-x-4'}`}>
-                      <h3 className={`font-semibold text-gray-900 ${isMobile ? 'text-base' : 'text-lg'}`}>
-                        {vistoria.condominio?.nome}
-                      </h3>
-                      <Badge variant="outline">
-                        #{vistoria.numero_interno}
-                      </Badge>
-                      <Badge className={getStatusColor(vistoria.status)}>
-                        {vistoria.status}
-                      </Badge>
-                    </div>
-                    
-                    <div className={`grid gap-2 text-gray-600 ${isMobile ? 'grid-cols-1 text-sm' : 'grid-cols-2 md:grid-cols-4 gap-4 text-sm'}`}>
-                      <div>
-                        <span className="font-medium">Data:</span> {formatDate(vistoria.data_vistoria)}
-                      </div>
-                      <div>
-                        <span className="font-medium">Responsável:</span> {vistoria.responsavel}
-                      </div>
-                      <div>
-                        <span className="font-medium">Grupos:</span> {vistoria.grupos.length}
-                      </div>
-                      <div>
-                        <span className="font-medium">ID:</span> {vistoria.id_sequencial}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className={`flex space-x-2 ${isMobile ? 'w-full' : 'ml-4'}`}>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className={isMobile ? 'flex-1' : ''}
-                      onClick={() => handleVisualizarVistoria(vistoria.id!)}
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-3">
+                    <span>{vistoria.condominio?.nome}</span>
+                    <Badge className={getStatusColor(vistoria.status)}>
+                      {vistoria.status}
+                    </Badge>
+                  </CardTitle>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleVerDetalhes(vistoria.id!)}
                     >
-                      <Eye size={16} className={isMobile ? '' : 'mr-2'} />
-                      {!isMobile && 'Visualizar'}
+                      <Eye size={16} className="mr-1" />
+                      Ver
                     </Button>
-                    <Button variant="outline" size="sm" className={isMobile ? 'flex-1' : ''}>
-                      <Download size={16} className={isMobile ? '' : 'mr-2'} />
-                      {!isMobile && 'PDF'}
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Trash2 size={16} className="mr-1" />
+                          Excluir
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja excluir a vistoria #{vistoria.numero_interno}? 
+                            Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleExcluir(vistoria.id!)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="text-teal-600" size={16} />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Data</p>
+                      <p className="text-gray-900">{formatDate(vistoria.data_vistoria)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <User className="text-teal-600" size={16} />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Responsável</p>
+                      <p className="text-gray-900">{vistoria.responsavel}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Building className="text-teal-600" size={16} />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Nº Interno</p>
+                      <p className="text-gray-900">#{vistoria.numero_interno}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {vistoria.observacoes_gerais && (
+                  <div className="mt-4 p-3 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Observações:</span> {vistoria.observacoes_gerais}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+                  <span>{vistoria.grupos.length} grupo(s) de vistoria</span>
+                  <span>Atualizada em {formatDate(vistoria.updated_at || vistoria.created_at || '')}</span>
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
