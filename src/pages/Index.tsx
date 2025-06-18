@@ -44,9 +44,26 @@ const Index = () => {
 
   const renderContent = () => {
     if (currentPage === 'preview' && previewData) {
+      // Converter VistoriaSupabase para o formato esperado pelo PreviewPDF
+      const previewDataFormatted = {
+        numeroInterno: previewData.numero_interno,
+        dataVistoria: previewData.data_vistoria,
+        condominio: previewData.condominio?.nome || '',
+        responsavel: previewData.responsavel,
+        observacoes: previewData.observacoes_gerais || '',
+        grupos: previewData.grupos.map(grupo => ({
+          ambiente: grupo.ambiente,
+          grupo: grupo.grupo,
+          item: grupo.item,
+          status: grupo.status,
+          parecer: grupo.parecer,
+          fotos: grupo.fotos || []
+        }))
+      };
+
       return (
         <PreviewPDF 
-          data={previewData} 
+          data={previewDataFormatted} 
           onBack={handleBackFromPreview}
           onEdit={() => setCurrentPage('nova-vistoria')}
         />
@@ -71,9 +88,20 @@ const Index = () => {
           />
         );
       case 'ambientes-grupos':
+        // Converter CondominioSupabase[] para o formato esperado
+        const condominiosFormatted = condominios.map(cond => ({
+          id: cond.id,
+          nome: cond.nome,
+          endereco: cond.endereco,
+          responsavel: '',
+          telefone: cond.telefone || '',
+          dataCadastro: cond.created_at,
+          proximoNumero: 1
+        }));
+        
         return (
           <GerenciarAmbientesGrupos 
-            condominios={condominios}
+            condominios={condominiosFormatted}
           />
         );
       case 'chat-ia':

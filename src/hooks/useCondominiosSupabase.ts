@@ -25,7 +25,9 @@ export const useCondominiosSupabase = () => {
   const carregarCondominios = async () => {
     try {
       const { data, error } = await supabase
-        .rpc('get_condominios');
+        .from('condominios')
+        .select('*')
+        .eq('ativo', true);
 
       if (error) {
         console.log('Usando dados mock enquanto as tabelas não estão disponíveis');
