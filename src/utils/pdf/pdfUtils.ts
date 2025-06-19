@@ -14,7 +14,7 @@ const waitForElementToBeReady = async (element: HTMLElement): Promise<void> => {
   return new Promise((resolve) => {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        setTimeout(resolve, 1000);
+        setTimeout(resolve, 500);
       });
     });
   });
@@ -31,7 +31,8 @@ export const processPageElement = async (pageElement: HTMLElement, pageIndex: nu
     console.log(`📋 Processando elemento:`, {
       tagName: pageElement.tagName,
       className: pageElement.className,
-      isConnected: pageElement.isConnected
+      isConnected: pageElement.isConnected,
+      id: pageElement.id || 'sem-id'
     });
     
     if (!document.contains(pageElement)) {
@@ -44,23 +45,29 @@ export const processPageElement = async (pageElement: HTMLElement, pageIndex: nu
     
     const rect = pageElement.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) {
-      throw new Error(`Página ${pageIndex + 1} não está visível`);
+      throw new Error(`Página ${pageIndex + 1} não está visível (${rect.width}x${rect.height})`);
     }
 
     console.log('🎬 Iniciando captura...', {
-      width: rect.width,
-      height: rect.height
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+      top: Math.round(rect.top),
+      left: Math.round(rect.left)
     });
 
-    // Configurações simplificadas para html2canvas
+    // Configurações otimizadas para html2canvas
     const canvasOptions = {
-      scale: 1.2,
+      scale: 1.5,
       useCORS: true,
       allowTaint: false,
       backgroundColor: "#ffffff",
       logging: false,
-      imageTimeout: 15000,
+      imageTimeout: 10000,
       removeContainer: true,
+      height: rect.height,
+      width: rect.width,
+      x: 0,
+      y: 0,
       onclone: (clonedDoc: Document, clonedElement: HTMLElement) => {
         console.log('🔄 Configurando documento clonado...');
         
@@ -73,6 +80,8 @@ export const processPageElement = async (pageElement: HTMLElement, pageIndex: nu
         clonedElement.style.display = 'block';
         clonedElement.style.visibility = 'visible';
         clonedElement.style.opacity = '1';
+        clonedElement.style.position = 'static';
+        clonedElement.style.transform = 'none';
         
         // Configurar imagens
         const imgs = clonedDoc.querySelectorAll('img');
@@ -81,6 +90,7 @@ export const processPageElement = async (pageElement: HTMLElement, pageIndex: nu
             img.crossOrigin = 'anonymous';
             img.style.display = 'block';
             img.style.maxWidth = '100%';
+            img.style.height = 'auto';
           }
         });
         
@@ -95,8 +105,8 @@ export const processPageElement = async (pageElement: HTMLElement, pageIndex: nu
       throw new Error(`Falha ao criar canvas para página ${pageIndex + 1}`);
     }
     
-    const imageData = canvas.toDataURL("image/jpeg", 0.8);
-    console.log(`✅ Canvas criado com sucesso`);
+    const imageData = canvas.toDataURL("image/jpeg", 0.85);
+    console.log(`✅ Canvas criado com sucesso - ${canvas.width}x${canvas.height}`);
     
     return imageData;
     
@@ -112,16 +122,16 @@ export const processPageWithFallback = async (pageElement: HTMLElement, pageInde
   } catch (pageError) {
     console.error(`❌ Erro na página ${pageIndex + 1}:`, pageError);
     
-    // Fallback apenas para primeira página
+    // Fallback simplificado
     if (pageIndex === 0) {
-      console.log('🔄 Tentando fallback para primeira página...');
+      console.log('🔄 Tentando fallback simplificado para primeira página...');
       
       try {
         if (!pageElement || !document.contains(pageElement)) {
           throw new Error('Elemento não está disponível para fallback');
         }
         
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         const rect = pageElement.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) {
@@ -135,14 +145,14 @@ export const processPageWithFallback = async (pageElement: HTMLElement, pageInde
           allowTaint: true,
           backgroundColor: "#ffffff",
           logging: false,
-          imageTimeout: 8000
+          imageTimeout: 5000
         });
         
         if (!simpleCanvas) {
           throw new Error('Fallback falhou ao criar canvas');
         }
         
-        const simpleImg = simpleCanvas.toDataURL("image/jpeg", 0.7);
+        const simpleImg = simpleCanvas.toDataURL("image/jpeg", 0.8);
         console.log('✅ Primeira página processada com fallback');
         return simpleImg;
         

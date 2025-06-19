@@ -43,7 +43,7 @@ export const usePDFGenerator = () => {
 
       // Aguardar estabilização do DOM
       console.log('⏳ Aguardando estabilização do DOM...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       // Verificar se há grupos com fotos
       const gruposComFotos = vistoria.grupos?.filter(grupo => grupo.fotos && grupo.fotos.length > 0) || [];
@@ -64,53 +64,68 @@ export const usePDFGenerator = () => {
       console.log('✅ Pré-carregamento concluído');
 
       // Aguardar mais tempo após o carregamento das imagens
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Buscar páginas de forma mais simples
-      console.log('🔍 Buscando páginas do relatório...');
-      let pages = Array.from(reportElement.querySelectorAll(".page")) as HTMLElement[];
+      // Busca simplificada e robusta por páginas
+      console.log('🔍 Iniciando busca por páginas...');
       
+      // Primeiro, tentar encontrar elementos com classe "page"
+      let pages = Array.from(reportElement.querySelectorAll(".page")) as HTMLElement[];
+      console.log(`📄 Páginas encontradas com classe .page: ${pages.length}`);
+
+      // Se não encontrou páginas com .page, buscar por outros seletores
       if (pages.length === 0) {
-        console.log('❌ Nenhuma página com classe .page encontrada, tentando busca alternativa...');
-        // Tentar buscar por divs com min-h-screen
+        console.log('⚠️ Tentando seletores alternativos...');
+        
+        // Tentar min-h-screen
         pages = Array.from(reportElement.querySelectorAll('[class*="min-h-screen"]')) as HTMLElement[];
+        console.log(`📄 Páginas encontradas com min-h-screen: ${pages.length}`);
+        
+        // Se ainda não encontrou, tentar divs grandes
+        if (pages.length === 0) {
+          const allDivs = Array.from(reportElement.querySelectorAll('div')) as HTMLElement[];
+          pages = allDivs.filter(div => {
+            const rect = div.getBoundingClientRect();
+            const hasHeight = div.offsetHeight > 300 || div.scrollHeight > 300;
+            const hasContent = (div.textContent?.trim().length || 0) > 20;
+            return hasHeight && hasContent && rect.width > 0;
+          });
+          console.log(`📄 Páginas encontradas por altura/conteúdo: ${pages.length}`);
+        }
+        
+        // Último recurso: usar o próprio reportElement como página única
+        if (pages.length === 0) {
+          console.log('🆘 Usando reportElement como página única');
+          pages = [reportElement];
+        }
       }
 
-      if (pages.length === 0) {
-        console.log('❌ Tentando usar children diretos do reportElement...');
-        pages = Array.from(reportElement.children).filter(child => {
-          const element = child as HTMLElement;
-          return element.offsetHeight > 200;
-        }) as HTMLElement[];
-      }
+      console.log(`📋 Total de páginas encontradas: ${pages.length}`);
 
-      console.log(`📄 Páginas encontradas: ${pages.length}`);
-
-      if (pages.length === 0) {
-        throw new Error('Nenhuma página encontrada para processar. Verifique se o conteúdo foi carregado corretamente.');
-      }
-
-      // Filtrar apenas páginas válidas
+      // Validar e filtrar páginas
       const paginasValidas = pages.filter((page, index) => {
-        if (!page) {
-          console.error(`❌ Página ${index + 1} é nula!`);
+        if (!page || !document.contains(page)) {
+          console.warn(`❌ Página ${index + 1} não está no DOM`);
           return false;
         }
         
-        const isInDOM = document.contains(page);
         const rect = page.getBoundingClientRect();
         const isVisible = rect.width > 0 && rect.height > 0;
         
-        console.log(`📊 Página ${index + 1} - No DOM: ${isInDOM}, Visível: ${isVisible}`);
+        if (!isVisible) {
+          console.warn(`❌ Página ${index + 1} não está visível`);
+          return false;
+        }
         
-        return isInDOM && isVisible;
+        console.log(`✅ Página ${index + 1} válida - ${Math.round(rect.width)}x${Math.round(rect.height)}`);
+        return true;
       });
 
-      if (paginasValidas.length === 0) {
-        throw new Error('Nenhuma página válida encontrada após validação');
-      }
+      console.log(`✅ Páginas válidas após filtro: ${paginasValidas.length}/${pages.length}`);
 
-      console.log(`✅ Páginas válidas: ${paginasValidas.length}/${pages.length}`);
+      if (paginasValidas.length === 0) {
+        throw new Error('Nenhuma página válida encontrada. Verifique se o conteúdo está carregado e visível.');
+      }
 
       toast({
         title: "Gerando PDF",
@@ -132,12 +147,19 @@ export const usePDFGenerator = () => {
         try {
           const page = paginasValidas[i];
           
+          // Verificação adicional antes de processar
           if (!page || !document.contains(page)) {
-            console.error(`❌ Página ${i + 1} não está válida para processamento`);
+            console.error(`❌ Página ${i + 1} não está mais válida`);
             continue;
           }
           
-          console.log(`✅ Processando página ${i + 1}...`);
+          const rect = page.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) {
+            console.error(`❌ Página ${i + 1} perdeu visibilidade`);
+            continue;
+          }
+          
+          console.log(`✅ Processando página ${i + 1} (${Math.round(rect.width)}x${Math.round(rect.height)})...`);
           
           const imageData = await processPageWithFallback(page, i);
           addImageToPDF(pdf, imageData, i > 0);
