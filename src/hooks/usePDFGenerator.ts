@@ -25,12 +25,18 @@ export const usePDFGenerator = () => {
       console.log('Vistoria:', vistoria.numero_interno);
       console.log('Grupos na vistoria:', vistoria.grupos?.length || 0);
       
+      // NOVA VERIFICAÇÃO CRÍTICA: Garantir que reportRef.current não seja nulo
+      const reportElement = reportRef.current;
+      if (!reportElement) {
+        throw new Error('Elemento do relatório é nulo ou não foi encontrado');
+      }
+      
       // Log da estrutura do DOM antes de começar
       console.log('Estrutura inicial do reportRef:', {
-        children: reportRef.current.children.length,
-        className: reportRef.current.className,
-        scrollHeight: reportRef.current.scrollHeight,
-        innerHTML: reportRef.current.innerHTML.substring(0, 500) + '...'
+        children: reportElement.children.length,
+        className: reportElement.className,
+        scrollHeight: reportElement.scrollHeight,
+        innerHTML: reportElement.innerHTML.substring(0, 500) + '...'
       });
       
       toast({
@@ -40,7 +46,12 @@ export const usePDFGenerator = () => {
 
       // Aguardar tempo suficiente para o DOM se estabilizar completamente
       console.log('Aguardando estabilização completa do DOM...');
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 4000));
+
+      // Verificar novamente se o elemento ainda existe após a espera
+      if (!reportRef.current || !document.contains(reportRef.current)) {
+        throw new Error('Elemento do relatório foi removido do DOM durante a espera');
+      }
 
       // Verificar se há conteúdo nos grupos
       const gruposComFotos = vistoria.grupos?.filter(grupo => grupo.fotos && grupo.fotos.length > 0) || [];
@@ -60,21 +71,27 @@ export const usePDFGenerator = () => {
       await preloadImages(reportRef.current);
       console.log('Pré-carregamento concluído');
 
-      // Aguardar mais um pouco após o carregamento das imagens
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Aguardar mais tempo após o carregamento das imagens
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       // Validar e buscar páginas com logs detalhados
       console.log('Iniciando validação das páginas...');
       const pages = validatePages(reportRef.current);
       console.log(`Páginas validadas: ${pages.length}`);
 
-      // Verificar se cada página ainda está válida antes de processar
+      // VERIFICAÇÃO CRÍTICA: Verificar se cada página ainda é válida e não é nula
       const paginasValidas = pages.filter((page, index) => {
+        // Verificação de nulidade crítica
+        if (!page) {
+          console.error(`❌ Página ${index + 1} é nula!`);
+          return false;
+        }
+        
         const isInDOM = document.contains(page);
         const rect = page.getBoundingClientRect();
         const isVisible = rect.width > 0 && rect.height > 0;
         
-        console.log(`Página ${index + 1} - No DOM: ${isInDOM}, Visível: ${isVisible}`);
+        console.log(`Página ${index + 1} - No DOM: ${isInDOM}, Visível: ${isVisible}, Elemento válido: ${page !== null}`);
         
         return isInDOM && isVisible;
       });
@@ -106,6 +123,11 @@ export const usePDFGenerator = () => {
         try {
           const page = paginasValidas[i];
           
+          // VERIFICAÇÃO CRÍTICA FINAL: Garantir que a página não seja nula
+          if (!page) {
+            throw new Error(`Página ${i + 1} é nula durante o processamento`);
+          }
+          
           // Verificação final antes do processamento
           if (!document.contains(page)) {
             throw new Error(`Página ${i + 1} não está mais no DOM`);
@@ -117,6 +139,7 @@ export const usePDFGenerator = () => {
           }
           
           console.log(`Página ${i + 1} validada para processamento:`, {
+            elemento: page ? 'válido' : 'NULO',
             dimensoes: { width: rect.width, height: rect.height },
             conteudo: (page.textContent?.trim().length || 0) > 0,
             imagens: page.querySelectorAll('img').length
@@ -140,7 +163,7 @@ export const usePDFGenerator = () => {
         
         // Pausa maior entre páginas para estabilização
         if (i < paginasValidas.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1500));
         }
       }
 

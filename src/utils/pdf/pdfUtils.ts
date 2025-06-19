@@ -12,17 +12,31 @@ export const createPDF = () => {
 
 const waitForElementToBeReady = async (element: HTMLElement): Promise<void> => {
   return new Promise((resolve) => {
-    // Aguardar o próximo frame de renderização
+    // Aguardar múltiplos frames de renderização para garantir estabilidade
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        // Aguardar um pouco mais para garantir que o layout esteja estável
-        setTimeout(resolve, 500);
+        requestAnimationFrame(() => {
+          // Aguardar mais tempo para garantir que o layout esteja completamente estável
+          setTimeout(resolve, 1000);
+        });
       });
     });
   });
 };
 
-const validateElementForCapture = (element: HTMLElement): boolean => {
+const validateElementForCapture = (element: HTMLElement | null): boolean => {
+  // Primeira verificação: elemento existe e está no DOM
+  if (!element) {
+    console.error('Elemento é nulo ou undefined');
+    return false;
+  }
+
+  if (!document.contains(element)) {
+    console.error('Elemento não está no DOM');
+    return false;
+  }
+
+  // Aguardar próximo frame para obter dimensões atualizadas
   const rect = element.getBoundingClientRect();
   const computedStyle = window.getComputedStyle(element);
   
@@ -37,7 +51,9 @@ const validateElementForCapture = (element: HTMLElement): boolean => {
     isNotHidden,
     hasContent,
     rect: { width: rect.width, height: rect.height },
-    scrollDimensions: { width: element.scrollWidth, height: element.scrollHeight }
+    scrollDimensions: { width: element.scrollWidth, height: element.scrollHeight },
+    className: element.className,
+    id: element.id
   });
   
   return isVisible && isDisplayed && isNotHidden && hasContent;
@@ -46,16 +62,21 @@ const validateElementForCapture = (element: HTMLElement): boolean => {
 export const processPageElement = async (pageElement: HTMLElement, pageIndex: number): Promise<string> => {
   console.log(`=== PROCESSANDO PÁGINA ${pageIndex + 1} ===`);
   
+  // Verificação crítica: elemento não pode ser nulo
+  if (!pageElement) {
+    throw new Error(`Elemento da página ${pageIndex + 1} é nulo ou undefined`);
+  }
+  
   // Verificar se o elemento ainda está no DOM
   if (!document.contains(pageElement)) {
     throw new Error(`Elemento da página ${pageIndex + 1} não está mais no DOM`);
   }
   
-  // Aguardar estabilização do layout
+  // Aguardar estabilização do layout com tempo maior
   console.log('Aguardando estabilização do layout...');
   await waitForElementToBeReady(pageElement);
   
-  // Validar elemento antes da captura
+  // Validar elemento antes da captura com verificação de nulidade
   if (!validateElementForCapture(pageElement)) {
     throw new Error(`Página ${pageIndex + 1} não está válida para captura`);
   }
@@ -83,33 +104,42 @@ export const processPageElement = async (pageElement: HTMLElement, pageIndex: nu
     height: pageElement.scrollHeight,
     windowWidth: Math.max(pageElement.scrollWidth, 1200),
     windowHeight: Math.max(pageElement.scrollHeight, 800),
-    onclone: (clonedDoc, element) => {
+    onclone: (clonedDoc, clonedElement) => {
       console.log('Processando documento clonado...');
       
-      // Verificar se o elemento foi clonado corretamente
-      if (!element) {
-        console.error('Elemento não foi clonado corretamente!');
-        throw new Error('Elemento não encontrado no documento clonado');
+      // CORREÇÃO CRÍTICA: Verificar se o elemento clonado existe antes de usar
+      if (!clonedElement) {
+        console.error('❌ ERRO CRÍTICO: Elemento não foi clonado corretamente!');
+        throw new Error('Elemento não encontrado no documento clonado - possível problema de seletor');
       }
       
-      // Configurar imagens no documento clonado
+      console.log('✅ Elemento clonado com sucesso:', {
+        tagName: clonedElement.tagName,
+        className: clonedElement.className,
+        id: clonedElement.id
+      });
+      
+      // Verificar se é HTMLElement antes de aplicar estilos
+      if (clonedElement instanceof HTMLElement) {
+        // Garantir que o elemento clonado seja visível
+        clonedElement.style.display = 'block';
+        clonedElement.style.visibility = 'visible';
+        clonedElement.style.opacity = '1';
+        console.log('Elemento clonado configurado para visibilidade');
+      }
+      
+      // Configurar imagens no documento clonado com verificação de nulidade
       const clonedImages = clonedDoc.querySelectorAll('img');
       console.log(`Configurando ${clonedImages.length} imagens no documento clonado`);
       
       clonedImages.forEach((img, idx) => {
-        img.crossOrigin = 'anonymous';
-        img.style.display = 'block';
-        img.style.maxWidth = '100%';
-        console.log(`Imagem ${idx + 1} configurada:`, img.src);
+        if (img instanceof HTMLImageElement) {
+          img.crossOrigin = 'anonymous';
+          img.style.display = 'block';
+          img.style.maxWidth = '100%';
+          console.log(`Imagem ${idx + 1} configurada:`, img.src);
+        }
       });
-      
-      // Garantir que o elemento clonado seja visível
-      if (element instanceof HTMLElement) {
-        element.style.display = 'block';
-        element.style.visibility = 'visible';
-        element.style.opacity = '1';
-        console.log('Elemento clonado configurado para visibilidade');
-      }
     }
   });
   
@@ -137,12 +167,21 @@ export const processPageWithFallback = async (pageElement: HTMLElement, pageInde
       console.log('Tentando fallback simplificado para a primeira página...');
       
       try {
+        // Verificação adicional antes do fallback
+        if (!pageElement) {
+          throw new Error('Elemento da página é nulo no fallback');
+        }
+        
         // Aguardar mais tempo antes do fallback
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         // Verificar novamente se o elemento está válido
         if (!document.contains(pageElement)) {
           throw new Error('Elemento não está mais no DOM após aguardar');
+        }
+        
+        if (!validateElementForCapture(pageElement)) {
+          throw new Error('Elemento não passou na validação durante fallback');
         }
         
         const simpleCanvas = await html2canvas(pageElement, {
@@ -152,11 +191,11 @@ export const processPageWithFallback = async (pageElement: HTMLElement, pageInde
           backgroundColor: "#ffffff",
           logging: true,
           imageTimeout: 10000,
-          onclone: (clonedDoc, element) => {
+          onclone: (clonedDoc, clonedElement) => {
             console.log('Fallback: configurando documento clonado...');
-            if (element) {
-              element.style.display = 'block';
-              element.style.visibility = 'visible';
+            if (clonedElement instanceof HTMLElement) {
+              clonedElement.style.display = 'block';
+              clonedElement.style.visibility = 'visible';
             }
           }
         });
