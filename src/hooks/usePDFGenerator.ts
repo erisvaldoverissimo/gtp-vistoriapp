@@ -38,9 +38,9 @@ export const usePDFGenerator = () => {
         description: "Preparando conteúdo...",
       });
 
-      // Aguardar mais tempo para o DOM se estabilizar
-      console.log('Aguardando estabilização do DOM...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Aguardar tempo suficiente para o DOM se estabilizar completamente
+      console.log('Aguardando estabilização completa do DOM...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       // Verificar se há conteúdo nos grupos
       const gruposComFotos = vistoria.grupos?.filter(grupo => grupo.fotos && grupo.fotos.length > 0) || [];
@@ -50,20 +50,40 @@ export const usePDFGenerator = () => {
         throw new Error('Nenhum grupo com fotos encontrado para gerar o PDF');
       }
 
+      // Aguardar que todas as imagens estejam carregadas
+      toast({
+        title: "Gerando PDF",
+        description: "Aguardando carregamento das imagens...",
+      });
+
+      console.log('Iniciando pré-carregamento de imagens...');
+      await preloadImages(reportRef.current);
+      console.log('Pré-carregamento concluído');
+
+      // Aguardar mais um pouco após o carregamento das imagens
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       // Validar e buscar páginas com logs detalhados
       console.log('Iniciando validação das páginas...');
       const pages = validatePages(reportRef.current);
       console.log(`Páginas validadas: ${pages.length}`);
 
-      toast({
-        title: "Gerando PDF",
-        description: "Carregando imagens...",
+      // Verificar se cada página ainda está válida antes de processar
+      const paginasValidas = pages.filter((page, index) => {
+        const isInDOM = document.contains(page);
+        const rect = page.getBoundingClientRect();
+        const isVisible = rect.width > 0 && rect.height > 0;
+        
+        console.log(`Página ${index + 1} - No DOM: ${isInDOM}, Visível: ${isVisible}`);
+        
+        return isInDOM && isVisible;
       });
 
-      // Pré-carregar imagens
-      console.log('Iniciando pré-carregamento de imagens...');
-      await preloadImages(reportRef.current);
-      console.log('Pré-carregamento concluído');
+      if (paginasValidas.length === 0) {
+        throw new Error('Nenhuma página válida encontrada após validação final');
+      }
+
+      console.log(`Páginas válidas para processamento: ${paginasValidas.length}/${pages.length}`);
 
       toast({
         title: "Gerando PDF",
@@ -74,34 +94,33 @@ export const usePDFGenerator = () => {
       let paginasProcessadas = 0;
       const errosPorPagina = [];
 
-      // Aguardar um pouco mais antes de começar o processamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      for (let i = 0; i < pages.length; i++) {
-        console.log(`=== PROCESSANDO PÁGINA ${i + 1}/${pages.length} ===`);
+      // Processar uma página por vez com pausas maiores
+      for (let i = 0; i < paginasValidas.length; i++) {
+        console.log(`=== PROCESSANDO PÁGINA ${i + 1}/${paginasValidas.length} ===`);
         
         toast({
           title: "Gerando PDF",
-          description: `Processando página ${i + 1} de ${pages.length}...`,
+          description: `Processando página ${i + 1} de ${paginasValidas.length}...`,
         });
 
         try {
-          // Verificar se a página ainda existe e está visível
-          const page = pages[i];
-          const rect = page.getBoundingClientRect();
+          const page = paginasValidas[i];
           
-          console.log(`Página ${i + 1} antes do processamento:`, {
-            existe: !!page,
-            visivel: rect.width > 0 && rect.height > 0,
+          // Verificação final antes do processamento
+          if (!document.contains(page)) {
+            throw new Error(`Página ${i + 1} não está mais no DOM`);
+          }
+          
+          const rect = page.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) {
+            throw new Error(`Página ${i + 1} não está visível`);
+          }
+          
+          console.log(`Página ${i + 1} validada para processamento:`, {
             dimensoes: { width: rect.width, height: rect.height },
             conteudo: (page.textContent?.trim().length || 0) > 0,
             imagens: page.querySelectorAll('img').length
           });
-          
-          if (rect.width === 0 || rect.height === 0) {
-            console.warn(`Página ${i + 1} não está visível, pulando...`);
-            continue;
-          }
           
           const imageData = await processPageWithFallback(page, i);
           addImageToPDF(pdf, imageData, i > 0);
@@ -119,8 +138,10 @@ export const usePDFGenerator = () => {
           }
         }
         
-        // Pequena pausa entre páginas
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Pausa maior entre páginas para estabilização
+        if (i < paginasValidas.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
 
       if (paginasProcessadas === 0) {
@@ -135,7 +156,7 @@ export const usePDFGenerator = () => {
       
       console.log(`=== PDF GERADO COM SUCESSO ===`);
       console.log(`Páginas no PDF: ${pdf.getNumberOfPages()}`);
-      console.log(`Páginas processadas: ${paginasProcessadas}/${pages.length}`);
+      console.log(`Páginas processadas: ${paginasProcessadas}/${paginasValidas.length}`);
       
       if (errosPorPagina.length > 0) {
         console.warn('Páginas com problemas:', errosPorPagina);
@@ -145,7 +166,7 @@ export const usePDFGenerator = () => {
 
       toast({
         title: "PDF Gerado",
-        description: `Relatório gerado com ${paginasProcessadas} de ${pages.length} página(s) e baixado com sucesso.`,
+        description: `Relatório gerado com ${paginasProcessadas} de ${paginasValidas.length} página(s) e baixado com sucesso.`,
       });
 
     } catch (error) {
