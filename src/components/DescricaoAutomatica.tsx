@@ -9,12 +9,14 @@ interface DescricaoAutomaticaProps {
   imageFile: File;
   onDescriptionGenerated: (description: string) => void;
   disabled?: boolean;
+  currentDescription?: string; // Texto atual no campo de descrição
 }
 
 const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
   imageFile,
   onDescriptionGenerated,
-  disabled
+  disabled,
+  currentDescription = ''
 }) => {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -102,19 +104,34 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
         systemPrompt = `${promptPersona ? promptPersona + '\n\n' : ''}${promptObjetivo ? promptObjetivo + '\n\n' : ''}${promptComportamento ? promptComportamento + '\n\n' : ''}`;
       }
 
-      // Adicionar instruções específicas para análise de vistoria
+      // Verificar se há instrução específica no campo de descrição
+      const hasSpecificInstruction = currentDescription.trim().length > 0;
+      const specificInstructionText = hasSpecificInstruction 
+        ? `\n\nINSTRUÇÃO ESPECÍFICA DO USUÁRIO: "${currentDescription.trim()}"\n- Use esta instrução como foco principal da sua análise`
+        : '';
+
+      // Construir prompt base aprimorado para análise completa
       const taskPrompt = `
-Como ${nomeAgente}, você deve analisar esta imagem de vistoria predial e descrever APENAS as anomalias, problemas ou condições técnicas observadas.
+Como ${nomeAgente}, você deve analisar esta imagem de vistoria predial e descrever detalhadamente o que está sendo observado.
 
 INSTRUÇÕES OBRIGATÓRIAS:
 - MÁXIMO 200 caracteres
 - Use linguagem técnica e objetiva
-- NÃO mencione datas, horários ou metadados da foto
-- Foque APENAS em: fissuras, infiltrações, desgastes, corrosão, defeitos estruturais, problemas de instalações
-- Se não houver anomalias visíveis, escreva "Sem anomalias aparentes"
-- Use termos técnicos de engenharia civil/predial
+- Descreva o trabalho/situação observada na imagem
+- Identifique: tipo de ambiente, atividades em execução, materiais utilizados, estado das estruturas
+- Foque em aspectos técnicos relevantes: condições prediais, trabalhos sendo realizados, anomalias (se houver)
+- Seja específico sobre o que está acontecendo na cena
+- Se não houver atividades específicas, descreva o estado atual do ambiente
 
-Exemplo: "Fissura horizontal na viga de concreto, aprox. 2mm de abertura. Sinais de infiltração com eflorescência na parede lateral direita."`;
+TIPOS DE ANÁLISE ESPERADA:
+✓ Trabalhos em execução (instalações, reparos, reformas)
+✓ Estado de conservação de estruturas
+✓ Condições de segurança
+✓ Materiais e equipamentos presentes
+✓ Anomalias estruturais (fissuras, infiltrações, desgastes)
+✓ Aspectos de acabamento e instalações${specificInstructionText}
+
+Exemplo: "Aplicação de argamassa em parede interna. Materiais de construção organizados no piso. Estrutura em bom estado de conservação."`;
 
       const requestBody = {
         model: apiInfo.model,
@@ -142,6 +159,9 @@ Exemplo: "Fissura horizontal na viga de concreto, aprox. 2mm de abertura. Sinais
 
       console.log('Enviando requisição para:', apiInfo.url);
       console.log('Usando agente:', nomeAgente);
+      if (hasSpecificInstruction) {
+        console.log('Instrução específica:', currentDescription.trim());
+      }
 
       const response = await fetch(apiInfo.url, {
         method: 'POST',
@@ -185,9 +205,10 @@ Exemplo: "Fissura horizontal na viga de concreto, aprox. 2mm de abertura. Sinais
 
       onDescriptionGenerated(description);
 
+      const instructionMessage = hasSpecificInstruction ? ' (com instrução específica)' : '';
       toast({
         title: "Descrição Gerada",
-        description: `Descrição criada por ${nomeAgente} via ${apiInfo.provider.toUpperCase()} (${description.length}/200 caracteres)`,
+        description: `Descrição criada por ${nomeAgente} via ${apiInfo.provider.toUpperCase()}${instructionMessage} (${description.length}/200 caracteres)`,
       });
 
     } catch (error) {

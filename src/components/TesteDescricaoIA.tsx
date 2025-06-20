@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Upload, Image as ImageIcon } from 'lucide-react';
+import { Upload, Image as ImageIcon, Info } from 'lucide-react';
 import DescricaoAutomatica from './DescricaoAutomatica';
 
 const TesteDescricaoIA = () => {
@@ -70,25 +70,36 @@ const TesteDescricaoIA = () => {
                 </div>
               </div>
 
+              <div>
+                <Label htmlFor="descriptionInput">
+                  Descrição / Instrução para IA
+                  <span className="text-sm text-gray-500 ml-2">(opcional - guia a análise)</span>
+                </Label>
+                <Textarea
+                  id="descriptionInput"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  className="mt-1"
+                  placeholder="Digite uma instrução específica para guiar a análise da IA (ex: 'Verificar infiltração na parede' ou 'Descrever o trabalho de instalação')"
+                />
+                <div className="flex items-center mt-2 text-sm text-blue-600">
+                  <Info size={14} className="mr-1" />
+                  <span>
+                    {description.trim() 
+                      ? `A IA usará esta instrução para focar a análise: "${description.trim()}"` 
+                      : 'Digite texto acima para guiar a análise da IA, ou deixe vazio para análise geral'
+                    }
+                  </span>
+                </div>
+              </div>
+
               {selectedFile && (
                 <DescricaoAutomatica
                   imageFile={selectedFile}
                   onDescriptionGenerated={handleDescriptionGenerated}
+                  currentDescription={description}
                 />
-              )}
-
-              {description && (
-                <div>
-                  <Label htmlFor="generatedDescription">Descrição Gerada pela IA</Label>
-                  <Textarea
-                    id="generatedDescription"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={6}
-                    className="mt-1"
-                    placeholder="A descrição aparecerá aqui..."
-                  />
-                </div>
               )}
             </div>
           )}
@@ -111,12 +122,24 @@ const TesteDescricaoIA = () => {
         </CardHeader>
         <CardContent>
           <ol className="list-decimal list-inside space-y-2 text-sm">
-            <li>Certifique-se de que sua API Key do Groq (gsk_...) está configurada</li>
+            <li>Certifique-se de que sua API Key do Groq (gsk_...) ou OpenAI (sk_...) está configurada</li>
             <li>Verifique se a opção "Habilitar descrição automática" está ativada nas Configurações</li>
             <li>Selecione uma imagem usando o campo acima</li>
+            <li><strong>NOVO:</strong> Digite uma instrução específica no campo de descrição para guiar a análise (opcional)</li>
             <li>Clique em "Gerar Descrição IA" para testar</li>
-            <li>A descrição deve aparecer no campo de texto abaixo</li>
+            <li>A IA agora descreve trabalhos sendo executados, não apenas anomalias</li>
           </ol>
+          
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">Exemplos de Instruções:</h4>
+            <ul className="text-sm text-blue-700 space-y-1">
+              <li>• "Verificar se há infiltração na parede"</li>
+              <li>• "Descrever o trabalho de instalação elétrica"</li>
+              <li>• "Analisar o estado da pintura"</li>
+              <li>• "Focar nos materiais utilizados"</li>
+              <li>• "Verificar condições de segurança"</li>
+            </ul>
+          </div>
         </CardContent>
       </Card>
     </div>
