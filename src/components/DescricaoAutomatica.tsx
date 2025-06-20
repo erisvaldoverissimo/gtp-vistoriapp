@@ -106,12 +106,35 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
 
       // Verificar se há instrução específica no campo de descrição
       const hasSpecificInstruction = currentDescription.trim().length > 0;
-      const specificInstructionText = hasSpecificInstruction 
-        ? `\n\nINSTRUÇÃO ESPECÍFICA DO USUÁRIO: "${currentDescription.trim()}"\n- Use esta instrução como foco principal da sua análise`
-        : '';
+      
+      // Construir prompt com prioridade para instrução específica
+      let taskPrompt = '';
+      
+      if (hasSpecificInstruction) {
+        // Prompt focado na instrução específica
+        taskPrompt = `
+INSTRUÇÃO PRIORITÁRIA: "${currentDescription.trim()}"
 
-      // Construir prompt base aprimorado para análise completa
-      const taskPrompt = `
+Você DEVE seguir rigorosamente esta instrução específica do usuário. Analise a imagem focando EXCLUSIVAMENTE no que foi solicitado.
+
+REGRAS OBRIGATÓRIAS:
+- MÁXIMO 200 caracteres
+- Use linguagem técnica e objetiva
+- Priorize TOTALMENTE a instrução específica fornecida
+- Se a instrução menciona empresa/serviço específico, INCLUA essas informações na resposta
+- Descreva o trabalho/situação observada conforme a instrução
+- Foque nos aspectos solicitados na instrução
+
+INSTRUÇÕES DE ANÁLISE:
+- Identifique: tipo de ambiente, atividades em execução, materiais utilizados, estado das estruturas
+- Descreva trabalhos sendo realizados, não apenas anomalias
+- Seja específico sobre o que está acontecendo na cena
+- Se a instrução menciona nome de empresa, serviço ou aspecto específico, destaque isso na resposta
+
+Exemplo de resposta considerando empresa: "Trabalho de aplicação de argamassa da empresa XYZ. Materiais organizados, estrutura em bom estado."`;
+      } else {
+        // Prompt geral quando não há instrução específica
+        taskPrompt = `
 Como ${nomeAgente}, você deve analisar esta imagem de vistoria predial e descrever detalhadamente o que está sendo observado.
 
 INSTRUÇÕES OBRIGATÓRIAS:
@@ -129,9 +152,10 @@ TIPOS DE ANÁLISE ESPERADA:
 ✓ Condições de segurança
 ✓ Materiais e equipamentos presentes
 ✓ Anomalias estruturais (fissuras, infiltrações, desgastes)
-✓ Aspectos de acabamento e instalações${specificInstructionText}
+✓ Aspectos de acabamento e instalações
 
 Exemplo: "Aplicação de argamassa em parede interna. Materiais de construção organizados no piso. Estrutura em bom estado de conservação."`;
+      }
 
       const requestBody = {
         model: apiInfo.model,
@@ -160,7 +184,7 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais de construção 
       console.log('Enviando requisição para:', apiInfo.url);
       console.log('Usando agente:', nomeAgente);
       if (hasSpecificInstruction) {
-        console.log('Instrução específica:', currentDescription.trim());
+        console.log('Instrução específica PRIORITÁRIA:', currentDescription.trim());
       }
 
       const response = await fetch(apiInfo.url, {
@@ -205,7 +229,7 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais de construção 
 
       onDescriptionGenerated(description);
 
-      const instructionMessage = hasSpecificInstruction ? ' (com instrução específica)' : '';
+      const instructionMessage = hasSpecificInstruction ? ' (seguindo instrução específica)' : '';
       toast({
         title: "Descrição Gerada",
         description: `Descrição criada por ${nomeAgente} via ${apiInfo.provider.toUpperCase()}${instructionMessage} (${description.length}/200 caracteres)`,
