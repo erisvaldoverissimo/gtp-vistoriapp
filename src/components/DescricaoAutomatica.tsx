@@ -107,18 +107,14 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
       // Verificar se há instrução específica no campo de descrição
       const hasSpecificInstruction = currentDescription.trim().length > 0;
       
-      // Construir prompt MUITO SIMPLES quando há instrução específica
+      // Construir prompt ULTRA SIMPLES quando há instrução específica
       let taskPrompt = '';
       
       if (hasSpecificInstruction) {
-        // Prompt super simples e direto
-        taskPrompt = `Analise esta imagem seguindo EXATAMENTE esta instrução: "${currentDescription.trim()}"
+        // Prompt minimalista e MUITO direto
+        taskPrompt = `TAREFA: ${currentDescription.trim()}
 
-Regras:
-- Máximo 200 caracteres
-- Siga a instrução ao pé da letra
-- Se menciona empresa/serviço, INCLUA na resposta
-- Descreva o que vê na imagem relacionado à instrução`;
+Descreva em máximo 200 caracteres o que vê na imagem considerando esta tarefa.`;
       } else {
         // Prompt geral quando não há instrução específica
         taskPrompt = `Como ${nomeAgente}, analise esta imagem de vistoria predial.
@@ -153,15 +149,16 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
             ]
           }
         ],
-        max_tokens: hasSpecificInstruction ? 200 : 150, // Mais tokens para instruções específicas
-        temperature: hasSpecificInstruction ? 0.3 : 0.1  // Mais criatividade para seguir instruções
+        max_tokens: hasSpecificInstruction ? 250 : 150, // Mais tokens para instruções específicas
+        temperature: hasSpecificInstruction ? 0.7 : 0.1  // Temperatura alta para seguir instruções criativas
       };
 
       console.log('Enviando requisição para:', apiInfo.url);
       console.log('Usando agente:', nomeAgente);
       if (hasSpecificInstruction) {
         console.log('INSTRUÇÃO ESPECÍFICA DETECTADA:', currentDescription.trim());
-        console.log('Prompt usado:', taskPrompt);
+        console.log('Prompt minimalista usado:', taskPrompt);
+        console.log('Temperature ajustada para:', 0.7);
       }
 
       const response = await fetch(apiInfo.url, {
