@@ -39,7 +39,15 @@ export const useConfiguracoes = () => {
       // Converter array de configurações em objeto
       const configObj: Record<string, any> = {};
       data?.forEach((config: ConfiguracaoSistema) => {
-        configObj[config.chave] = config.valor;
+        // Parse do JSON para obter o valor real
+        try {
+          configObj[config.chave] = typeof config.valor === 'string' 
+            ? JSON.parse(config.valor) 
+            : config.valor;
+        } catch {
+          // Se não conseguir fazer parse, usar o valor como está
+          configObj[config.chave] = config.valor;
+        }
       });
 
       setConfiguracoes(configObj);
@@ -62,7 +70,7 @@ export const useConfiguracoes = () => {
         .from('configuracoes_sistema')
         .upsert({
           chave,
-          valor: JSON.stringify(valor),
+          valor: valor, // Não fazer JSON.stringify aqui, deixar o Supabase tratar
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'chave'
@@ -96,7 +104,7 @@ export const useConfiguracoes = () => {
     try {
       const updates = Object.entries(novasConfiguracoes).map(([chave, valor]) => ({
         chave,
-        valor: JSON.stringify(valor),
+        valor: valor, // Não fazer JSON.stringify aqui, deixar o Supabase tratar
         updated_at: new Date().toISOString()
       }));
 
