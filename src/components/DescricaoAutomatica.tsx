@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Brain, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useConfiguracoes } from '@/hooks/useConfiguracoes';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DescricaoAutomaticaProps {
   imageFile: File;
@@ -29,7 +30,7 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
       return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.2-11b-vision-preview' };
     } else {
       // Se não tem prefixo conhecido, assumir que é Chatvolt
-      return { provider: 'chatvolt', url: 'https://api.chatvolt.ai/agents/query', model: 'chatvolt-agent' };
+      return { provider: 'chatvolt', url: 'chatvolt-description', model: 'chatvolt-agent' };
     }
   };
 
@@ -83,7 +84,7 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
       console.log('Gerando descrição via:', apiInfo.provider, 'modelo:', apiInfo.model);
 
       if (apiInfo.provider === 'chatvolt') {
-        await generateWithChatvolt(apiInfo, apiKey, chatvoltAgentId);
+        await generateWithChatvolt(apiKey, chatvoltAgentId);
       } else {
         await generateWithOpenAIOrGroq(apiInfo, apiKey);
       }
@@ -91,26 +92,17 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
     } catch (error) {
       console.error('Erro ao gerar descrição:', error);
       
-      // Verificar se é erro de CORS especificamente
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        toast({
-          title: "Erro de CORS",
-          description: "A API da Chatvolt não permite requisições diretas do navegador. Tente usar OpenAI (sk-...) ou Groq (gsk-...) em vez disso.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Erro na Geração",
-          description: error instanceof Error ? error.message : "Não foi possível gerar a descrição. Verifique sua API Key e conexão.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Erro na Geração",
+        description: error instanceof Error ? error.message : "Não foi possível gerar a descrição. Verifique sua API Key e conexão.",
+        variant: "destructive"
+      });
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const generateWithChatvolt = async (apiInfo: any, apiKey: string, agentId: string) => {
+  const generateWithChatvolt = async (apiKey: string, agentId: string) => {
     // Converter imagem para base64
     const base64Image = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -144,87 +136,42 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
       console.log('CHATVOLT - MODO PADRÃO');
     }
 
-    // Tentar diferentes formatos de requisição para a Chatvolt
-    const requestBody = {
-      agentId: agentId,
-      message: message,
-      files: [
-        {
-          type: 'image',
-          data: `data:image/jpeg;base64,${base64Image}`
-        }
-      ]
-    };
+    console.log('Chamando Edge Function para Chatvolt...');
 
-    console.log('Enviando para Chatvolt Agent ID:', agentId);
-    console.log('URL:', apiInfo.url);
-    console.log('Request body:', JSON.stringify(requestBody, null, 2));
-
-    // Tentar requisição com modo 'no-cors' primeiro para ver se funciona
-    try {
-      console.log('Tentando requisição padrão...');
-      const response = await fetch(apiInfo.url, {
-        method: 'POST',
-        mode: 'cors', // Explicitamente usar CORS
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      console.log('Status da resposta Chatvolt:', response.status);
-      console.log('Headers da resposta:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Erro da API Chatvolt - Status:', response.status);
-        console.error('Erro da API Chatvolt - Response:', errorText);
-        
-        let errorMessage = `Erro ${response.status}`;
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage += ` - ${errorData.error?.message || errorData.message || 'Erro desconhecido'}`;
-        } catch {
-          errorMessage += ` - ${errorText || 'Erro desconhecido'}`;
-        }
-        
-        throw new Error(`Chatvolt API: ${errorMessage}`);
+    // Usar a Edge Function do Supabase para fazer a requisição
+    const { data, error } = await supabase.functions.invoke('chatvolt-description', {
+      body: {
+        message: message,
+        base64Image: base64Image,
+        agentId: agentId,
+        apiKey: apiKey
       }
+    });
 
-      const responseText = await response.text();
-      console.log('Resposta bruta Chatvolt:', responseText);
-
-      const data = JSON.parse(responseText);
-      console.log('Dados parseados Chatvolt:', data);
-      
-      // A resposta da Chatvolt pode vir em diferentes formatos
-      let description = data.answer || data.response || data.message || data.text || data.content || 'Resposta não encontrada';
-
-      // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
-      if (!hasSpecificInstruction && description.length > 200) {
-        description = description.substring(0, 197) + '...';
-      }
-
-      onDescriptionGenerated(description);
-
-      const instructionMessage = hasSpecificInstruction ? ' (seguindo sua instrução específica)' : '';
-      toast({
-        title: "Descrição Gerada",
-        description: `Descrição criada pelo agente Chatvolt${instructionMessage} (${description.length} caracteres)`,
-      });
-
-    } catch (fetchError) {
-      console.error('Erro na requisição fetch:', fetchError);
-      
-      // Se falhou por CORS, informar ao usuário
-      if (fetchError instanceof TypeError && fetchError.message.includes('Failed to fetch')) {
-        throw new Error('Erro de CORS: A API da Chatvolt não permite requisições diretas do navegador. Use OpenAI (sk-...) ou Groq (gsk-...) em vez disso.');
-      }
-      
-      throw fetchError;
+    if (error) {
+      console.error('Erro na Edge Function:', error);
+      throw new Error(`Erro na comunicação com Chatvolt: ${error.message}`);
     }
+
+    if (!data?.description) {
+      console.error('Resposta da Edge Function:', data);
+      throw new Error('Nenhuma descrição retornada pela Chatvolt');
+    }
+
+    let description = data.description;
+
+    // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
+    if (!hasSpecificInstruction && description.length > 200) {
+      description = description.substring(0, 197) + '...';
+    }
+
+    onDescriptionGenerated(description);
+
+    const instructionMessage = hasSpecificInstruction ? ' (seguindo sua instrução específica)' : '';
+    toast({
+      title: "Descrição Gerada",
+      description: `Descrição criada pelo agente Chatvolt${instructionMessage} (${description.length} caracteres)`,
+    });
   };
 
   const generateWithOpenAIOrGroq = async (apiInfo: any, apiKey: string) => {
