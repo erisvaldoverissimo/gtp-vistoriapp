@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,14 +8,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Settings, Mail, Image, Save, Upload, Bot, Brain } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useConfiguracoes } from '@/hooks/useConfiguracoes';
 
 const Configuracoes = () => {
   const { toast } = useToast();
+  const { configuracoes, loading, salvarConfiguracoes, obterConfiguracao } = useConfiguracoes();
   const [config, setConfig] = useState({
     // Configurações da Empresa
-    nomeEmpresa: 'VistoriaApp',
-    emailEmpresa: 'contato@vistoriaapp.com.br',
-    telefoneEmpresa: '(11) 99999-9999',
+    nomeEmpresa: '',
+    emailEmpresa: '',
+    telefoneEmpresa: '',
     
     // Configurações de Email SMTP
     smtpServer: '',
@@ -34,47 +37,93 @@ const Configuracoes = () => {
     
     // Configurações do Agente IA
     nomeAgente: 'Theo',
-    promptPersona: `Seu nome é Theo, atue como um Tutor virtual e Mentor de estudo no Seminário Teológico de Guarulhos, você possui vasta experiência em pedagogia teológica, Cosmovisão Cristã e práticas de aprendizagem ativa. Seu propósito é auxiliar alunos durante todo o processo educativo.
-
-### PERSONA
-- Tom acolhedor e empático, transmitindo calma e segurança ao estudante
-- Estilo de fala claro, objetivo e acessível, evitando jargões técnicos sem necessidade
-- Uso ocasional de metáforas e ilustrações bíblicas (por exemplo, "como um farol que guia o barco.")
-- Demonstra paciência exemplar, encorajando o aluno a expor dúvidas sem receio
-- Mostra entusiasmo sincero ao reconhecer o progresso ou empenho do estudante
-- Adota postura respeitosa e humilde, reconhecendo limites de conhecimento e aprendendo junto
-- Sinaliza abertura para feedback contínuo e novas perguntas`,
-    promptObjetivo: `Esclarecer dúvidas em tempo real sobre Cosmovisão e Espiritualidade, fundamentando-se em textos bíblicos e referências teológicas
-
-- Gerar cronogramas de estudo customizados de acordo com a disponibilidade semanal e metas individuais de cada aluno
-- Incentivar o engajamento e a autonomia do estudante por meio de métodos de estudo eficazes`,
-    promptComportamento: `### COMPORTAMENTO E AÇÕES
-
-1. **Atendimento de dúvidas:**
-   - Responder com linguagem clara, contextualizada e fundamentada em passagens bíblicas, livros acadêmicos e artigos teológicos
-   - Quando citar autores ou obras, sempre incluir referência completa (título, autor, edição e, se possível, link para a biblioteca digital do Seminário)
-
-2. **Gerenciamento de cronogramas:**
-   - Solicitar ao aluno sua disponibilidade semanal (horas/dias) e adaptar o plano de estudo conforme prazos de entrega ou exames`,
+    promptPersona: '',
+    promptObjetivo: '',
+    promptComportamento: '',
     enableAgente: true,
     
     // Configurações Gerais
     limiteFotos: 10,
-    tamanhoMaximoFoto: '5', // MB
+    tamanhoMaximoFoto: '5',
     formatosPermitidos: 'JPEG, PNG, WebP'
   });
+
+  // Atualizar estado local quando as configurações do Supabase forem carregadas
+  useEffect(() => {
+    if (!loading && configuracoes) {
+      setConfig({
+        nomeEmpresa: obterConfiguracao('empresa_nome', 'VistoriaApp'),
+        emailEmpresa: obterConfiguracao('empresa_email', 'contato@vistoriaapp.com.br'),
+        telefoneEmpresa: obterConfiguracao('empresa_telefone', '(11) 99999-9999'),
+        
+        smtpServer: obterConfiguracao('smtp_server', ''),
+        smtpPort: obterConfiguracao('smtp_port', '587'),
+        smtpUser: obterConfiguracao('smtp_user', ''),
+        smtpPassword: obterConfiguracao('smtp_password', ''),
+        smtpSecure: obterConfiguracao('smtp_secure', true),
+        
+        logoEmpresa: obterConfiguracao('empresa_logo', ''),
+        corCabecalho: obterConfiguracao('empresa_cor_cabecalho', '#0f766e'),
+        assinaturaEmail: obterConfiguracao('email_assinatura', ''),
+        
+        apiKeyOpenAI: obterConfiguracao('api_key_openai', ''),
+        enableAutoDescription: obterConfiguracao('ia_auto_descricao', true),
+        
+        nomeAgente: obterConfiguracao('agente_nome', 'Theo'),
+        promptPersona: obterConfiguracao('agente_prompt_persona', 'Seu nome é Theo, atue como um Tutor virtual e Mentor de estudo no Seminário Teológico de Guarulhos...'),
+        promptObjetivo: obterConfiguracao('agente_prompt_objetivo', 'Esclarecer dúvidas em tempo real sobre Cosmovisão e Espiritualidade...'),
+        promptComportamento: obterConfiguracao('agente_prompt_comportamento', '### COMPORTAMENTO E AÇÕES...'),
+        enableAgente: obterConfiguracao('agente_enable', true),
+        
+        limiteFotos: obterConfiguracao('upload_limite_fotos', 10),
+        tamanhoMaximoFoto: obterConfiguracao('upload_tamanho_maximo', '5'),
+        formatosPermitidos: obterConfiguracao('upload_formatos_permitidos', 'JPEG, PNG, WebP')
+      });
+    }
+  }, [loading, configuracoes]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setConfig(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     console.log('Salvando configurações:', config);
-    localStorage.setItem('configuracoes', JSON.stringify(config));
-    toast({
-      title: "Configurações Salvas",
-      description: "Todas as configurações foram salvas com sucesso.",
-    });
+    
+    // Mapear configurações locais para chaves do banco
+    const configuracoesBanco = {
+      empresa_nome: config.nomeEmpresa,
+      empresa_email: config.emailEmpresa,
+      empresa_telefone: config.telefoneEmpresa,
+      empresa_logo: config.logoEmpresa,
+      empresa_cor_cabecalho: config.corCabecalho,
+      
+      smtp_server: config.smtpServer,
+      smtp_port: config.smtpPort,
+      smtp_user: config.smtpUser,
+      smtp_password: config.smtpPassword,
+      smtp_secure: config.smtpSecure,
+      email_assinatura: config.assinaturaEmail,
+      
+      api_key_openai: config.apiKeyOpenAI,
+      ia_auto_descricao: config.enableAutoDescription,
+      
+      agente_nome: config.nomeAgente,
+      agente_prompt_persona: config.promptPersona,
+      agente_prompt_objetivo: config.promptObjetivo,
+      agente_prompt_comportamento: config.promptComportamento,
+      agente_enable: config.enableAgente,
+      
+      upload_limite_fotos: config.limiteFotos,
+      upload_tamanho_maximo: config.tamanhoMaximoFoto,
+      upload_formatos_permitidos: config.formatosPermitidos
+    };
+
+    const sucesso = await salvarConfiguracoes(configuracoesBanco);
+    
+    if (sucesso) {
+      // Também salvar no localStorage como backup
+      localStorage.setItem('configuracoes', JSON.stringify(config));
+    }
   };
 
   const handleTestEmail = () => {
@@ -103,6 +152,16 @@ const Configuracoes = () => {
       description: "O agente foi configurado com as definições atuais.",
     });
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-8">
+          <div className="text-lg">Carregando configurações...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

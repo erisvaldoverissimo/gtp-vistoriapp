@@ -51,6 +51,63 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_sistema: {
+        Row: {
+          categoria: string
+          chave: string
+          created_at: string | null
+          descricao: string | null
+          id: string
+          updated_at: string | null
+          valor: Json
+        }
+        Insert: {
+          categoria?: string
+          chave: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          updated_at?: string | null
+          valor: Json
+        }
+        Update: {
+          categoria?: string
+          chave?: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          updated_at?: string | null
+          valor?: Json
+        }
+        Relationships: []
+      }
+      configuracoes_usuario: {
+        Row: {
+          chave: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          valor: Json
+        }
+        Insert: {
+          chave: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          valor: Json
+        }
+        Update: {
+          chave?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          valor?: Json
+        }
+        Relationships: []
+      }
       fotos_vistoria: {
         Row: {
           arquivo_nome: string
