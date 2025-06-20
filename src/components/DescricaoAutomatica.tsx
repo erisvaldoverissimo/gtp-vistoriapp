@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Brain, Loader2 } from 'lucide-react';
@@ -97,48 +96,23 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
       const promptObjetivo = obterConfiguracao('agente_prompt_objetivo', '');
       const promptComportamento = obterConfiguracao('agente_prompt_comportamento', '');
 
-      // Construir prompt personalizado usando as configurações do agente
-      let systemPrompt = '';
-      
-      if (enableAgente && (promptPersona || promptObjetivo || promptComportamento)) {
-        systemPrompt = `${promptPersona ? promptPersona + '\n\n' : ''}${promptObjetivo ? promptObjetivo + '\n\n' : ''}${promptComportamento ? promptComportamento + '\n\n' : ''}`;
-      }
-
       // Verificar se há instrução específica no campo de descrição
       const hasSpecificInstruction = currentDescription.trim().length > 0;
       
-      // Construir prompt ULTRA SIMPLES quando há instrução específica
-      let taskPrompt = '';
+      // Construir mensagens de forma diferente baseado na instrução
+      let messages = [];
       
       if (hasSpecificInstruction) {
-        // Prompt minimalista e MUITO direto
-        taskPrompt = `TAREFA: ${currentDescription.trim()}
-
-Descreva em máximo 200 caracteres o que vê na imagem considerando esta tarefa.`;
-      } else {
-        // Prompt geral quando não há instrução específica
-        taskPrompt = `Como ${nomeAgente}, analise esta imagem de vistoria predial.
-
-INSTRUÇÕES:
-- MÁXIMO 200 caracteres
-- Use linguagem técnica e objetiva
-- Descreva trabalhos/atividades em execução
-- Identifique: ambiente, materiais, estado das estruturas
-- Foque em aspectos técnicos relevantes
-
-Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, estrutura em bom estado."`;
-      }
-
-      const requestBody = {
-        model: apiInfo.model,
-        messages: [
-          ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+        // INSTRUÇÃO ESPECÍFICA: Colocar como PRIMEIRA mensagem prioritária
+        messages = [
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: taskPrompt
+                text: `INSTRUÇÃO PRIORITÁRIA: ${currentDescription.trim()}
+
+Analise esta imagem e responda EXATAMENTE conforme a instrução acima. Máximo 200 caracteres.`
               },
               {
                 type: 'image_url',
@@ -148,17 +122,55 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
               }
             ]
           }
-        ],
-        max_tokens: hasSpecificInstruction ? 250 : 150, // Mais tokens para instruções específicas
-        temperature: hasSpecificInstruction ? 0.7 : 0.1  // Temperatura alta para seguir instruções criativas
+        ];
+      } else {
+        // SEM INSTRUÇÃO: Usar prompt geral com sistema
+        const systemPrompt = promptPersona || promptObjetivo || promptComportamento ? 
+          `${promptPersona ? promptPersona + '\n\n' : ''}${promptObjetivo ? promptObjetivo + '\n\n' : ''}${promptComportamento ? promptComportamento + '\n\n' : ''}` : '';
+        
+        if (systemPrompt) {
+          messages.push({ role: 'system', content: systemPrompt });
+        }
+        
+        messages.push({
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `Como ${nomeAgente}, analise esta imagem de vistoria predial.
+
+INSTRUÇÕES:
+- MÁXIMO 200 caracteres
+- Use linguagem técnica e objetiva
+- Descreva trabalhos/atividades em execução
+- Identifique: ambiente, materiais, estado das estruturas
+- Foque em aspectos técnicos relevantes
+
+Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, estrutura em bom estado."`
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`
+              }
+            }
+          ]
+        });
+      }
+
+      const requestBody = {
+        model: apiInfo.model,
+        messages: messages,
+        max_tokens: hasSpecificInstruction ? 300 : 150,
+        temperature: hasSpecificInstruction ? 0.8 : 0.1
       };
 
       console.log('Enviando requisição para:', apiInfo.url);
       console.log('Usando agente:', nomeAgente);
       if (hasSpecificInstruction) {
-        console.log('INSTRUÇÃO ESPECÍFICA DETECTADA:', currentDescription.trim());
-        console.log('Prompt minimalista usado:', taskPrompt);
-        console.log('Temperature ajustada para:', 0.7);
+        console.log('INSTRUÇÃO ESPECÍFICA COMO PRIMEIRA MENSAGEM:', currentDescription.trim());
+        console.log('Temperature ajustada para:', 0.8);
+        console.log('Max tokens:', 300);
       }
 
       const response = await fetch(apiInfo.url, {
