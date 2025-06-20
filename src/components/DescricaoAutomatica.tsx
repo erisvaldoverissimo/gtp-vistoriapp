@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Brain, Loader2 } from 'lucide-react';
@@ -29,10 +27,10 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
       return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
     } else if (apiKey.startsWith('gsk_')) {
       return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.2-11b-vision-preview' };
-    } else if (apiKey.startsWith('cv-')) {
-      return { provider: 'chatvolt', url: 'https://api.chatvolt.ai/api/external/agents', model: 'chatvolt-agent' };
+    } else {
+      // Se não tem prefixo conhecido, assumir que é Chatvolt
+      return { provider: 'chatvolt', url: 'https://api.chatvolt.ai/agents/query', model: 'chatvolt-agent' };
     }
-    return null;
   };
 
   const generateDescription = async () => {
@@ -48,7 +46,6 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
     const enableAutoDescription = obterConfiguracao('ia_auto_descricao', false);
     const apiKey = obterConfiguracao('api_key_openai', '');
     const chatvoltAgentId = obterConfiguracao('chatvolt_agent_id', '');
-    const enableAgente = obterConfiguracao('agente_enable', true);
     
     if (!enableAutoDescription) {
       toast({
@@ -69,14 +66,6 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
     }
 
     const apiInfo = detectApiProvider(apiKey);
-    if (!apiInfo) {
-      toast({
-        title: "API Key Inválida",
-        description: "A API Key deve começar com 'sk-' (OpenAI), 'gsk_' (Groq) ou 'cv-' (Chatvolt).",
-        variant: "destructive"
-      });
-      return;
-    }
 
     // Validação específica para Chatvolt
     if (apiInfo.provider === 'chatvolt' && !chatvoltAgentId) {
@@ -145,7 +134,9 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
       console.log('CHATVOLT - MODO PADRÃO');
     }
 
+    // Usar o formato correto da API da Chatvolt conforme documentação
     const requestBody = {
+      agentId: agentId,
       message: message,
       files: [
         {
@@ -156,8 +147,9 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
     };
 
     console.log('Enviando para Chatvolt Agent ID:', agentId);
+    console.log('URL:', apiInfo.url);
 
-    const response = await fetch(`${apiInfo.url}/${agentId}/query`, {
+    const response = await fetch(apiInfo.url, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -186,7 +178,8 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
     const data = JSON.parse(responseText);
     console.log('Dados parseados Chatvolt:', data);
     
-    let description = data.answer || data.response || data.message || 'Resposta não encontrada';
+    // A resposta da Chatvolt pode vir em diferentes formatos
+    let description = data.answer || data.response || data.message || data.text || 'Resposta não encontrada';
 
     // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
     if (!hasSpecificInstruction && description.length > 200) {
@@ -371,4 +364,3 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
 };
 
 export default DescricaoAutomatica;
-

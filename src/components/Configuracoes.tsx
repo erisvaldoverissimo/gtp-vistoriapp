@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,6 +32,7 @@ const Configuracoes = () => {
     
     // Configurações de IA
     apiKeyOpenAI: '',
+    chatvoltAgentId: '',
     enableAutoDescription: true,
     
     // Configurações do Agente IA
@@ -67,6 +67,7 @@ const Configuracoes = () => {
         assinaturaEmail: obterConfiguracao('email_assinatura', ''),
         
         apiKeyOpenAI: obterConfiguracao('api_key_openai', ''),
+        chatvoltAgentId: obterConfiguracao('chatvolt_agent_id', ''),
         enableAutoDescription: obterConfiguracao('ia_auto_descricao', true),
         
         nomeAgente: obterConfiguracao('agente_nome', 'Theo'),
@@ -105,6 +106,7 @@ const Configuracoes = () => {
       email_assinatura: config.assinaturaEmail,
       
       api_key_openai: config.apiKeyOpenAI,
+      chatvolt_agent_id: config.chatvoltAgentId,
       ia_auto_descricao: config.enableAutoDescription,
       
       agente_nome: config.nomeAgente,
@@ -386,7 +388,7 @@ const Configuracoes = () => {
           </CardContent>
         </Card>
 
-        {/* Configurações de IA */}
+        {/* Configurações de IA - Atualizada com campo do Chatvolt */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -396,16 +398,29 @@ const Configuracoes = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="apiKeyOpenAI">API Key (OpenAI ou Groq)</Label>
+              <Label htmlFor="apiKeyOpenAI">API Key (OpenAI, Groq ou Chatvolt)</Label>
               <Input
                 id="apiKeyOpenAI"
                 type="password"
                 value={config.apiKeyOpenAI}
                 onChange={(e) => handleInputChange('apiKeyOpenAI', e.target.value)}
-                placeholder="sk-... ou gsk_..."
+                placeholder="sk-... ou gsk_... ou sua chave Chatvolt"
               />
               <p className="text-sm text-gray-600 mt-1">
-                Suporta OpenAI (sk-...) e Groq (gsk_...). Detecção automática do provedor.
+                Suporta OpenAI (sk-...), Groq (gsk_...) e Chatvolt (sem prefixo). Detecção automática do provedor.
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="chatvoltAgentId">Agent ID do Chatvolt</Label>
+              <Input
+                id="chatvoltAgentId"
+                value={config.chatvoltAgentId}
+                onChange={(e) => handleInputChange('chatvoltAgentId', e.target.value)}
+                placeholder="ID do seu agente no Chatvolt"
+              />
+              <p className="text-sm text-gray-600 mt-1">
+                Necessário apenas se estiver usando API Key do Chatvolt. Encontre em: Agents → Seu Agente → Settings
               </p>
             </div>
 
