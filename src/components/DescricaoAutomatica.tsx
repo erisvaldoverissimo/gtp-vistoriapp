@@ -90,11 +90,21 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
 
     } catch (error) {
       console.error('Erro ao gerar descrição:', error);
-      toast({
-        title: "Erro na Geração",
-        description: error instanceof Error ? error.message : "Não foi possível gerar a descrição. Verifique sua API Key e conexão.",
-        variant: "destructive"
-      });
+      
+      // Verificar se é erro de CORS especificamente
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        toast({
+          title: "Erro de CORS",
+          description: "A API da Chatvolt não permite requisições diretas do navegador. Tente usar OpenAI (sk-...) ou Groq (gsk-...) em vez disso.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erro na Geração",
+          description: error instanceof Error ? error.message : "Não foi possível gerar a descrição. Verifique sua API Key e conexão.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -134,7 +144,7 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
       console.log('CHATVOLT - MODO PADRÃO');
     }
 
-    // Usar o formato correto da API da Chatvolt conforme documentação
+    // Tentar diferentes formatos de requisição para a Chatvolt
     const requestBody = {
       agentId: agentId,
       message: message,
@@ -150,56 +160,71 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
     console.log('URL:', apiInfo.url);
     console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
-    const response = await fetch(apiInfo.url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(requestBody),
-    });
+    // Tentar requisição com modo 'no-cors' primeiro para ver se funciona
+    try {
+      console.log('Tentando requisição padrão...');
+      const response = await fetch(apiInfo.url, {
+        method: 'POST',
+        mode: 'cors', // Explicitamente usar CORS
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(requestBody),
+      });
 
-    console.log('Status da resposta Chatvolt:', response.status);
-    console.log('Headers da resposta:', Object.fromEntries(response.headers.entries()));
+      console.log('Status da resposta Chatvolt:', response.status);
+      console.log('Headers da resposta:', Object.fromEntries(response.headers.entries()));
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Erro da API Chatvolt - Status:', response.status);
-      console.error('Erro da API Chatvolt - Response:', errorText);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Erro da API Chatvolt - Status:', response.status);
+        console.error('Erro da API Chatvolt - Response:', errorText);
+        
+        let errorMessage = `Erro ${response.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage += ` - ${errorData.error?.message || errorData.message || 'Erro desconhecido'}`;
+        } catch {
+          errorMessage += ` - ${errorText || 'Erro desconhecido'}`;
+        }
+        
+        throw new Error(`Chatvolt API: ${errorMessage}`);
+      }
+
+      const responseText = await response.text();
+      console.log('Resposta bruta Chatvolt:', responseText);
+
+      const data = JSON.parse(responseText);
+      console.log('Dados parseados Chatvolt:', data);
       
-      let errorMessage = `Erro ${response.status}`;
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage += ` - ${errorData.error?.message || errorData.message || 'Erro desconhecido'}`;
-      } catch {
-        errorMessage += ` - ${errorText || 'Erro desconhecido'}`;
+      // A resposta da Chatvolt pode vir em diferentes formatos
+      let description = data.answer || data.response || data.message || data.text || data.content || 'Resposta não encontrada';
+
+      // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
+      if (!hasSpecificInstruction && description.length > 200) {
+        description = description.substring(0, 197) + '...';
+      }
+
+      onDescriptionGenerated(description);
+
+      const instructionMessage = hasSpecificInstruction ? ' (seguindo sua instrução específica)' : '';
+      toast({
+        title: "Descrição Gerada",
+        description: `Descrição criada pelo agente Chatvolt${instructionMessage} (${description.length} caracteres)`,
+      });
+
+    } catch (fetchError) {
+      console.error('Erro na requisição fetch:', fetchError);
+      
+      // Se falhou por CORS, informar ao usuário
+      if (fetchError instanceof TypeError && fetchError.message.includes('Failed to fetch')) {
+        throw new Error('Erro de CORS: A API da Chatvolt não permite requisições diretas do navegador. Use OpenAI (sk-...) ou Groq (gsk-...) em vez disso.');
       }
       
-      throw new Error(`Chatvolt API: ${errorMessage}`);
+      throw fetchError;
     }
-
-    const responseText = await response.text();
-    console.log('Resposta bruta Chatvolt:', responseText);
-
-    const data = JSON.parse(responseText);
-    console.log('Dados parseados Chatvolt:', data);
-    
-    // A resposta da Chatvolt pode vir em diferentes formatos
-    let description = data.answer || data.response || data.message || data.text || data.content || 'Resposta não encontrada';
-
-    // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
-    if (!hasSpecificInstruction && description.length > 200) {
-      description = description.substring(0, 197) + '...';
-    }
-
-    onDescriptionGenerated(description);
-
-    const instructionMessage = hasSpecificInstruction ? ' (seguindo sua instrução específica)' : '';
-    toast({
-      title: "Descrição Gerada",
-      description: `Descrição criada pelo agente Chatvolt${instructionMessage} (${description.length} caracteres)`,
-    });
   };
 
   const generateWithOpenAIOrGroq = async (apiInfo: any, apiKey: string) => {
