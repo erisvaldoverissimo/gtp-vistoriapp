@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Brain, Loader2 } from 'lucide-react';
@@ -21,6 +22,64 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const { obterConfiguracao, loading } = useConfiguracoes();
+
+  // Função para comprimir imagem
+  const compressImage = async (file: File, maxSizeKB: number = 700): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calcular dimensões mantendo proporção
+        let { width, height } = img;
+        const maxDimension = 1024; // Máximo 1024px na maior dimensão
+        
+        if (width > height) {
+          if (width > maxDimension) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          }
+        } else {
+          if (height > maxDimension) {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Desenhar imagem redimensionada
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Comprimir com qualidade variável até atingir o tamanho desejado
+        let quality = 0.8;
+        let base64 = '';
+        
+        const tryCompress = () => {
+          base64 = canvas.toDataURL('image/jpeg', quality);
+          const sizeKB = (base64.length * 3) / 4 / 1024; // Estimativa do tamanho em KB
+          
+          console.log(`Tentativa de compressão - Qualidade: ${quality}, Tamanho estimado: ${sizeKB.toFixed(2)}KB`);
+          
+          if (sizeKB <= maxSizeKB || quality <= 0.1) {
+            const finalBase64 = base64.split(',')[1]; // Remove prefixo data:image/jpeg;base64,
+            console.log(`Compressão finalizada - Tamanho final estimado: ${sizeKB.toFixed(2)}KB`);
+            resolve(finalBase64);
+          } else {
+            quality -= 0.1;
+            tryCompress();
+          }
+        };
+        
+        tryCompress();
+      };
+      
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
 
   // Detectar o tipo de API baseado na chave
   const detectApiProvider = (apiKey: string) => {
@@ -103,17 +162,10 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
   };
 
   const generateWithChatvolt = async (apiKey: string, agentId: string) => {
-    // Converter imagem para base64
-    const base64Image = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        const base64 = result.split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(imageFile);
-    });
+    console.log('Comprimindo imagem para Chatvolt...');
+    
+    // Comprimir imagem para máximo 700KB (deixando margem para o limite de 1MB)
+    const base64Image = await compressImage(imageFile, 700);
 
     const hasSpecificInstruction = currentDescription.trim().length > 0;
     
