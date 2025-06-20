@@ -107,54 +107,30 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
       // Verificar se há instrução específica no campo de descrição
       const hasSpecificInstruction = currentDescription.trim().length > 0;
       
-      // Construir prompt com prioridade para instrução específica
+      // Construir prompt MUITO SIMPLES quando há instrução específica
       let taskPrompt = '';
       
       if (hasSpecificInstruction) {
-        // Prompt focado na instrução específica
-        taskPrompt = `
-INSTRUÇÃO PRIORITÁRIA: "${currentDescription.trim()}"
+        // Prompt super simples e direto
+        taskPrompt = `Analise esta imagem seguindo EXATAMENTE esta instrução: "${currentDescription.trim()}"
 
-Você DEVE seguir rigorosamente esta instrução específica do usuário. Analise a imagem focando EXCLUSIVAMENTE no que foi solicitado.
-
-REGRAS OBRIGATÓRIAS:
-- MÁXIMO 200 caracteres
-- Use linguagem técnica e objetiva
-- Priorize TOTALMENTE a instrução específica fornecida
-- Se a instrução menciona empresa/serviço específico, INCLUA essas informações na resposta
-- Descreva o trabalho/situação observada conforme a instrução
-- Foque nos aspectos solicitados na instrução
-
-INSTRUÇÕES DE ANÁLISE:
-- Identifique: tipo de ambiente, atividades em execução, materiais utilizados, estado das estruturas
-- Descreva trabalhos sendo realizados, não apenas anomalias
-- Seja específico sobre o que está acontecendo na cena
-- Se a instrução menciona nome de empresa, serviço ou aspecto específico, destaque isso na resposta
-
-Exemplo de resposta considerando empresa: "Trabalho de aplicação de argamassa da empresa XYZ. Materiais organizados, estrutura em bom estado."`;
+Regras:
+- Máximo 200 caracteres
+- Siga a instrução ao pé da letra
+- Se menciona empresa/serviço, INCLUA na resposta
+- Descreva o que vê na imagem relacionado à instrução`;
       } else {
         // Prompt geral quando não há instrução específica
-        taskPrompt = `
-Como ${nomeAgente}, você deve analisar esta imagem de vistoria predial e descrever detalhadamente o que está sendo observado.
+        taskPrompt = `Como ${nomeAgente}, analise esta imagem de vistoria predial.
 
-INSTRUÇÕES OBRIGATÓRIAS:
+INSTRUÇÕES:
 - MÁXIMO 200 caracteres
 - Use linguagem técnica e objetiva
-- Descreva o trabalho/situação observada na imagem
-- Identifique: tipo de ambiente, atividades em execução, materiais utilizados, estado das estruturas
-- Foque em aspectos técnicos relevantes: condições prediais, trabalhos sendo realizados, anomalias (se houver)
-- Seja específico sobre o que está acontecendo na cena
-- Se não houver atividades específicas, descreva o estado atual do ambiente
+- Descreva trabalhos/atividades em execução
+- Identifique: ambiente, materiais, estado das estruturas
+- Foque em aspectos técnicos relevantes
 
-TIPOS DE ANÁLISE ESPERADA:
-✓ Trabalhos em execução (instalações, reparos, reformas)
-✓ Estado de conservação de estruturas
-✓ Condições de segurança
-✓ Materiais e equipamentos presentes
-✓ Anomalias estruturais (fissuras, infiltrações, desgastes)
-✓ Aspectos de acabamento e instalações
-
-Exemplo: "Aplicação de argamassa em parede interna. Materiais de construção organizados no piso. Estrutura em bom estado de conservação."`;
+Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, estrutura em bom estado."`;
       }
 
       const requestBody = {
@@ -177,14 +153,15 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais de construção 
             ]
           }
         ],
-        max_tokens: 150,
-        temperature: 0.1
+        max_tokens: hasSpecificInstruction ? 200 : 150, // Mais tokens para instruções específicas
+        temperature: hasSpecificInstruction ? 0.3 : 0.1  // Mais criatividade para seguir instruções
       };
 
       console.log('Enviando requisição para:', apiInfo.url);
       console.log('Usando agente:', nomeAgente);
       if (hasSpecificInstruction) {
-        console.log('Instrução específica PRIORITÁRIA:', currentDescription.trim());
+        console.log('INSTRUÇÃO ESPECÍFICA DETECTADA:', currentDescription.trim());
+        console.log('Prompt usado:', taskPrompt);
       }
 
       const response = await fetch(apiInfo.url, {
