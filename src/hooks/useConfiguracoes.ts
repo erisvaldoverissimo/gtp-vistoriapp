@@ -39,15 +39,25 @@ export const useConfiguracoes = () => {
       // Converter array de configurações em objeto
       const configObj: Record<string, any> = {};
       data?.forEach((config: ConfiguracaoSistema) => {
-        // Parse do JSON para obter o valor real
-        try {
-          configObj[config.chave] = typeof config.valor === 'string' 
-            ? JSON.parse(config.valor) 
-            : config.valor;
-        } catch {
-          // Se não conseguir fazer parse, usar o valor como está
-          configObj[config.chave] = config.valor;
+        // Tratar valores que podem estar com dupla serialização
+        let valor = config.valor;
+        
+        // Se o valor for uma string que parece ser JSON, tentar fazer parse
+        if (typeof valor === 'string') {
+          try {
+            // Primeiro parse
+            valor = JSON.parse(valor);
+            // Se ainda for string após o primeiro parse, tentar novamente
+            if (typeof valor === 'string') {
+              valor = JSON.parse(valor);
+            }
+          } catch {
+            // Se não conseguir fazer parse, usar o valor como string limpa (sem aspas)
+            valor = valor.replace(/^"(.*)"$/, '$1');
+          }
         }
+        
+        configObj[config.chave] = valor;
       });
 
       setConfiguracoes(configObj);
