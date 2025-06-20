@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Brain, Loader2 } from 'lucide-react';
@@ -162,29 +161,28 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
   };
 
   const generateWithChatvolt = async (apiKey: string, agentId: string) => {
-    console.log('Comprimindo imagem para Chatvolt...');
-    
-    // Comprimir imagem para máximo 700KB (deixando margem para o limite de 1MB)
-    const base64Image = await compressImage(imageFile, 700);
-
     const hasSpecificInstruction = currentDescription.trim().length > 0;
     
-    // Construir mensagem para o Chatvolt
+    // Construir mensagem para o Chatvolt (apenas texto, sem imagem por enquanto)
     let message = '';
     if (hasSpecificInstruction) {
-      message = currentDescription.trim();
+      message = `${currentDescription.trim()}
+
+NOTA: Uma imagem foi selecionada para análise, mas no momento só posso processar instruções de texto. Por favor, aguarde futuras atualizações para análise de imagens.`;
       console.log('CHATVOLT - MODO INSTRUÇÃO ESPECÍFICA:', message);
     } else {
-      message = `Analise esta imagem de vistoria predial.
+      message = `Olá! Gostaria de gerar uma descrição para uma vistoria predial.
 
 INSTRUÇÕES:
 - MÁXIMO 200 caracteres
 - Use linguagem técnica e objetiva
-- Descreva trabalhos/atividades em execução
+- Descreva trabalhos/atividades típicos em vistorias
 - Identifique: ambiente, materiais, estado das estruturas
 - Foque em aspectos técnicos relevantes
 
-Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, estrutura em bom estado."`;
+Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, estrutura em bom estado."
+
+NOTA: Uma imagem foi selecionada, mas no momento só posso processar texto. Gere uma descrição genérica baseada nas instruções acima.`;
       console.log('CHATVOLT - MODO PADRÃO');
     }
 
@@ -194,7 +192,6 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
     const { data, error } = await supabase.functions.invoke('chatvolt-description', {
       body: {
         message: message,
-        base64Image: base64Image,
         agentId: agentId,
         apiKey: apiKey
       }

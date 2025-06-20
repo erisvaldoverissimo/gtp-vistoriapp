@@ -24,30 +24,23 @@ serve(async (req) => {
     );
 
     // Get request data
-    const { message, base64Image, agentId, apiKey } = await req.json();
+    const { message, agentId, apiKey } = await req.json();
 
-    if (!message || !base64Image || !agentId || !apiKey) {
-      throw new Error('Dados obrigatórios ausentes: message, base64Image, agentId, apiKey');
+    if (!message || !agentId || !apiKey) {
+      throw new Error('Dados obrigatórios ausentes: message, agentId, apiKey');
     }
 
     console.log('Dados recebidos:');
     console.log('- Agent ID:', agentId);
     console.log('- Message length:', message.length);
-    console.log('- Image data present:', !!base64Image);
 
-    // Prepare request body for Chatvolt
+    // Prepare request body for Chatvolt following their API documentation
     const requestBody = {
       agentId: agentId,
-      message: message,
-      files: [
-        {
-          type: 'image',
-          data: `data:image/jpeg;base64,${base64Image}`
-        }
-      ]
+      message: message
     };
 
-    console.log('Enviando requisição para Chatvolt API...');
+    console.log('Payload enviado para Chatvolt:', JSON.stringify(requestBody, null, 2));
 
     // Make request to Chatvolt API
     const response = await fetch('https://api.chatvolt.ai/agents/query', {
@@ -63,24 +56,24 @@ serve(async (req) => {
     console.log('Status da resposta Chatvolt:', response.status);
     console.log('Headers da resposta:', Object.fromEntries(response.headers.entries()));
 
+    const responseText = await response.text();
+    console.log('Resposta bruta Chatvolt:', responseText);
+
     if (!response.ok) {
-      const errorText = await response.text();
       console.error('Erro da API Chatvolt - Status:', response.status);
-      console.error('Erro da API Chatvolt - Response:', errorText);
+      console.error('Erro da API Chatvolt - Response:', responseText);
       
       let errorMessage = `Erro ${response.status}`;
       try {
-        const errorData = JSON.parse(errorText);
+        const errorData = JSON.parse(responseText);
         errorMessage += ` - ${errorData.error?.message || errorData.message || 'Erro desconhecido'}`;
+        console.error('Erro detalhado:', errorData);
       } catch {
-        errorMessage += ` - ${errorText || 'Erro desconhecido'}`;
+        errorMessage += ` - ${responseText || 'Erro desconhecido'}`;
       }
       
       throw new Error(`Chatvolt API: ${errorMessage}`);
     }
-
-    const responseText = await response.text();
-    console.log('Resposta bruta Chatvolt:', responseText);
 
     const data = JSON.parse(responseText);
     console.log('Dados parseados Chatvolt:', data);
