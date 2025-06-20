@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Brain, Loader2 } from 'lucide-react';
@@ -99,20 +100,21 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
       // Verificar se há instrução específica no campo de descrição
       const hasSpecificInstruction = currentDescription.trim().length > 0;
       
-      // Construir mensagens de forma diferente baseado na instrução
+      // Construir mensagens de forma COMPLETAMENTE diferente
       let messages = [];
       
       if (hasSpecificInstruction) {
-        // INSTRUÇÃO ESPECÍFICA: Colocar como PRIMEIRA mensagem prioritária
+        // MODO INSTRUÇÃO ESPECÍFICA: Usar APENAS a instrução do usuário, sem prompts extras
+        console.log('MODO INSTRUÇÃO ESPECÍFICA PURA - SEM PROMPTS EXTRAS');
+        console.log('Instrução do usuário:', currentDescription.trim());
+        
         messages = [
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: `INSTRUÇÃO PRIORITÁRIA: ${currentDescription.trim()}
-
-Analise esta imagem e responda EXATAMENTE conforme a instrução acima. Máximo 200 caracteres.`
+                text: currentDescription.trim() // APENAS a instrução do usuário, nada mais
               },
               {
                 type: 'image_url',
@@ -124,7 +126,9 @@ Analise esta imagem e responda EXATAMENTE conforme a instrução acima. Máximo 
           }
         ];
       } else {
-        // SEM INSTRUÇÃO: Usar prompt geral com sistema
+        // MODO PADRÃO: Usar prompts do sistema
+        console.log('MODO PADRÃO - USANDO PROMPTS DO SISTEMA');
+        
         const systemPrompt = promptPersona || promptObjetivo || promptComportamento ? 
           `${promptPersona ? promptPersona + '\n\n' : ''}${promptObjetivo ? promptObjetivo + '\n\n' : ''}${promptComportamento ? promptComportamento + '\n\n' : ''}` : '';
         
@@ -161,17 +165,14 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
       const requestBody = {
         model: apiInfo.model,
         messages: messages,
-        max_tokens: hasSpecificInstruction ? 300 : 150,
-        temperature: hasSpecificInstruction ? 0.8 : 0.1
+        max_tokens: hasSpecificInstruction ? 500 : 150, // Mais tokens para instruções específicas
+        temperature: hasSpecificInstruction ? 1.0 : 0.1  // Temperatura máxima para seguir instruções
       };
 
-      console.log('Enviando requisição para:', apiInfo.url);
-      console.log('Usando agente:', nomeAgente);
-      if (hasSpecificInstruction) {
-        console.log('INSTRUÇÃO ESPECÍFICA COMO PRIMEIRA MENSAGEM:', currentDescription.trim());
-        console.log('Temperature ajustada para:', 0.8);
-        console.log('Max tokens:', 300);
-      }
+      console.log('Configuração da requisição:');
+      console.log('- Max tokens:', requestBody.max_tokens);
+      console.log('- Temperature:', requestBody.temperature);
+      console.log('- Mensagens enviadas:', JSON.stringify(messages, null, 2));
 
       const response = await fetch(apiInfo.url, {
         method: 'POST',
@@ -208,17 +209,17 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
       
       let description = data.choices[0].message.content;
 
-      // Garantir que a descrição não exceda 200 caracteres
-      if (description.length > 200) {
+      // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
+      if (!hasSpecificInstruction && description.length > 200) {
         description = description.substring(0, 197) + '...';
       }
 
       onDescriptionGenerated(description);
 
-      const instructionMessage = hasSpecificInstruction ? ' (seguindo instrução específica)' : '';
+      const instructionMessage = hasSpecificInstruction ? ' (seguindo sua instrução específica)' : '';
       toast({
         title: "Descrição Gerada",
-        description: `Descrição criada por ${nomeAgente} via ${apiInfo.provider.toUpperCase()}${instructionMessage} (${description.length}/200 caracteres)`,
+        description: `Descrição criada por ${nomeAgente} via ${apiInfo.provider.toUpperCase()}${instructionMessage} (${description.length} caracteres)`,
       });
 
     } catch (error) {
