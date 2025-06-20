@@ -148,38 +148,45 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
 
     console.log('Enviando para Chatvolt Agent ID:', agentId);
     console.log('URL:', apiInfo.url);
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
     const response = await fetch(apiInfo.url, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify(requestBody),
     });
 
     console.log('Status da resposta Chatvolt:', response.status);
+    console.log('Headers da resposta:', Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Erro da API Chatvolt - Status:', response.status);
+      console.error('Erro da API Chatvolt - Response:', errorText);
+      
+      let errorMessage = `Erro ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage += ` - ${errorData.error?.message || errorData.message || 'Erro desconhecido'}`;
+      } catch {
+        errorMessage += ` - ${errorText || 'Erro desconhecido'}`;
+      }
+      
+      throw new Error(`Chatvolt API: ${errorMessage}`);
+    }
 
     const responseText = await response.text();
     console.log('Resposta bruta Chatvolt:', responseText);
-
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = JSON.parse(responseText);
-      } catch {
-        errorData = { error: { message: responseText } };
-      }
-      console.error('Erro da API Chatvolt:', errorData);
-      
-      throw new Error(`Erro no Chatvolt: ${response.status} - ${errorData.error?.message || errorData.message || 'Erro desconhecido'}`);
-    }
 
     const data = JSON.parse(responseText);
     console.log('Dados parseados Chatvolt:', data);
     
     // A resposta da Chatvolt pode vir em diferentes formatos
-    let description = data.answer || data.response || data.message || data.text || 'Resposta não encontrada';
+    let description = data.answer || data.response || data.message || data.text || data.content || 'Resposta não encontrada';
 
     // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
     if (!hasSpecificInstruction && description.length > 200) {
