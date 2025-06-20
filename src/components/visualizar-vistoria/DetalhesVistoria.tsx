@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,28 +92,11 @@ const DetalhesVistoria = ({ vistoria: vistoriaInicial, onBack, onEdit }: Detalhe
       recarregarVistoria();
     };
 
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        recarregarVistoria();
-      }
-    };
-
     window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
     return () => {
       window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [vistoria.id]);
-
-  // Recarregar periodicamente para capturar mudanças
-  useEffect(() => {
-    const interval = setInterval(() => {
-      recarregarVistoria();
-    }, 5000); // Recarrega a cada 5 segundos
-
-    return () => clearInterval(interval);
   }, [vistoria.id]);
 
   const formatDate = (dateString: string) => {

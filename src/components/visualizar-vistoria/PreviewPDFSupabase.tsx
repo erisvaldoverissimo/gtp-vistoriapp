@@ -19,10 +19,11 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
 
   // Recarregar dados mais recentes quando o componente montar
   useEffect(() => {
+    let isMounted = true;
     const carregarDadosAtualizados = async () => {
       try {
         console.log('Carregando dados atualizados para PDF:', vistoriaInicial.id);
-        
+
         const { data: vistoriaData, error } = await supabase
           .from('vistorias')
           .select(`
@@ -41,7 +42,6 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           return;
         }
 
-        // Formatar dados
         const grupos = (vistoriaData.grupos_vistoria || []).map(grupo => ({
           id: grupo.id,
           vistoria_id: grupo.vistoria_id,
@@ -70,14 +70,20 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           grupos: grupos
         };
 
-        setVistoria(vistoriaAtualizada);
-        console.log('Dados atualizados carregados para PDF:', vistoriaAtualizada);
+        if (isMounted) {
+          setVistoria(vistoriaAtualizada);
+          console.log('Dados atualizados carregados para PDF:', vistoriaAtualizada);
+        }
       } catch (error) {
         console.error('Erro ao carregar dados atualizados:', error);
       }
     };
 
     carregarDadosAtualizados();
+
+    return () => {
+      isMounted = false;
+    };
   }, [vistoriaInicial.id]);
 
   const formatDate = (dateString: string) => {
