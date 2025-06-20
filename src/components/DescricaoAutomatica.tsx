@@ -1,15 +1,15 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Brain, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useConfiguracoes } from '@/hooks/useConfiguracoes';
-import { supabase } from '@/integrations/supabase/client';
 
 interface DescricaoAutomaticaProps {
   imageFile: File;
   onDescriptionGenerated: (description: string) => void;
   disabled?: boolean;
-  currentDescription?: string;
+  currentDescription?: string; // Texto atual no campo de descrição
 }
 
 const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
@@ -22,74 +22,14 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const { obterConfiguracao, loading } = useConfiguracoes();
 
-  // Função para comprimir imagem
-  const compressImage = async (file: File, maxSizeKB: number = 700): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        // Calcular dimensões mantendo proporção
-        let { width, height } = img;
-        const maxDimension = 1024; // Máximo 1024px na maior dimensão
-        
-        if (width > height) {
-          if (width > maxDimension) {
-            height = (height * maxDimension) / width;
-            width = maxDimension;
-          }
-        } else {
-          if (height > maxDimension) {
-            width = (width * maxDimension) / height;
-            height = maxDimension;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Desenhar imagem redimensionada
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        // Comprimir com qualidade variável até atingir o tamanho desejado
-        let quality = 0.8;
-        let base64 = '';
-        
-        const tryCompress = () => {
-          base64 = canvas.toDataURL('image/jpeg', quality);
-          const sizeKB = (base64.length * 3) / 4 / 1024; // Estimativa do tamanho em KB
-          
-          console.log(`Tentativa de compressão - Qualidade: ${quality}, Tamanho estimado: ${sizeKB.toFixed(2)}KB`);
-          
-          if (sizeKB <= maxSizeKB || quality <= 0.1) {
-            const finalBase64 = base64.split(',')[1]; // Remove prefixo data:image/jpeg;base64,
-            console.log(`Compressão finalizada - Tamanho final estimado: ${sizeKB.toFixed(2)}KB`);
-            resolve(finalBase64);
-          } else {
-            quality -= 0.1;
-            tryCompress();
-          }
-        };
-        
-        tryCompress();
-      };
-      
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
   // Detectar o tipo de API baseado na chave
   const detectApiProvider = (apiKey: string) => {
     if (apiKey.startsWith('sk-')) {
       return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
     } else if (apiKey.startsWith('gsk_')) {
       return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.2-11b-vision-preview' };
-    } else {
-      // Se não tem prefixo conhecido, assumir que é Chatvolt
-      return { provider: 'chatvolt', url: 'chatvolt-description', model: 'chatvolt-agent' };
     }
+    return null;
   };
 
   const generateDescription = async () => {
@@ -104,7 +44,7 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
 
     const enableAutoDescription = obterConfiguracao('ia_auto_descricao', false);
     const apiKey = obterConfiguracao('api_key_openai', '');
-    const chatvoltAgentId = obterConfiguracao('chatvolt_agent_id', '');
+    const enableAgente = obterConfiguracao('agente_enable', true);
     
     if (!enableAutoDescription) {
       toast({
@@ -118,19 +58,17 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
     if (!apiKey) {
       toast({
         title: "API Key Necessária",
-        description: "Configure a API Key (OpenAI, Groq ou Chatvolt) nas configurações.",
+        description: "Configure a API Key (OpenAI ou Groq) nas configurações.",
         variant: "destructive"
       });
       return;
     }
 
     const apiInfo = detectApiProvider(apiKey);
-
-    // Validação específica para Chatvolt
-    if (apiInfo.provider === 'chatvolt' && !chatvoltAgentId) {
+    if (!apiInfo) {
       toast({
-        title: "Agent ID Necessário",
-        description: "Configure o Agent ID do Chatvolt nas configurações.",
+        title: "API Key Inválida",
+        description: "A API Key deve começar com 'sk-' (OpenAI) ou 'gsk_' (Groq).",
         variant: "destructive"
       });
       return;
@@ -139,154 +77,71 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
     setIsGenerating(true);
 
     try {
+      // Converter imagem para base64
+      const base64Image = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          const base64 = result.split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(imageFile);
+      });
+
       console.log('Gerando descrição via:', apiInfo.provider, 'modelo:', apiInfo.model);
 
-      if (apiInfo.provider === 'chatvolt') {
-        await generateWithChatvolt(apiKey, chatvoltAgentId);
+      // Carregar configurações do agente
+      const nomeAgente = obterConfiguracao('agente_nome', 'Assistente IA');
+      const promptPersona = obterConfiguracao('agente_prompt_persona', '');
+      const promptObjetivo = obterConfiguracao('agente_prompt_objetivo', '');
+      const promptComportamento = obterConfiguracao('agente_prompt_comportamento', '');
+
+      // Verificar se há instrução específica no campo de descrição
+      const hasSpecificInstruction = currentDescription.trim().length > 0;
+      
+      // Construir mensagens de forma COMPLETAMENTE diferente
+      let messages = [];
+      
+      if (hasSpecificInstruction) {
+        // MODO INSTRUÇÃO ESPECÍFICA: Usar APENAS a instrução do usuário, sem prompts extras
+        console.log('MODO INSTRUÇÃO ESPECÍFICA PURA - SEM PROMPTS EXTRAS');
+        console.log('Instrução do usuário:', currentDescription.trim());
+        
+        messages = [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: currentDescription.trim() // APENAS a instrução do usuário, nada mais
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`
+                }
+              }
+            ]
+          }
+        ];
       } else {
-        await generateWithOpenAIOrGroq(apiInfo, apiKey);
-      }
-
-    } catch (error) {
-      console.error('Erro ao gerar descrição:', error);
-      
-      toast({
-        title: "Erro na Geração",
-        description: error instanceof Error ? error.message : "Não foi possível gerar a descrição. Verifique sua API Key e conexão.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const generateWithChatvolt = async (apiKey: string, agentId: string) => {
-    const hasSpecificInstruction = currentDescription.trim().length > 0;
-    
-    // Construir mensagem para o Chatvolt (apenas texto, sem imagem por enquanto)
-    let message = '';
-    if (hasSpecificInstruction) {
-      message = `${currentDescription.trim()}
-
-NOTA: Uma imagem foi selecionada para análise, mas no momento só posso processar instruções de texto. Por favor, aguarde futuras atualizações para análise de imagens.`;
-      console.log('CHATVOLT - MODO INSTRUÇÃO ESPECÍFICA:', message);
-    } else {
-      message = `Olá! Gostaria de gerar uma descrição para uma vistoria predial.
-
-INSTRUÇÕES:
-- MÁXIMO 200 caracteres
-- Use linguagem técnica e objetiva
-- Descreva trabalhos/atividades típicos em vistorias
-- Identifique: ambiente, materiais, estado das estruturas
-- Foque em aspectos técnicos relevantes
-
-Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, estrutura em bom estado."
-
-NOTA: Uma imagem foi selecionada, mas no momento só posso processar texto. Gere uma descrição genérica baseada nas instruções acima.`;
-      console.log('CHATVOLT - MODO PADRÃO');
-    }
-
-    console.log('Chamando Edge Function para Chatvolt...');
-
-    // Usar a Edge Function do Supabase para fazer a requisição
-    const { data, error } = await supabase.functions.invoke('chatvolt-description', {
-      body: {
-        message: message,
-        agentId: agentId,
-        apiKey: apiKey
-      }
-    });
-
-    if (error) {
-      console.error('Erro na Edge Function:', error);
-      throw new Error(`Erro na comunicação com Chatvolt: ${error.message}`);
-    }
-
-    if (!data?.description) {
-      console.error('Resposta da Edge Function:', data);
-      throw new Error('Nenhuma descrição retornada pela Chatvolt');
-    }
-
-    let description = data.description;
-
-    // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
-    if (!hasSpecificInstruction && description.length > 200) {
-      description = description.substring(0, 197) + '...';
-    }
-
-    onDescriptionGenerated(description);
-
-    const instructionMessage = hasSpecificInstruction ? ' (seguindo sua instrução específica)' : '';
-    toast({
-      title: "Descrição Gerada",
-      description: `Descrição criada pelo agente Chatvolt${instructionMessage} (${description.length} caracteres)`,
-    });
-  };
-
-  const generateWithOpenAIOrGroq = async (apiInfo: any, apiKey: string) => {
-    // Converter imagem para base64
-    const base64Image = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        const base64 = result.split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(imageFile);
-    });
-
-    // Carregar configurações do agente
-    const nomeAgente = obterConfiguracao('agente_nome', 'Assistente IA');
-    const promptPersona = obterConfiguracao('agente_prompt_persona', '');
-    const promptObjetivo = obterConfiguracao('agente_prompt_objetivo', '');
-    const promptComportamento = obterConfiguracao('agente_prompt_comportamento', '');
-
-    // Verificar se há instrução específica no campo de descrição
-    const hasSpecificInstruction = currentDescription.trim().length > 0;
-    
-    // Construir mensagens de forma COMPLETAMENTE diferente
-    let messages = [];
-    
-    if (hasSpecificInstruction) {
-      // MODO INSTRUÇÃO ESPECÍFICA: Usar APENAS a instrução do usuário, sem prompts extras
-      console.log('MODO INSTRUÇÃO ESPECÍFICA PURA - SEM PROMPTS EXTRAS');
-      console.log('Instrução do usuário:', currentDescription.trim());
-      
-      messages = [
-        {
+        // MODO PADRÃO: Usar prompts do sistema
+        console.log('MODO PADRÃO - USANDO PROMPTS DO SISTEMA');
+        
+        const systemPrompt = promptPersona || promptObjetivo || promptComportamento ? 
+          `${promptPersona ? promptPersona + '\n\n' : ''}${promptObjetivo ? promptObjetivo + '\n\n' : ''}${promptComportamento ? promptComportamento + '\n\n' : ''}` : '';
+        
+        if (systemPrompt) {
+          messages.push({ role: 'system', content: systemPrompt });
+        }
+        
+        messages.push({
           role: 'user',
           content: [
             {
               type: 'text',
-              text: currentDescription.trim() // APENAS a instrução do usuário, nada mais
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`
-              }
-            }
-          ]
-        }
-      ];
-    } else {
-      // MODO PADRÃO: Usar prompts do sistema
-      console.log('MODO PADRÃO - USANDO PROMPTS DO SISTEMA');
-      
-      const systemPrompt = promptPersona || promptObjetivo || promptComportamento ? 
-        `${promptPersona ? promptPersona + '\n\n' : ''}${promptObjetivo ? promptObjetivo + '\n\n' : ''}${promptComportamento ? promptComportamento + '\n\n' : ''}` : '';
-      
-      if (systemPrompt) {
-        messages.push({ role: 'system', content: systemPrompt });
-      }
-      
-      messages.push({
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Como ${nomeAgente}, analise esta imagem de vistoria predial.
+              text: `Como ${nomeAgente}, analise esta imagem de vistoria predial.
 
 INSTRUÇÕES:
 - MÁXIMO 200 caracteres
@@ -296,76 +151,87 @@ INSTRUÇÕES:
 - Foque em aspectos técnicos relevantes
 
 Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, estrutura em bom estado."`
-          },
-          {
-            type: 'image_url',
-            image_url: {
-              url: `data:image/jpeg;base64,${base64Image}`
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`
+              }
             }
-          }
-        ]
+          ]
+        });
+      }
+
+      const requestBody = {
+        model: apiInfo.model,
+        messages: messages,
+        max_tokens: hasSpecificInstruction ? 500 : 150, // Mais tokens para instruções específicas
+        temperature: hasSpecificInstruction ? 1.0 : 0.1  // Temperatura máxima para seguir instruções
+      };
+
+      console.log('Configuração da requisição:');
+      console.log('- Max tokens:', requestBody.max_tokens);
+      console.log('- Temperature:', requestBody.temperature);
+      console.log('- Mensagens enviadas:', JSON.stringify(messages, null, 2));
+
+      const response = await fetch(apiInfo.url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
       });
-    }
 
-    const requestBody = {
-      model: apiInfo.model,
-      messages: messages,
-      max_tokens: hasSpecificInstruction ? 500 : 150, // Mais tokens para instruções específicas
-      temperature: hasSpecificInstruction ? 1.0 : 0.1  // Temperatura máxima para seguir instruções
-    };
+      console.log('Status da resposta:', response.status);
 
-    console.log('Configuração da requisição:');
-    console.log('- Max tokens:', requestBody.max_tokens);
-    console.log('- Temperature:', requestBody.temperature);
-    console.log('- Mensagens enviadas:', JSON.stringify(messages, null, 2));
+      const responseText = await response.text();
+      console.log('Resposta bruta:', responseText);
 
-    const response = await fetch(apiInfo.url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    console.log('Status da resposta:', response.status);
-
-    const responseText = await response.text();
-    console.log('Resposta bruta:', responseText);
-
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = JSON.parse(responseText);
-      } catch {
-        errorData = { error: { message: responseText } };
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          errorData = { error: { message: responseText } };
+        }
+        console.error('Erro da API:', errorData);
+        
+        if (response.status === 400 && errorData.error?.message?.includes('model')) {
+          throw new Error(`Modelo ${apiInfo.model} não disponível no ${apiInfo.provider.toUpperCase()}. Tente usar uma API Key do OpenAI.`);
+        }
+        
+        throw new Error(`Erro na API ${apiInfo.provider}: ${response.status} - ${errorData.error?.message || 'Erro desconhecido'}`);
       }
-      console.error('Erro da API:', errorData);
+
+      const data = JSON.parse(responseText);
+      console.log('Dados parseados:', data);
       
-      if (response.status === 400 && errorData.error?.message?.includes('model')) {
-        throw new Error(`Modelo ${apiInfo.model} não disponível no ${apiInfo.provider.toUpperCase()}. Tente usar uma API Key do OpenAI.`);
+      let description = data.choices[0].message.content;
+
+      // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
+      if (!hasSpecificInstruction && description.length > 200) {
+        description = description.substring(0, 197) + '...';
       }
-      
-      throw new Error(`Erro na API ${apiInfo.provider}: ${response.status} - ${errorData.error?.message || 'Erro desconhecido'}`);
+
+      onDescriptionGenerated(description);
+
+      const instructionMessage = hasSpecificInstruction ? ' (seguindo sua instrução específica)' : '';
+      toast({
+        title: "Descrição Gerada",
+        description: `Descrição criada por ${nomeAgente} via ${apiInfo.provider.toUpperCase()}${instructionMessage} (${description.length} caracteres)`,
+      });
+
+    } catch (error) {
+      console.error('Erro ao gerar descrição:', error);
+      toast({
+        title: "Erro na Geração",
+        description: error instanceof Error ? error.message : "Não foi possível gerar a descrição. Verifique sua API Key e conexão.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
     }
-
-    const data = JSON.parse(responseText);
-    console.log('Dados parseados:', data);
-    
-    let description = data.choices[0].message.content;
-
-    // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
-    if (!hasSpecificInstruction && description.length > 200) {
-      description = description.substring(0, 197) + '...';
-    }
-
-    onDescriptionGenerated(description);
-
-    const instructionMessage = hasSpecificInstruction ? ' (seguindo sua instrução específica)' : '';
-    toast({
-      title: "Descrição Gerada",
-      description: `Descrição criada por ${nomeAgente} via ${apiInfo.provider.toUpperCase()}${instructionMessage} (${description.length} caracteres)`,
-    });
   };
 
   return (
