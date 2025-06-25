@@ -242,10 +242,11 @@ const ChatIAPersistente = () => {
       return;
     }
 
-    if (!conversaAtual) {
+    let targetConversa = conversaAtual;
+    if (!targetConversa) {
       console.log('Criando nova conversa para áudio...');
-      const novaConversa = await criarConversa();
-      if (!novaConversa) return;
+      targetConversa = await criarConversa();
+      if (!targetConversa) return;
     }
 
     setIsLoading(true);
@@ -264,11 +265,11 @@ const ChatIAPersistente = () => {
         return;
       }
 
-      // Salvar mensagem do usuário
-      await adicionarMensagem(transcription, 'user', 'audio');
+      // Salvar mensagem do usuário com o ID da conversa
+      await adicionarMensagem(transcription, 'user', 'audio', targetConversa.id);
 
       // Enviar para a IA
-      await sendMessageToAI(transcription);
+      await sendMessageToAI(transcription, targetConversa.id);
 
     } catch (error) {
       console.error('Erro ao processar áudio:', error);
@@ -289,23 +290,25 @@ const ChatIAPersistente = () => {
     console.log('Mensagem:', inputMessage);
     console.log('Conversa atual:', conversaAtual?.id || 'nenhuma');
     
-    if (!conversaAtual) {
+    let targetConversa = conversaAtual;
+    if (!targetConversa) {
       console.log('Criando nova conversa...');
-      const novaConversa = await criarConversa();
-      if (!novaConversa) {
+      targetConversa = await criarConversa();
+      if (!targetConversa) {
         console.error('Falha ao criar nova conversa');
         return;
       }
     }
 
-    await sendMessageToAI(inputMessage);
+    await sendMessageToAI(inputMessage, targetConversa.id);
     setInputMessage('');
   };
 
-  const sendMessageToAI = async (messageContent: string) => {
+  const sendMessageToAI = async (messageContent: string, conversaId?: string) => {
     console.log('=== Enviando para IA ===');
     console.log('Enable agente:', config.enableAgente);
     console.log('API Key presente:', !!config.apiKeyOpenAI);
+    console.log('Conversa ID:', conversaId || conversaAtual?.id);
     
     if (!config.enableAgente) {
       toast({
@@ -325,6 +328,12 @@ const ChatIAPersistente = () => {
       return;
     }
 
+    const targetConversaId = conversaId || conversaAtual?.id;
+    if (!targetConversaId) {
+      console.error('Nenhuma conversa disponível');
+      return;
+    }
+
     // Verificar se é um comando especial de análise
     const tipoComando = detectarComandoAnalise(messageContent);
     
@@ -332,7 +341,7 @@ const ChatIAPersistente = () => {
       console.log('Comando de análise detectado:', tipoComando);
       
       // Salvar mensagem do usuário
-      await adicionarMensagem(messageContent, 'user', 'text');
+      await adicionarMensagem(messageContent, 'user', 'text', targetConversaId);
       
       setIsLoading(true);
       
@@ -341,9 +350,9 @@ const ChatIAPersistente = () => {
         
         if (resultadoAnalise.tipo === 'analytics') {
           // Salvar como JSON para poder renderizar o componente visual
-          await adicionarMensagem(JSON.stringify(resultadoAnalise.conteudo), 'assistant', 'analytics');
+          await adicionarMensagem(JSON.stringify(resultadoAnalise.conteudo), 'assistant', 'analytics', targetConversaId);
         } else {
-          await adicionarMensagem(resultadoAnalise.conteudo as string, 'assistant', 'text');
+          await adicionarMensagem(resultadoAnalise.conteudo as string, 'assistant', 'text', targetConversaId);
         }
         
         toast({
@@ -352,7 +361,7 @@ const ChatIAPersistente = () => {
         });
       } catch (error) {
         console.error('Erro ao processar análise:', error);
-        await adicionarMensagem('Desculpe, ocorreu um erro ao analisar os dados dos relatórios.', 'assistant', 'text');
+        await adicionarMensagem('Desculpe, ocorreu um erro ao analisar os dados dos relatórios.', 'assistant', 'text', targetConversaId);
       } finally {
         setIsLoading(false);
       }
@@ -372,7 +381,7 @@ const ChatIAPersistente = () => {
     // Salvar mensagem do usuário se não for áudio
     if (!mensagens.find(m => m.content === messageContent && m.role === 'user')) {
       console.log('Salvando mensagem do usuário...');
-      await adicionarMensagem(messageContent, 'user', 'text');
+      await adicionarMensagem(messageContent, 'user', 'text', targetConversaId);
     }
 
     setIsLoading(true);
@@ -446,7 +455,7 @@ Quando o usuário mencionar relatórios, vistorias, condomínios, problemas ou e
 
       // Salvar resposta da IA
       console.log('Salvando resposta da IA...');
-      await adicionarMensagem(data.choices[0].message.content, 'assistant', 'text');
+      await adicionarMensagem(data.choices[0].message.content, 'assistant', 'text', targetConversaId);
 
       toast({
         title: "Mensagem Enviada",

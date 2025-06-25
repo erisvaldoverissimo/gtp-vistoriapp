@@ -132,9 +132,11 @@ export const useChatConversas = () => {
       // Atualizar lista de conversas
       setConversas(prev => [data, ...prev]);
       
-      // Selecionar a nova conversa
+      // Selecionar a nova conversa e limpar mensagens
       setConversaAtual(data);
       setMensagens([]);
+
+      console.log('Estado atualizado - Nova conversa selecionada:', data.id);
 
       return data;
     } catch (error) {
@@ -156,19 +158,32 @@ export const useChatConversas = () => {
   };
 
   // Adicionar mensagem
-  const adicionarMensagem = async (content: string, role: 'user' | 'assistant', type: 'text' | 'audio' | 'analytics' = 'text') => {
-    if (!conversaAtual) {
-      console.error('Nenhuma conversa selecionada');
+  const adicionarMensagem = async (
+    content: string, 
+    role: 'user' | 'assistant', 
+    type: 'text' | 'audio' | 'analytics' = 'text',
+    conversaId?: string
+  ) => {
+    // Usar conversaId passado como parâmetro ou conversaAtual
+    const targetConversaId = conversaId || conversaAtual?.id;
+    
+    if (!targetConversaId) {
+      console.error('Nenhuma conversa disponível para salvar mensagem');
       return;
     }
 
     try {
-      console.log('Adicionando mensagem:', { content: content.substring(0, 100) + '...', role, type });
+      console.log('Adicionando mensagem:', { 
+        content: content.substring(0, 100) + '...', 
+        role, 
+        type, 
+        conversaId: targetConversaId 
+      });
 
       const { data, error } = await supabase
         .from('mensagens_chat')
         .insert({
-          conversa_id: conversaAtual.id,
+          conversa_id: targetConversaId,
           role,
           content,
           type
@@ -190,18 +205,20 @@ export const useChatConversas = () => {
         type: data.type as 'text' | 'audio' | 'analytics'
       };
       
-      // Atualizar mensagens localmente
-      setMensagens(prev => {
-        const novasMensagens = [...prev, mensagemTyped];
-        console.log('Estado atualizado - Total mensagens:', novasMensagens.length);
-        return novasMensagens;
-      });
+      // Atualizar mensagens localmente apenas se for da conversa atual
+      if (targetConversaId === conversaAtual?.id) {
+        setMensagens(prev => {
+          const novasMensagens = [...prev, mensagemTyped];
+          console.log('Estado atualizado - Total mensagens:', novasMensagens.length);
+          return novasMensagens;
+        });
+      }
 
       // Atualizar timestamp da conversa
       await supabase
         .from('conversas_chat')
         .update({ updated_at: new Date().toISOString() })
-        .eq('id', conversaAtual.id);
+        .eq('id', targetConversaId);
 
     } catch (error) {
       console.error('Erro ao adicionar mensagem:', error);
