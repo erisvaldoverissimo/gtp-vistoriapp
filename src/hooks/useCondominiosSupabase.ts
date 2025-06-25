@@ -12,6 +12,8 @@ export interface CondominioSupabase {
   cep?: string;
   telefone?: string;
   email?: string;
+  responsavel?: string;
+  telefone_responsavel?: string;
   ativo: boolean;
   created_at: string;
   updated_at: string;
