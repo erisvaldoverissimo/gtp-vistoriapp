@@ -6,7 +6,7 @@ import ListaVistoriasSupabase from '@/components/ListaVistoriasSupabase';
 import Configuracoes from '@/components/Configuracoes';
 import GerenciarCondominios from '@/components/GerenciarCondominios';
 import GerenciarAmbientesGrupos from '@/components/GerenciarAmbientesGrupos';
-import ChatIA from '@/components/ChatIA';
+import ChatIAPersistente from '@/components/ChatIAPersistente';
 import GerenciarUsuarios from '@/components/GerenciarUsuarios';
 import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
 
@@ -61,7 +61,7 @@ const Index = () => {
           />
         );
       case 'chat-ia':
-        return <ChatIA />;
+        return <ChatIAPersistente />;
       case 'configuracoes':
         return <Configuracoes />;
       case 'vistorias':

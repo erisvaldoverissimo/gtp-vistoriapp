@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -31,13 +30,22 @@ export const useChatConversas = () => {
   // Carregar conversas do usuário
   const carregarConversas = async () => {
     try {
+      console.log('Carregando conversas...');
+      const { data: userData } = await supabase.auth.getUser();
+      console.log('Usuário atual:', userData.user?.id);
+
       const { data, error } = await supabase
         .from('conversas_chat')
         .select('*')
         .eq('ativa', true)
         .order('updated_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao carregar conversas:', error);
+        throw error;
+      }
+      
+      console.log('Conversas carregadas:', data);
       setConversas(data || []);
     } catch (error) {
       console.error('Erro ao carregar conversas:', error);
@@ -53,13 +61,20 @@ export const useChatConversas = () => {
   const carregarMensagens = async (conversaId: string) => {
     try {
       setLoading(true);
+      console.log('Carregando mensagens para conversa:', conversaId);
+      
       const { data, error } = await supabase
         .from('mensagens_chat')
         .select('*')
         .eq('conversa_id', conversaId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao carregar mensagens:', error);
+        throw error;
+      }
+      
+      console.log('Mensagens carregadas:', data);
       
       // Type casting para garantir tipos corretos
       const mensagensTyped: Mensagem[] = (data || []).map(msg => ({
@@ -84,17 +99,28 @@ export const useChatConversas = () => {
   // Criar nova conversa
   const criarConversa = async (titulo: string = 'Nova Conversa') => {
     try {
+      console.log('Criando nova conversa:', titulo);
+      const { data: userData } = await supabase.auth.getUser();
+      
+      if (!userData.user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase
         .from('conversas_chat')
         .insert({
           titulo,
-          user_id: (await supabase.auth.getUser()).data.user?.id
+          user_id: userData.user.id
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao criar conversa:', error);
+        throw error;
+      }
       
+      console.log('Conversa criada:', data);
       setConversas(prev => [data, ...prev]);
       setConversaAtual(data);
       setMensagens([]);
@@ -116,6 +142,8 @@ export const useChatConversas = () => {
     if (!conversaAtual) return null;
 
     try {
+      console.log('Adicionando mensagem:', { content, role, type });
+      
       const { data, error } = await supabase
         .from('mensagens_chat')
         .insert({
@@ -127,7 +155,12 @@ export const useChatConversas = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao adicionar mensagem:', error);
+        throw error;
+      }
+
+      console.log('Mensagem adicionada:', data);
 
       // Type casting para garantir tipos corretos
       const mensagemTyped: Mensagem = {
@@ -158,6 +191,7 @@ export const useChatConversas = () => {
 
   // Selecionar conversa
   const selecionarConversa = async (conversa: Conversa) => {
+    console.log('Selecionando conversa:', conversa.id);
     setConversaAtual(conversa);
     await carregarMensagens(conversa.id);
   };
@@ -165,6 +199,8 @@ export const useChatConversas = () => {
   // Deletar conversa
   const deletarConversa = async (conversaId: string) => {
     try {
+      console.log('Deletando conversa:', conversaId);
+      
       const { error } = await supabase
         .from('conversas_chat')
         .update({ ativa: false })
@@ -196,6 +232,8 @@ export const useChatConversas = () => {
   // Atualizar título da conversa
   const atualizarTituloConversa = async (conversaId: string, novoTitulo: string) => {
     try {
+      console.log('Atualizando título da conversa:', conversaId, novoTitulo);
+      
       const { error } = await supabase
         .from('conversas_chat')
         .update({ titulo: novoTitulo })
@@ -221,6 +259,7 @@ export const useChatConversas = () => {
   };
 
   useEffect(() => {
+    console.log('Hook useChatConversas inicializado');
     carregarConversas();
   }, []);
 
