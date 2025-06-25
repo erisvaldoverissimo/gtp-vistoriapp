@@ -41,6 +41,22 @@ const ChatIAPersistente = () => {
     apiKeyOpenAI: obterConfiguracao('api_key_openai', '')
   };
 
+  // Debug logs para configurações
+  useEffect(() => {
+    console.log('=== DEBUG ChatIAPersistente ===');
+    console.log('Config loading:', configLoading);
+    console.log('Chat loading:', chatLoading);
+    console.log('Configurações:', {
+      nomeAgente: config.nomeAgente,
+      enableAgente: config.enableAgente,
+      hasApiKey: !!config.apiKeyOpenAI,
+      apiKeyLength: config.apiKeyOpenAI?.length || 0
+    });
+    console.log('Conversas:', conversas.length);
+    console.log('Conversa atual:', conversaAtual?.id || 'nenhuma');
+    console.log('Mensagens:', mensagens.length);
+  }, [configLoading, chatLoading, config, conversas, conversaAtual, mensagens]);
+
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
@@ -110,6 +126,10 @@ const ChatIAPersistente = () => {
   };
 
   const handleAudioRecorded = async (audioBlob: Blob) => {
+    console.log('=== Audio gravado ===');
+    console.log('Enable agente:', config.enableAgente);
+    console.log('API Key presente:', !!config.apiKeyOpenAI);
+
     if (!config.enableAgente) {
       toast({
         title: "Agente IA Desabilitado",
@@ -129,6 +149,7 @@ const ChatIAPersistente = () => {
     }
 
     if (!conversaAtual) {
+      console.log('Criando nova conversa para áudio...');
       const novaConversa = await criarConversa();
       if (!novaConversa) return;
     }
@@ -170,9 +191,17 @@ const ChatIAPersistente = () => {
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
     
+    console.log('=== Enviando mensagem ===');
+    console.log('Mensagem:', inputMessage);
+    console.log('Conversa atual:', conversaAtual?.id || 'nenhuma');
+    
     if (!conversaAtual) {
+      console.log('Criando nova conversa...');
       const novaConversa = await criarConversa();
-      if (!novaConversa) return;
+      if (!novaConversa) {
+        console.error('Falha ao criar nova conversa');
+        return;
+      }
     }
 
     await sendMessageToAI(inputMessage);
@@ -180,7 +209,27 @@ const ChatIAPersistente = () => {
   };
 
   const sendMessageToAI = async (messageContent: string) => {
-    if (!config.enableAgente || !config.apiKeyOpenAI) return;
+    console.log('=== Enviando para IA ===');
+    console.log('Enable agente:', config.enableAgente);
+    console.log('API Key presente:', !!config.apiKeyOpenAI);
+    
+    if (!config.enableAgente) {
+      toast({
+        title: "Agente IA Desabilitado",
+        description: "Habilite o agente IA nas configurações.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!config.apiKeyOpenAI) {
+      toast({
+        title: "API Key Necessária",
+        description: "Configure a API Key nas configurações.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     const apiInfo = detectApiProvider(config.apiKeyOpenAI);
     if (!apiInfo) {
@@ -194,6 +243,7 @@ const ChatIAPersistente = () => {
 
     // Salvar mensagem do usuário se não for áudio
     if (!mensagens.find(m => m.content === messageContent && m.role === 'user')) {
+      console.log('Salvando mensagem do usuário...');
       await adicionarMensagem(messageContent, 'user', 'text');
     }
 
@@ -205,6 +255,7 @@ const ChatIAPersistente = () => {
 
       console.log('Enviando para:', apiInfo.provider, apiInfo.url);
       console.log('Modelo:', apiInfo.model);
+      console.log('System prompt length:', systemPrompt.length);
 
       const response = await fetch(apiInfo.url, {
         method: 'POST',
@@ -238,13 +289,14 @@ const ChatIAPersistente = () => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('Erro da API:', errorData);
-        throw new Error(`Erro na API ${apiInfo.provider}: ${response.status}`);
+        throw new Error(`Erro na API ${apiInfo.provider}: ${response.status} - ${JSON.stringify(errorData)}`);
       }
 
       const data = await response.json();
       console.log('Resposta recebida:', data);
 
       // Salvar resposta da IA
+      console.log('Salvando resposta da IA...');
       await adicionarMensagem(data.choices[0].message.content, 'assistant', 'text');
 
       toast({
@@ -256,7 +308,7 @@ const ChatIAPersistente = () => {
       console.error('Erro ao enviar mensagem:', error);
       toast({
         title: "Erro na Comunicação",
-        description: `Não foi possível se comunicar com a IA. Verifique sua API Key.`,
+        description: `Não foi possível se comunicar com a IA. Erro: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -290,13 +342,18 @@ const ChatIAPersistente = () => {
   if (configLoading || chatLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-lg">Carregando...</div>
+        <div className="text-lg">Carregando configurações...</div>
       </div>
     );
   }
 
   return (
     <div className="flex h-[calc(100vh-120px)] gap-4">
+      {/* Debug info - remover depois */}
+      <div className="fixed top-2 right-2 bg-black text-white p-2 text-xs z-50">
+        Debug: API={!!config.apiKeyOpenAI} | Enable={String(config.enableAgente)} | Conversas={conversas.length}
+      </div>
+
       {/* Sidebar com lista de conversas */}
       <div className="w-80 bg-white rounded-lg border p-4">
         <div className="flex items-center justify-between mb-4">
@@ -382,6 +439,9 @@ const ChatIAPersistente = () => {
               {!config.enableAgente && (
                 <span className="ml-2 text-sm text-red-500 font-normal">(Desabilitado)</span>
               )}
+              {!config.apiKeyOpenAI && (
+                <span className="ml-2 text-sm text-red-500 font-normal">(Sem API Key)</span>
+              )}
               {currentProvider && (
                 <span className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded">
                   {currentProvider.provider.toUpperCase()}
@@ -398,6 +458,12 @@ const ChatIAPersistente = () => {
                     <Bot size={48} className="mx-auto mb-4 text-gray-300" />
                     <p>Selecione uma conversa ou crie uma nova</p>
                     <p className="text-sm mt-2">para começar a conversar com {config.nomeAgente}</p>
+                    {!config.enableAgente && (
+                      <p className="text-sm mt-2 text-red-500">⚠️ Agente IA desabilitado nas configurações</p>
+                    )}
+                    {!config.apiKeyOpenAI && (
+                      <p className="text-sm mt-2 text-red-500">⚠️ API Key não configurada</p>
+                    )}
                   </div>
                 )}
                 
@@ -469,16 +535,16 @@ const ChatIAPersistente = () => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={`Digite sua mensagem para ${config.nomeAgente}...`}
-                disabled={isLoading || !config.enableAgente}
+                disabled={isLoading || !config.enableAgente || !config.apiKeyOpenAI}
                 className="flex-1"
               />
               <AudioRecorder 
                 onAudioRecorded={handleAudioRecorded}
-                disabled={isLoading || !config.enableAgente}
+                disabled={isLoading || !config.enableAgente || !config.apiKeyOpenAI}
               />
               <Button 
                 onClick={sendMessage} 
-                disabled={isLoading || !inputMessage.trim() || !config.enableAgente}
+                disabled={isLoading || !inputMessage.trim() || !config.enableAgente || !config.apiKeyOpenAI}
                 className="bg-teal-600 hover:bg-teal-700"
               >
                 <Send size={18} />
