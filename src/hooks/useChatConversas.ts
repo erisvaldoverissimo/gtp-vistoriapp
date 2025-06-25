@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -83,7 +82,15 @@ export const useChatConversas = () => {
       }
 
       console.log('Mensagens carregadas:', data?.length || 0);
-      setMensagens(data || []);
+      
+      // Cast the data to match our Mensagem interface
+      const mensagensTyped: Mensagem[] = (data || []).map(msg => ({
+        ...msg,
+        role: msg.role as 'user' | 'assistant',
+        type: msg.type as 'text' | 'audio' | 'analytics'
+      }));
+      
+      setMensagens(mensagensTyped);
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
       toast({
@@ -176,9 +183,16 @@ export const useChatConversas = () => {
 
       console.log('Mensagem salva no banco:', data);
       
+      // Cast the returned data to match our Mensagem interface
+      const mensagemTyped: Mensagem = {
+        ...data,
+        role: data.role as 'user' | 'assistant',
+        type: data.type as 'text' | 'audio' | 'analytics'
+      };
+      
       // Atualizar mensagens localmente
       setMensagens(prev => {
-        const novasMensagens = [...prev, data];
+        const novasMensagens = [...prev, mensagemTyped];
         console.log('Estado atualizado - Total mensagens:', novasMensagens.length);
         return novasMensagens;
       });
