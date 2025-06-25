@@ -7,8 +7,9 @@ import { Send, Bot, User, MessageCircle, Plus, Trash2, Edit2, BarChart3, FileTex
 import { useToast } from '@/hooks/use-toast';
 import { useConfiguracoes } from '@/hooks/useConfiguracoes';
 import { useChatConversas } from '@/hooks/useChatConversas';
-import { useVistoriaAnalytics } from '@/hooks/useVistoriaAnalytics';
+import { useVistoriaAnalytics, VistoriaAnalytics } from '@/hooks/useVistoriaAnalytics';
 import AudioRecorder from './AudioRecorder';
+import AnalyticsDisplay from './chat/AnalyticsDisplay';
 
 const ChatIAPersistente = () => {
   const { toast } = useToast();
@@ -84,63 +85,41 @@ const ChatIAPersistente = () => {
   };
 
   // Processar comandos de análise
-  const processarComandoAnalise = async (tipo: string, mensagemOriginal: string): Promise<string> => {
+  const processarComandoAnalise = async (tipo: string, mensagemOriginal: string): Promise<{ tipo: 'texto' | 'analytics', conteudo: string | VistoriaAnalytics }> => {
     try {
       console.log('Processando comando de análise:', tipo);
       
       switch (tipo) {
         case 'estatisticas':
           const analytics = await obterEstatisticasGerais();
-          if (!analytics) return 'Não foi possível obter as estatísticas no momento.';
+          if (!analytics) return { tipo: 'texto', conteudo: 'Não foi possível obter as estatísticas no momento.' };
           
-          return `📊 **Resumo Geral das Vistorias:**
-
-**Total de Vistorias:** ${analytics.totalVistorias}
-
-**Por Condomínio:**
-${Object.entries(analytics.vistoriasPorCondominio)
-  .map(([nome, count]) => `• ${nome}: ${count} vistorias`)
-  .join('\n')}
-
-**Por Status:**
-${Object.entries(analytics.vistoriasPorStatus)
-  .map(([status, count]) => `• ${status}: ${count} vistorias`)
-  .join('\n')}
-
-**Problemas Mais Frequentes:**
-${analytics.problemasFrequentes.slice(0, 5)
-  .map((p, i) => `${i + 1}. ${p.item} (${p.count} ocorrências)`)
-  .join('\n')}
-
-**Condomínios Mais Ativos:**
-${analytics.condominiosAtivos.slice(0, 3)
-  .map((c, i) => `${i + 1}. ${c.nome} (${c.totalVistorias} vistorias)`)
-  .join('\n')}`;
+          return { tipo: 'analytics', conteudo: analytics };
 
         case 'por_condominio':
           const analyticsCondominio = await obterEstatisticasGerais();
-          if (!analyticsCondominio) return 'Não foi possível obter os dados por condomínio.';
+          if (!analyticsCondominio) return { tipo: 'texto', conteudo: 'Não foi possível obter os dados por condomínio.' };
           
-          return `🏢 **Relatórios por Condomínio:**\n\n${Object.entries(analyticsCondominio.vistoriasPorCondominio)
+          return { tipo: 'texto', conteudo: `🏢 **Relatórios por Condomínio:**\n\n${Object.entries(analyticsCondominio.vistoriasPorCondominio)
             .sort(([,a], [,b]) => b - a)
             .map(([nome, count]) => `• **${nome}**: ${count} vistorias`)
-            .join('\n')}`;
+            .join('\n')}` };
 
         case 'problemas_frequentes':
           const analyticsProblemas = await obterEstatisticasGerais();
-          if (!analyticsProblemas) return 'Não foi possível obter os dados de problemas.';
+          if (!analyticsProblemas) return { tipo: 'texto', conteudo: 'Não foi possível obter os dados de problemas.' };
           
-          return `🔧 **Problemas Mais Frequentes:**\n\n${analyticsProblemas.problemasFrequentes
+          return { tipo: 'texto', conteudo: `🔧 **Problemas Mais Frequentes:**\n\n${analyticsProblemas.problemasFrequentes
             .map((p, i) => `${i + 1}. **${p.item}**\n   └ ${p.count} ocorrências`)
-            .join('\n\n')}`;
+            .join('\n\n')}` };
 
         case 'por_status':
           const analyticsStatus = await obterEstatisticasGerais();
-          if (!analyticsStatus) return 'Não foi possível obter os dados por status.';
+          if (!analyticsStatus) return { tipo: 'texto', conteudo: 'Não foi possível obter os dados por status.' };
           
-          return `📋 **Vistorias por Status:**\n\n${Object.entries(analyticsStatus.vistoriasPorStatus)
+          return { tipo: 'texto', conteudo: `📋 **Vistorias por Status:**\n\n${Object.entries(analyticsStatus.vistoriasPorStatus)
             .map(([status, count]) => `• **${status}**: ${count} vistorias`)
-            .join('\n')}`;
+            .join('\n')}` };
 
         case 'buscar':
           // Extrair filtros da mensagem
@@ -161,20 +140,20 @@ ${analytics.condominiosAtivos.slice(0, 3)
           const vistoriasFiltradas = await buscarVistoriasPorFiltro(filtros);
           
           if (vistoriasFiltradas.length === 0) {
-            return 'Nenhuma vistoria encontrada com os filtros especificados.';
+            return { tipo: 'texto', conteudo: 'Nenhuma vistoria encontrada com os filtros especificados.' };
           }
 
-          return `🔍 **Encontrei ${vistoriasFiltradas.length} vistoria(s):**\n\n${vistoriasFiltradas
+          return { tipo: 'texto', conteudo: `🔍 **Encontrei ${vistoriasFiltradas.length} vistoria(s):**\n\n${vistoriasFiltradas
             .slice(0, 10)
             .map(v => `• **${v.numero_interno}** - ${v.condominio?.nome || 'N/A'}\n  └ Data: ${new Date(v.data_vistoria).toLocaleDateString('pt-BR')}\n  └ Status: ${v.status}`)
-            .join('\n\n')}${vistoriasFiltradas.length > 10 ? '\n\n*Mostrando apenas os primeiros 10 resultados*' : ''}`;
+            .join('\n\n')}${vistoriasFiltradas.length > 10 ? '\n\n*Mostrando apenas os primeiros 10 resultados*' : ''}` };
 
         default:
-          return 'Comando não reconhecido.';
+          return { tipo: 'texto', conteudo: 'Comando não reconhecido.' };
       }
     } catch (error) {
       console.error('Erro ao processar comando de análise:', error);
-      return 'Ocorreu um erro ao processar sua solicitação de análise.';
+      return { tipo: 'texto', conteudo: 'Ocorreu um erro ao processar sua solicitação de análise.' };
     }
   };
 
@@ -358,8 +337,14 @@ ${analytics.condominiosAtivos.slice(0, 3)
       setIsLoading(true);
       
       try {
-        const respostaAnalise = await processarComandoAnalise(tipoComando, messageContent);
-        await adicionarMensagem(respostaAnalise, 'assistant', 'text');
+        const resultadoAnalise = await processarComandoAnalise(tipoComando, messageContent);
+        
+        if (resultadoAnalise.tipo === 'analytics') {
+          // Salvar como JSON para poder renderizar o componente visual
+          await adicionarMensagem(JSON.stringify(resultadoAnalise.conteudo), 'assistant', 'analytics');
+        } else {
+          await adicionarMensagem(resultadoAnalise.conteudo as string, 'assistant', 'text');
+        }
         
         toast({
           title: "Análise Concluída",
@@ -719,13 +704,22 @@ Quando o usuário mencionar relatórios, vistorias, condomínios, problemas ou e
                           : 'bg-gray-100 text-gray-900'
                       }`}
                     >
-                      <div className="whitespace-pre-wrap">{message.content}</div>
+                      {message.type === 'analytics' ? (
+                        <div className="bg-white rounded-lg p-4">
+                          <AnalyticsDisplay analytics={JSON.parse(message.content)} />
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap">{message.content}</div>
+                      )}
                       <div className={`flex items-center justify-between mt-2 text-xs ${
                         message.role === 'user' ? 'text-teal-100' : 'text-gray-500'
                       }`}>
                         <span>{new Date(message.created_at).toLocaleTimeString()}</span>
                         {message.type === 'audio' && (
                           <span className="ml-2 opacity-75">🎤</span>
+                        )}
+                        {message.type === 'analytics' && (
+                          <span className="ml-2 opacity-75">📊</span>
                         )}
                       </div>
                     </div>
