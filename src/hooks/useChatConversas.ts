@@ -60,7 +60,15 @@ export const useChatConversas = () => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMensagens(data || []);
+      
+      // Type casting para garantir tipos corretos
+      const mensagensTyped: Mensagem[] = (data || []).map(msg => ({
+        ...msg,
+        role: msg.role as 'user' | 'assistant',
+        type: (msg.type || 'text') as 'text' | 'audio'
+      }));
+      
+      setMensagens(mensagensTyped);
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
       toast({
@@ -121,7 +129,14 @@ export const useChatConversas = () => {
 
       if (error) throw error;
 
-      setMensagens(prev => [...prev, data]);
+      // Type casting para garantir tipos corretos
+      const mensagemTyped: Mensagem = {
+        ...data,
+        role: data.role as 'user' | 'assistant',
+        type: (data.type || 'text') as 'text' | 'audio'
+      };
+
+      setMensagens(prev => [...prev, mensagemTyped]);
 
       // Atualizar timestamp da conversa
       await supabase
@@ -129,7 +144,7 @@ export const useChatConversas = () => {
         .update({ updated_at: new Date().toISOString() })
         .eq('id', conversaAtual.id);
 
-      return data;
+      return mensagemTyped;
     } catch (error) {
       console.error('Erro ao adicionar mensagem:', error);
       toast({
