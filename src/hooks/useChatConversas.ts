@@ -34,9 +34,15 @@ export const useChatConversas = () => {
       const { data: userData } = await supabase.auth.getUser();
       console.log('Usuário atual:', userData.user?.id);
 
+      if (!userData.user) {
+        console.error('Usuário não autenticado');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('conversas_chat')
         .select('*')
+        .eq('user_id', userData.user.id)
         .eq('ativa', true)
         .order('updated_at', { ascending: false });
 
@@ -45,7 +51,7 @@ export const useChatConversas = () => {
         throw error;
       }
       
-      console.log('Conversas carregadas:', data);
+      console.log('Conversas carregadas:', data?.length || 0);
       setConversas(data || []);
     } catch (error) {
       console.error('Erro ao carregar conversas:', error);
@@ -74,7 +80,7 @@ export const useChatConversas = () => {
         throw error;
       }
       
-      console.log('Mensagens carregadas:', data);
+      console.log('Mensagens carregadas:', data?.length || 0);
       
       // Type casting para garantir tipos corretos
       const mensagensTyped: Mensagem[] = (data || []).map(msg => ({
@@ -103,6 +109,7 @@ export const useChatConversas = () => {
       const { data: userData } = await supabase.auth.getUser();
       
       if (!userData.user) {
+        console.error('Usuário não autenticado');
         throw new Error('Usuário não autenticado');
       }
 
@@ -139,10 +146,13 @@ export const useChatConversas = () => {
 
   // Adicionar mensagem
   const adicionarMensagem = async (content: string, role: 'user' | 'assistant', type: 'text' | 'audio' = 'text') => {
-    if (!conversaAtual) return null;
+    if (!conversaAtual) {
+      console.error('Nenhuma conversa selecionada');
+      return null;
+    }
 
     try {
-      console.log('Adicionando mensagem:', { content, role, type });
+      console.log('Adicionando mensagem:', { content: content.substring(0, 50) + '...', role, type });
       
       const { data, error } = await supabase
         .from('mensagens_chat')
@@ -160,7 +170,7 @@ export const useChatConversas = () => {
         throw error;
       }
 
-      console.log('Mensagem adicionada:', data);
+      console.log('Mensagem salva no banco:', data);
 
       // Type casting para garantir tipos corretos
       const mensagemTyped: Mensagem = {
@@ -169,13 +179,22 @@ export const useChatConversas = () => {
         type: (data.type || 'text') as 'text' | 'audio'
       };
 
-      setMensagens(prev => [...prev, mensagemTyped]);
+      // Atualizar estado local IMEDIATAMENTE
+      setMensagens(prev => {
+        const novasMensagens = [...prev, mensagemTyped];
+        console.log('Estado atualizado - Total mensagens:', novasMensagens.length);
+        return novasMensagens;
+      });
 
       // Atualizar timestamp da conversa
-      await supabase
+      const { error: updateError } = await supabase
         .from('conversas_chat')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', conversaAtual.id);
+
+      if (updateError) {
+        console.error('Erro ao atualizar timestamp da conversa:', updateError);
+      }
 
       return mensagemTyped;
     } catch (error) {
