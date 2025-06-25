@@ -2,14 +2,23 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, Building2, AlertCircle, TrendingUp, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BarChart3, Building2, AlertCircle, TrendingUp, CheckCircle, Clock, XCircle, Download } from 'lucide-react';
 import { VistoriaAnalytics } from '@/hooks/useVistoriaAnalytics';
+import { useChatPDFGenerator } from '@/hooks/useChatPDFGenerator';
 
 interface AnalyticsDisplayProps {
   analytics: VistoriaAnalytics;
+  titulo?: string;
 }
 
-const AnalyticsDisplay: React.FC<AnalyticsDisplayProps> = ({ analytics }) => {
+const AnalyticsDisplay: React.FC<AnalyticsDisplayProps> = ({ analytics, titulo = 'Relatório de Análise de Vistorias' }) => {
+  const { generateAnalyticsPDF } = useChatPDFGenerator();
+
+  const handleDownloadPDF = async () => {
+    await generateAnalyticsPDF(analytics, titulo);
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'concluído':
@@ -40,6 +49,19 @@ const AnalyticsDisplay: React.FC<AnalyticsDisplayProps> = ({ analytics }) => {
 
   return (
     <div className="space-y-4 w-full max-w-4xl">
+      {/* Header com botão de download */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Análise de Vistorias</h3>
+        <Button
+          onClick={handleDownloadPDF}
+          className="bg-teal-600 hover:bg-teal-700 text-white"
+          size="sm"
+        >
+          <Download size={16} className="mr-2" />
+          Baixar PDF
+        </Button>
+      </div>
+
       {/* Resumo Geral */}
       <Card>
         <CardHeader className="pb-3">
@@ -172,7 +194,7 @@ const AnalyticsDisplay: React.FC<AnalyticsDisplayProps> = ({ analytics }) => {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </div>
       )}
     </div>
   );

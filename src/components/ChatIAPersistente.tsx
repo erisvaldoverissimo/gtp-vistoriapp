@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Bot, User, MessageCircle, Plus, Trash2, Edit2, BarChart3, FileText } from 'lucide-react';
+import { Send, Bot, User, MessageCircle, Plus, Trash2, Edit2, BarChart3, FileText, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useConfiguracoes } from '@/hooks/useConfiguracoes';
 import { useChatConversas } from '@/hooks/useChatConversas';
 import { useVistoriaAnalytics, VistoriaAnalytics } from '@/hooks/useVistoriaAnalytics';
+import { useChatPDFGenerator } from '@/hooks/useChatPDFGenerator';
 import AudioRecorder from './AudioRecorder';
 import AnalyticsDisplay from './chat/AnalyticsDisplay';
 
@@ -20,6 +21,7 @@ const ChatIAPersistente = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { obterConfiguracao, loading: configLoading } = useConfiguracoes();
   const { obterEstatisticasGerais, buscarVistoriasPorFiltro, loading: analyticsLoading } = useVistoriaAnalytics();
+  const { generateTextReportPDF } = useChatPDFGenerator();
   
   const {
     conversas,
@@ -494,6 +496,53 @@ Quando o usuário mencionar relatórios, vistorias, condomínios, problemas ou e
     setNovoTitulo('');
   };
 
+  // Função para baixar conversa como PDF
+  const handleDownloadConversation = async () => {
+    if (!conversaAtual || mensagens.length === 0) {
+      toast({
+        title: "Nenhuma Conversa",
+        description: "Selecione uma conversa com mensagens para baixar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Montar o conteúdo da conversa
+    let content = `CONVERSA: ${conversaAtual.titulo}\n`;
+    content += `Data: ${new Date(conversaAtual.created_at).toLocaleDateString('pt-BR')}\n`;
+    content += `Total de mensagens: ${mensagens.length}\n\n`;
+    content += ''.padEnd(50, '=') + '\n\n';
+
+    mensagens.forEach((mensagem, index) => {
+      const tipo = mensagem.role === 'user' ? 'USUÁRIO' : 'PREDIBBOT';
+      const timestamp = new Date(mensagem.created_at).toLocaleTimeString('pt-BR');
+      
+      content += `[${timestamp}] ${tipo}:\n`;
+      
+      if (mensagem.type === 'analytics') {
+        content += '[RELATÓRIO DE ANÁLISE - Ver dados visuais na interface]\n';
+        try {
+          const analytics = JSON.parse(mensagem.content);
+          content += `Total de vistorias: ${analytics.totalVistorias}\n`;
+          if (analytics.vistoriasPorCondominio) {
+            content += 'Vistorias por condomínio:\n';
+            Object.entries(analytics.vistoriasPorCondominio).forEach(([nome, count]) => {
+              content += `  - ${nome}: ${count}\n`;
+            });
+          }
+        } catch (e) {
+          content += '[Dados de análise não puderam ser processados]\n';
+        }
+      } else {
+        content += `${mensagem.content}\n`;
+      }
+      
+      content += '\n' + ''.padEnd(30, '-') + '\n\n';
+    });
+
+    await generateTextReportPDF(content, `Conversa: ${conversaAtual.titulo}`);
+  };
+
   // Detectar o provedor atual para exibir na interface
   const currentProvider = config.apiKeyOpenAI ? detectApiProvider(config.apiKeyOpenAI) : null;
 
@@ -628,26 +677,39 @@ Quando o usuário mencionar relatórios, vistorias, condomínios, problemas ou e
       <div className="flex-1">
         <Card className="h-full flex flex-col">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Bot size={20} className="mr-2" />
-              {conversaAtual ? conversaAtual.titulo : `Chat com ${config.nomeAgente}`}
-              {!config.enableAgente && (
-                <span className="ml-2 text-sm text-red-500 font-normal">(Desabilitado)</span>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center text-lg">
+                <Bot size={20} className="mr-2" />
+                {conversaAtual ? conversaAtual.titulo : `Chat com ${config.nomeAgente}`}
+                {!config.enableAgente && (
+                  <span className="ml-2 text-sm text-red-500 font-normal">(Desabilitado)</span>
+                )}
+                {!config.apiKeyOpenAI && (
+                  <span className="ml-2 text-sm text-red-500 font-normal">(Sem API Key)</span>
+                )}
+                {currentProvider && (
+                  <span className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded">
+                    {currentProvider.provider.toUpperCase()}
+                  </span>
+                )}
+                {analyticsLoading && (
+                  <span className="ml-2 text-xs bg-blue-100 px-2 py-1 rounded text-blue-600">
+                    Analisando...
+                  </span>
+                )}
+              </CardTitle>
+              {conversaAtual && mensagens.length > 0 && (
+                <Button
+                  onClick={handleDownloadConversation}
+                  variant="outline"
+                  size="sm"
+                  className="ml-2"
+                >
+                  <Download size={16} className="mr-2" />
+                  Baixar Conversa
+                </Button>
               )}
-              {!config.apiKeyOpenAI && (
-                <span className="ml-2 text-sm text-red-500 font-normal">(Sem API Key)</span>
-              )}
-              {currentProvider && (
-                <span className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded">
-                  {currentProvider.provider.toUpperCase()}
-                </span>
-              )}
-              {analyticsLoading && (
-                <span className="ml-2 text-xs bg-blue-100 px-2 py-1 rounded text-blue-600">
-                  Analisando...
-                </span>
-              )}
-            </CardTitle>
+            </div>
           </CardHeader>
           
           <CardContent className="flex-1 flex flex-col space-y-4">
@@ -715,7 +777,10 @@ Quando o usuário mencionar relatórios, vistorias, condomínios, problemas ou e
                     >
                       {message.type === 'analytics' ? (
                         <div className="bg-white rounded-lg p-4">
-                          <AnalyticsDisplay analytics={JSON.parse(message.content)} />
+                          <AnalyticsDisplay 
+                            analytics={JSON.parse(message.content)} 
+                            titulo={`Análise - ${conversaAtual?.titulo || 'Chat'}`}
+                          />
                         </div>
                       ) : (
                         <div className="whitespace-pre-wrap">{message.content}</div>
