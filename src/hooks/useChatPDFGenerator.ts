@@ -28,8 +28,8 @@ export const useChatPDFGenerator = () => {
       const contentWidth = pageWidth - (margin * 2);
       let currentY = margin;
 
-      // Cabeçalho com logos GTP (similar ao relatório de vistoria)
-      pdf.setFillColor(128, 90, 213); // Cor roxa da marca
+      // Cabeçalho com logos GTP (cor corrigida para #222075)
+      pdf.setFillColor(34, 32, 117); // #222075 convertido para RGB
       pdf.rect(0, 0, pageWidth, 40, 'F');
       
       pdf.setTextColor(255, 255, 255);
@@ -75,7 +75,7 @@ export const useChatPDFGenerator = () => {
       currentY += 10;
 
       // Resumo Geral com destaque
-      pdf.setFillColor(128, 90, 213);
+      pdf.setFillColor(34, 32, 117); // Mesma cor do cabeçalho
       pdf.rect(margin, currentY, contentWidth, 8, 'F');
       
       pdf.setTextColor(255, 255, 255);
@@ -85,11 +85,11 @@ export const useChatPDFGenerator = () => {
       currentY += 15;
 
       // Caixa destacada para total de vistorias
-      pdf.setDrawColor(128, 90, 213);
+      pdf.setDrawColor(34, 32, 117); // Mesma cor do cabeçalho
       pdf.setLineWidth(1);
       pdf.rect(margin, currentY, contentWidth, 20);
       
-      pdf.setTextColor(128, 90, 213);
+      pdf.setTextColor(34, 32, 117); // Mesma cor do cabeçalho
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
       pdf.text(analytics.totalVistorias.toString(), pageWidth / 2, currentY + 10, { align: 'center' });
@@ -340,8 +340,8 @@ export const useChatPDFGenerator = () => {
       const contentWidth = pageWidth - (margin * 2);
       let currentY = margin;
 
-      // Cabeçalho com logos GTP (similar ao relatório de vistoria)
-      pdf.setFillColor(128, 90, 213); // Cor roxa da marca
+      // Cabeçalho com logos GTP (cor corrigida para #222075)
+      pdf.setFillColor(34, 32, 117); // #222075 convertido para RGB
       pdf.rect(0, 0, pageWidth, 40, 'F');
       
       pdf.setTextColor(255, 255, 255);
@@ -379,7 +379,7 @@ export const useChatPDFGenerator = () => {
       currentY += 10;
 
       // Título do conteúdo
-      pdf.setFillColor(128, 90, 213);
+      pdf.setFillColor(34, 32, 117); // Mesma cor do cabeçalho
       pdf.rect(margin, currentY, contentWidth, 8, 'F');
       
       pdf.setTextColor(255, 255, 255);
