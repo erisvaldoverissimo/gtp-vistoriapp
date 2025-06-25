@@ -1,4 +1,3 @@
-
 import { useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
@@ -28,9 +27,22 @@ export const useChatPDFGenerator = () => {
       const contentWidth = pageWidth - (margin * 2);
       let currentY = margin;
 
-      // Cabeçalho com logos GTP (cor corrigida para #222075)
+      // Cabeçalho com fundo GTP
       pdf.setFillColor(34, 32, 117); // #222075 convertido para RGB
       pdf.rect(0, 0, pageWidth, 40, 'F');
+      
+      // Adicionar logos GTP
+      try {
+        // Logo esquerda
+        const logoLeft = '/lovable-uploads/9e07dcd0-b996-4996-9028-7daeb90e3140.png';
+        pdf.addImage(logoLeft, 'PNG', 10, 8, 24, 24);
+        
+        // Logo direita
+        const logoRight = '/lovable-uploads/bfe02df4-f545-4232-ad0a-e69690083a38.png';
+        pdf.addImage(logoRight, 'PNG', pageWidth - 34, 8, 24, 24);
+      } catch (logoError) {
+        console.warn('Erro ao carregar logos:', logoError);
+      }
       
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(18);
@@ -340,9 +352,22 @@ export const useChatPDFGenerator = () => {
       const contentWidth = pageWidth - (margin * 2);
       let currentY = margin;
 
-      // Cabeçalho com logos GTP (cor corrigida para #222075)
+      // Cabeçalho com fundo GTP
       pdf.setFillColor(34, 32, 117); // #222075 convertido para RGB
       pdf.rect(0, 0, pageWidth, 40, 'F');
+      
+      // Adicionar logos GTP
+      try {
+        // Logo esquerda
+        const logoLeft = '/lovable-uploads/9e07dcd0-b996-4996-9028-7daeb90e3140.png';
+        pdf.addImage(logoLeft, 'PNG', 10, 8, 24, 24);
+        
+        // Logo direita
+        const logoRight = '/lovable-uploads/bfe02df4-f545-4232-ad0a-e69690083a38.png';
+        pdf.addImage(logoRight, 'PNG', pageWidth - 34, 8, 24, 24);
+      } catch (logoError) {
+        console.warn('Erro ao carregar logos:', logoError);
+      }
       
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(18);
