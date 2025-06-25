@@ -1,13 +1,13 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Bot, User, MessageCircle, Plus, Trash2, Edit2 } from 'lucide-react';
+import { Send, Bot, User, MessageCircle, Plus, Trash2, Edit2, BarChart3, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useConfiguracoes } from '@/hooks/useConfiguracoes';
 import { useChatConversas } from '@/hooks/useChatConversas';
+import { useVistoriaAnalytics } from '@/hooks/useVistoriaAnalytics';
 import AudioRecorder from './AudioRecorder';
 
 const ChatIAPersistente = () => {
@@ -18,6 +18,7 @@ const ChatIAPersistente = () => {
   const [novoTitulo, setNovoTitulo] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { obterConfiguracao, loading: configLoading } = useConfiguracoes();
+  const { obterEstatisticasGerais, buscarVistoriasPorFiltro, loading: analyticsLoading } = useVistoriaAnalytics();
   
   const {
     conversas,
@@ -33,7 +34,7 @@ const ChatIAPersistente = () => {
 
   // Carregar configurações da IA
   const config = {
-    nomeAgente: obterConfiguracao('agente_nome', 'Theo'),
+    nomeAgente: obterConfiguracao('agente_nome', 'PrediBot'),
     promptPersona: obterConfiguracao('agente_prompt_persona', ''),
     promptObjetivo: obterConfiguracao('agente_prompt_objetivo', ''),
     promptComportamento: obterConfiguracao('agente_prompt_comportamento', ''),
@@ -62,6 +63,120 @@ const ChatIAPersistente = () => {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [mensagens]);
+
+  // Detectar comandos especiais para análise de vistorias
+  const detectarComandoAnalise = (message: string): string | null => {
+    const comandos = [
+      { pattern: /estatísticas|estatisticas|resumo geral|visão geral|overview/i, type: 'estatisticas' },
+      { pattern: /quantos relatórios|quantas vistorias|total de vistorias/i, type: 'estatisticas' },
+      { pattern: /condomínio|condominios|por condomínio/i, type: 'por_condominio' },
+      { pattern: /problemas frequentes|mais comuns|principais problemas/i, type: 'problemas_frequentes' },
+      { pattern: /status|situação das vistorias/i, type: 'por_status' },
+      { pattern: /buscar.*por|filtrar.*por|encontrar vistorias/i, type: 'buscar' }
+    ];
+
+    for (const comando of comandos) {
+      if (comando.pattern.test(message)) {
+        return comando.type;
+      }
+    }
+    return null;
+  };
+
+  // Processar comandos de análise
+  const processarComandoAnalise = async (tipo: string, mensagemOriginal: string): Promise<string> => {
+    try {
+      console.log('Processando comando de análise:', tipo);
+      
+      switch (tipo) {
+        case 'estatisticas':
+          const analytics = await obterEstatisticasGerais();
+          if (!analytics) return 'Não foi possível obter as estatísticas no momento.';
+          
+          return `📊 **Resumo Geral das Vistorias:**
+
+**Total de Vistorias:** ${analytics.totalVistorias}
+
+**Por Condomínio:**
+${Object.entries(analytics.vistoriasPorCondominio)
+  .map(([nome, count]) => `• ${nome}: ${count} vistorias`)
+  .join('\n')}
+
+**Por Status:**
+${Object.entries(analytics.vistoriasPorStatus)
+  .map(([status, count]) => `• ${status}: ${count} vistorias`)
+  .join('\n')}
+
+**Problemas Mais Frequentes:**
+${analytics.problemasFrequentes.slice(0, 5)
+  .map((p, i) => `${i + 1}. ${p.item} (${p.count} ocorrências)`)
+  .join('\n')}
+
+**Condomínios Mais Ativos:**
+${analytics.condominiosAtivos.slice(0, 3)
+  .map((c, i) => `${i + 1}. ${c.nome} (${c.totalVistorias} vistorias)`)
+  .join('\n')}`;
+
+        case 'por_condominio':
+          const analyticsCondominio = await obterEstatisticasGerais();
+          if (!analyticsCondominio) return 'Não foi possível obter os dados por condomínio.';
+          
+          return `🏢 **Relatórios por Condomínio:**\n\n${Object.entries(analyticsCondominio.vistoriasPorCondominio)
+            .sort(([,a], [,b]) => b - a)
+            .map(([nome, count]) => `• **${nome}**: ${count} vistorias`)
+            .join('\n')}`;
+
+        case 'problemas_frequentes':
+          const analyticsProblemas = await obterEstatisticasGerais();
+          if (!analyticsProblemas) return 'Não foi possível obter os dados de problemas.';
+          
+          return `🔧 **Problemas Mais Frequentes:**\n\n${analyticsProblemas.problemasFrequentes
+            .map((p, i) => `${i + 1}. **${p.item}**\n   └ ${p.count} ocorrências`)
+            .join('\n\n')}`;
+
+        case 'por_status':
+          const analyticsStatus = await obterEstatisticasGerais();
+          if (!analyticsStatus) return 'Não foi possível obter os dados por status.';
+          
+          return `📋 **Vistorias por Status:**\n\n${Object.entries(analyticsStatus.vistoriasPorStatus)
+            .map(([status, count]) => `• **${status}**: ${count} vistorias`)
+            .join('\n')}`;
+
+        case 'buscar':
+          // Extrair filtros da mensagem
+          const filtros: any = {};
+          
+          if (/condomínio\s+([^,\n]+)/i.test(mensagemOriginal)) {
+            filtros.condominio = mensagemOriginal.match(/condomínio\s+([^,\n]+)/i)?.[1]?.trim();
+          }
+          
+          if (/status\s+([^,\n]+)/i.test(mensagemOriginal)) {
+            filtros.status = mensagemOriginal.match(/status\s+([^,\n]+)/i)?.[1]?.trim();
+          }
+
+          if (/problema\s+([^,\n]+)/i.test(mensagemOriginal)) {
+            filtros.problema = mensagemOriginal.match(/problema\s+([^,\n]+)/i)?.[1]?.trim();
+          }
+
+          const vistoriasFiltradas = await buscarVistoriasPorFiltro(filtros);
+          
+          if (vistoriasFiltradas.length === 0) {
+            return 'Nenhuma vistoria encontrada com os filtros especificados.';
+          }
+
+          return `🔍 **Encontrei ${vistoriasFiltradas.length} vistoria(s):**\n\n${vistoriasFiltradas
+            .slice(0, 10)
+            .map(v => `• **${v.numero_interno}** - ${v.condominio?.nome || 'N/A'}\n  └ Data: ${new Date(v.data_vistoria).toLocaleDateString('pt-BR')}\n  └ Status: ${v.status}`)
+            .join('\n\n')}${vistoriasFiltradas.length > 10 ? '\n\n*Mostrando apenas os primeiros 10 resultados*' : ''}`;
+
+        default:
+          return 'Comando não reconhecido.';
+      }
+    } catch (error) {
+      console.error('Erro ao processar comando de análise:', error);
+      return 'Ocorreu um erro ao processar sua solicitação de análise.';
+    }
+  };
 
   // Detectar o tipo de API baseado na chave
   const detectApiProvider = (apiKey: string) => {
@@ -231,6 +346,34 @@ const ChatIAPersistente = () => {
       return;
     }
 
+    // Verificar se é um comando especial de análise
+    const tipoComando = detectarComandoAnalise(messageContent);
+    
+    if (tipoComando) {
+      console.log('Comando de análise detectado:', tipoComando);
+      
+      // Salvar mensagem do usuário
+      await adicionarMensagem(messageContent, 'user', 'text');
+      
+      setIsLoading(true);
+      
+      try {
+        const respostaAnalise = await processarComandoAnalise(tipoComando, messageContent);
+        await adicionarMensagem(respostaAnalise, 'assistant', 'text');
+        
+        toast({
+          title: "Análise Concluída",
+          description: "Dados dos relatórios analisados com sucesso.",
+        });
+      } catch (error) {
+        console.error('Erro ao processar análise:', error);
+        await adicionarMensagem('Desculpe, ocorreu um erro ao analisar os dados dos relatórios.', 'assistant', 'text');
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     const apiInfo = detectApiProvider(config.apiKeyOpenAI);
     if (!apiInfo) {
       toast({
@@ -250,8 +393,29 @@ const ChatIAPersistente = () => {
     setIsLoading(true);
 
     try {
-      // Construir o prompt completo do sistema
-      const systemPrompt = `${config.promptPersona}\n\n${config.promptObjetivo}\n\n${config.promptComportamento}`;
+      // Construir o prompt completo do sistema com contexto de vistorias
+      const systemPromptVistorias = `
+Você tem acesso aos seguintes comandos especiais para análise de relatórios de vistoria:
+
+COMANDOS DISPONÍVEIS:
+- "estatísticas" ou "resumo geral": Mostra estatísticas gerais
+- "quantos relatórios" ou "total de vistorias": Mostra quantidade total
+- "por condomínio": Agrupa relatórios por condomínio  
+- "problemas frequentes": Lista os problemas mais comuns
+- "por status": Agrupa relatórios por status
+- "buscar por [filtro]": Busca relatórios específicos
+
+EXEMPLOS DE USO:
+- "Me mostre as estatísticas gerais"
+- "Quantos relatórios temos por condomínio?"
+- "Quais são os problemas mais frequentes?"
+- "Buscar vistorias do condomínio Villa Real"
+- "Filtrar por status Em Andamento"
+
+Quando o usuário mencionar relatórios, vistorias, condomínios, problemas ou estatísticas, sugira estes comandos.
+      `;
+
+      const systemPrompt = `${config.promptPersona}\n\n${config.promptObjetivo}\n\n${config.promptComportamento}\n\n${systemPromptVistorias}`;
 
       console.log('Enviando para:', apiInfo.provider, apiInfo.url);
       console.log('Modelo:', apiInfo.model);
@@ -363,8 +527,45 @@ const ChatIAPersistente = () => {
             Nova
           </Button>
         </div>
+
+        {/* Comandos de análise rápida */}
+        <div className="mb-4 p-3 bg-teal-50 rounded-lg">
+          <h4 className="text-sm font-semibold text-teal-700 mb-2 flex items-center">
+            <BarChart3 size={14} className="mr-1" />
+            Análise Rápida
+          </h4>
+          <div className="space-y-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-xs h-7 text-teal-600"
+              onClick={() => setInputMessage('Me mostre as estatísticas gerais')}
+            >
+              <FileText size={12} className="mr-1" />
+              Estatísticas Gerais
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-xs h-7 text-teal-600"
+              onClick={() => setInputMessage('Quantos relatórios temos por condomínio?')}
+            >
+              <BarChart3 size={12} className="mr-1" />
+              Por Condomínio
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-xs h-7 text-teal-600"
+              onClick={() => setInputMessage('Quais são os problemas mais frequentes?')}
+            >
+              <MessageCircle size={12} className="mr-1" />
+              Problemas Frequentes
+            </Button>
+          </div>
+        </div>
         
-        <ScrollArea className="h-[calc(100%-60px)]">
+        <ScrollArea className="h-[calc(100%-180px)]">
           <div className="space-y-2">
             {conversas.map((conversa) => (
               <div
@@ -447,6 +648,11 @@ const ChatIAPersistente = () => {
                   {currentProvider.provider.toUpperCase()}
                 </span>
               )}
+              {analyticsLoading && (
+                <span className="ml-2 text-xs bg-blue-100 px-2 py-1 rounded text-blue-600">
+                  Analisando...
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
           
@@ -458,6 +664,15 @@ const ChatIAPersistente = () => {
                     <Bot size={48} className="mx-auto mb-4 text-gray-300" />
                     <p>Selecione uma conversa ou crie uma nova</p>
                     <p className="text-sm mt-2">para começar a conversar com {config.nomeAgente}</p>
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg text-left">
+                      <h4 className="font-semibold text-blue-700 mb-2">💡 Comandos Especiais:</h4>
+                      <ul className="text-sm space-y-1 text-blue-600">
+                        <li>• "estatísticas gerais" - Resumo completo</li>
+                        <li>• "por condomínio" - Relatórios agrupados</li>
+                        <li>• "problemas frequentes" - Issues mais comuns</li>
+                        <li>• "buscar por [termo]" - Filtrar relatórios</li>
+                      </ul>
+                    </div>
                     {!config.enableAgente && (
                       <p className="text-sm mt-2 text-red-500">⚠️ Agente IA desabilitado nas configurações</p>
                     )}
@@ -471,7 +686,16 @@ const ChatIAPersistente = () => {
                   <div className="text-center text-gray-500 py-8">
                     <Bot size={48} className="mx-auto mb-4 text-gray-300" />
                     <p>Inicie uma conversa com {config.nomeAgente}</p>
-                    <p className="text-sm mt-2">Digite sua mensagem ou grave um áudio</p>
+                    <p className="text-sm mt-2">Digite sua mensagem, grave um áudio ou use comandos de análise</p>
+                    <div className="mt-4 p-4 bg-teal-50 rounded-lg text-left">
+                      <h4 className="font-semibold text-teal-700 mb-2">📊 Análise de Relatórios:</h4>
+                      <ul className="text-sm space-y-1 text-teal-600">
+                        <li>• "Me mostre as estatísticas gerais"</li>
+                        <li>• "Quantos relatórios por condomínio?"</li>
+                        <li>• "Problemas mais frequentes"</li>
+                        <li>• "Buscar vistorias do Villa Real"</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
                 
@@ -495,7 +719,7 @@ const ChatIAPersistente = () => {
                           : 'bg-gray-100 text-gray-900'
                       }`}
                     >
-                      <p className="whitespace-pre-wrap">{message.content}</p>
+                      <div className="whitespace-pre-wrap">{message.content}</div>
                       <div className={`flex items-center justify-between mt-2 text-xs ${
                         message.role === 'user' ? 'text-teal-100' : 'text-gray-500'
                       }`}>
@@ -534,7 +758,7 @@ const ChatIAPersistente = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder={`Digite sua mensagem para ${config.nomeAgente}...`}
+                placeholder={`Digite sua mensagem para ${config.nomeAgente} ou use comandos de análise...`}
                 disabled={isLoading || !config.enableAgente || !config.apiKeyOpenAI}
                 className="flex-1"
               />
