@@ -7,6 +7,7 @@ import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useAmbientesGrupos } from '@/hooks/useAmbientesGrupos';
 import DadosBasicos from './nova-vistoria/DadosBasicos';
+import DadosMeteorologicos from './nova-vistoria/DadosMeteorologicos';
 import GrupoVistoria from './nova-vistoria/GrupoVistoria';
 import ObservacoesGerais from './nova-vistoria/ObservacoesGerais';
 import { useNovaVistoriaForm } from './nova-vistoria/useNovaVistoriaForm';
@@ -25,12 +26,15 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
   const {
     formData,
     saving,
+    dadosMeteorologicos,
+    loadingWeather,
     handleInputChange,
     handleCondominioChange,
     handleGrupoChange,
     adicionarGrupo,
     removerGrupo,
     handleFotosChange,
+    handleBuscarDadosMeteorologicos,
     handleSave,
     handlePreview
   } = useNovaVistoriaForm(onBack);
@@ -92,6 +96,13 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
         formData={formData}
         onCondominioChange={handleCondominioChange}
         onInputChange={handleInputChange}
+      />
+
+      {/* Dados Meteorológicos */}
+      <DadosMeteorologicos
+        dadosMeteorologicos={dadosMeteorologicos}
+        onBuscarDados={handleBuscarDadosMeteorologicos}
+        loading={loadingWeather}
       />
 
       {/* Grupos de Vistoria */}

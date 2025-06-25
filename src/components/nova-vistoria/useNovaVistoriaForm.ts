@@ -1,9 +1,9 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { VistoriaSupabase, GrupoVistoriaSupabase, useVistoriasSupabase } from '@/hooks/useVistoriasSupabase';
 import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
 import { useFotosSupabase, FotoUpload } from '@/hooks/useFotosSupabase';
+import { useWeatherData, WeatherData } from '@/hooks/useWeatherData';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useNovaVistoriaForm = (onBack?: () => void) => {
@@ -11,6 +11,7 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
   const { condominios } = useCondominiosSupabase();
   const { salvarVistoria, obterProximoNumeroSequencial } = useVistoriasSupabase();
   const { uploadFotos, uploading, uploadProgress } = useFotosSupabase();
+  const { buscarDadosMeteorologicos, loading: loadingWeather } = useWeatherData();
 
   const [formData, setFormData] = useState<VistoriaSupabase>({
     condominio_id: '',
@@ -32,6 +33,7 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
 
   const [saving, setSaving] = useState(false);
   const [grupoFotos, setGrupoFotos] = useState<{ [key: number]: FotoUpload[] }>({});
+  const [dadosMeteorologicos, setDadosMeteorologicos] = useState<WeatherData | null>(null);
 
   const handleInputChange = useCallback((field: keyof VistoriaSupabase, value: string) => {
     if (field === 'observacoes_gerais' && value.length > 150) {
@@ -57,6 +59,25 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
       }));
     }
   }, [condominios, obterProximoNumeroSequencial]);
+
+  const handleBuscarDadosMeteorologicos = useCallback(async () => {
+    if (!formData.data_vistoria) {
+      toast({
+        title: "Data da Vistoria",
+        description: "Por favor, selecione a data da vistoria primeiro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const condominio = condominios.find(c => c.id === formData.condominio_id);
+    const cidade = condominio?.cidade || 'São Paulo';
+    
+    const dados = await buscarDadosMeteorologicos(formData.data_vistoria, cidade);
+    if (dados) {
+      setDadosMeteorologicos(dados);
+    }
+  }, [formData.data_vistoria, formData.condominio_id, condominios, buscarDadosMeteorologicos, toast]);
 
   const handleGrupoChange = useCallback((grupoIndex: number, field: keyof GrupoVistoriaSupabase, value: string) => {
     if (field === 'parecer' && value.length > 200) {
@@ -116,7 +137,6 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     }
   }, [formData.grupos.length]);
 
-  // Função simplificada - VERSÃO CORRIGIDA
   const handleFotosChange = useCallback((grupoIndex: number, fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => {
     console.log(`=== handleFotosChange NOVA VISTORIA (SIMPLIFICADA) ===`);
     console.log(`Grupo: ${grupoIndex}`);
@@ -161,6 +181,7 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     console.log('=== INICIANDO SALVAMENTO NOVA VISTORIA ===');
     console.log('FormData:', formData);
     console.log('GrupoFotos estado atual:', grupoFotos);
+    console.log('Dados meteorológicos:', dadosMeteorologicos);
     
     if (!formData.condominio_id) {
       toast({
@@ -183,7 +204,20 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     setSaving(true);
     try {
       console.log('Salvando vistoria...');
-      const vistoriaSalva = await salvarVistoria(formData);
+      
+      // Incluir dados meteorológicos nas observações se existirem
+      let observacoesComClima = formData.observacoes_gerais || '';
+      if (dadosMeteorologicos) {
+        const climaInfo = `\n\nDados Meteorológicos: ${dadosMeteorologicos.condicao}, ${dadosMeteorologicos.temperatura}°C, Chuva: ${dadosMeteorologicos.precipitacao}mm, Vento: ${dadosMeteorologicos.velocidade_vento}km/h`;
+        observacoesComClima = (observacoesComClima + climaInfo).substring(0, 150);
+      }
+
+      const vistoriaParaSalvar = {
+        ...formData,
+        observacoes_gerais: observacoesComClima
+      };
+
+      const vistoriaSalva = await salvarVistoria(vistoriaParaSalvar);
       
       if (!vistoriaSalva || !vistoriaSalva.id) {
         throw new Error('Erro ao salvar vistoria - ID não retornado');
@@ -253,19 +287,18 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
         if (totalFotosUpload > 0) {
           toast({
             title: "Sucesso Completo",
-            description: `Vistoria ${formData.numero_interno} salva com ${totalFotosUpload} foto(s).`,
+            description: `Vistoria ${formData.numero_interno} salva com ${totalFotosUpload} foto(s) e dados meteorológicos.`,
           });
         } else {
           toast({
             title: "Vistoria Salva",
-            description: `Vistoria ${formData.numero_interno} salva, mas nenhuma foto foi processada.`,
-            variant: "destructive",
+            description: `Vistoria ${formData.numero_interno} salva com dados meteorológicos.`,
           });
         }
       } else {
         toast({
           title: "Vistoria Salva",
-          description: `Vistoria ${formData.numero_interno} salva sem fotos.`,
+          description: `Vistoria ${formData.numero_interno} salva${dadosMeteorologicos ? ' com dados meteorológicos' : ''}.`,
         });
       }
 
@@ -288,6 +321,7 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
         }]
       });
       setGrupoFotos({});
+      setDadosMeteorologicos(null);
 
       if (onBack) {
         onBack();
@@ -302,7 +336,7 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     } finally {
       setSaving(false);
     }
-  }, [formData, grupoFotos, salvarVistoria, uploadFotos, onBack, toast]);
+  }, [formData, grupoFotos, dadosMeteorologicos, salvarVistoria, uploadFotos, onBack, toast]);
 
   const handlePreview = useCallback(() => {
     if (!formData.condominio_id) {
@@ -322,12 +356,15 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     grupoFotos,
     uploading,
     uploadProgress,
+    dadosMeteorologicos,
+    loadingWeather,
     handleInputChange,
     handleCondominioChange,
     handleGrupoChange,
     adicionarGrupo,
     removerGrupo,
     handleFotosChange,
+    handleBuscarDadosMeteorologicos,
     handleSave,
     handlePreview
   };
