@@ -82,6 +82,7 @@ export const useChatConversas = () => {
       }
 
       console.log('Mensagens carregadas:', data?.length || 0);
+      console.log('Dados das mensagens:', data);
       
       // Cast the data to match our Mensagem interface
       const mensagensTyped: Mensagem[] = (data || []).map(msg => ({
@@ -90,6 +91,7 @@ export const useChatConversas = () => {
         type: msg.type as 'text' | 'audio' | 'analytics'
       }));
       
+      console.log('Mensagens tipadas:', mensagensTyped);
       setMensagens(mensagensTyped);
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
@@ -154,6 +156,9 @@ export const useChatConversas = () => {
   const selecionarConversa = async (conversa: Conversa) => {
     console.log('Selecionando conversa:', conversa.id);
     setConversaAtual(conversa);
+    
+    // Força o carregamento das mensagens
+    console.log('Carregando mensagens para conversa selecionada...');
     await carregarMensagens(conversa.id);
   };
 
@@ -323,6 +328,14 @@ export const useChatConversas = () => {
   useEffect(() => {
     carregarConversas();
   }, []);
+
+  // Debug effect para monitorar mudanças
+  useEffect(() => {
+    console.log('=== Estado do Chat ===');
+    console.log('Conversa atual:', conversaAtual?.id || 'nenhuma');
+    console.log('Total mensagens:', mensagens.length);
+    console.log('Mensagens:', mensagens.map(m => ({ id: m.id, role: m.role, content: m.content.substring(0, 50) + '...' })));
+  }, [conversaAtual, mensagens]);
 
   return {
     conversas,
