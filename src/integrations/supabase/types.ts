@@ -108,6 +108,33 @@ export type Database = {
         }
         Relationships: []
       }
+      conversas_chat: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          id: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          id?: string
+          titulo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          id?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fotos_vistoria: {
         Row: {
           arquivo_nome: string
@@ -192,6 +219,41 @@ export type Database = {
             columns: ["vistoria_id"]
             isOneToOne: false
             referencedRelation: "vistorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mensagens_chat: {
+        Row: {
+          content: string
+          conversa_id: string
+          created_at: string
+          id: string
+          role: string
+          type: string | null
+        }
+        Insert: {
+          content: string
+          conversa_id: string
+          created_at?: string
+          id?: string
+          role: string
+          type?: string | null
+        }
+        Update: {
+          content?: string
+          conversa_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensagens_chat_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "conversas_chat"
             referencedColumns: ["id"]
           },
         ]
