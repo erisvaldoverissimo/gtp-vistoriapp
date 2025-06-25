@@ -194,7 +194,7 @@ const AnalyticsDisplay: React.FC<AnalyticsDisplayProps> = ({ analytics, titulo =
               ))}
             </div>
           </CardContent>
-        </div>
+        </Card>
       )}
     </div>
   );
