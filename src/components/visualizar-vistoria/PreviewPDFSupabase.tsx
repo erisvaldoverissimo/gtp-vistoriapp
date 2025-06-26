@@ -96,21 +96,10 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     return now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const formatMarkdownText = (text: string, maxLength: number = 300) => {
+  const truncateText = (text: string, maxLength: number = 200) => {
     if (!text) return '';
-    
-    // Processar markdown básico
-    let formattedText = text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold**
-      .replace(/\*(.*?)\*/g, '<em>$1</em>') // *italic*
-      .replace(/\n/g, '<br>'); // quebras de linha
-    
-    // Truncar se necessário
-    if (formattedText.length > maxLength) {
-      formattedText = formattedText.substring(0, maxLength) + '...';
-    }
-    
-    return formattedText;
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   };
 
   const handleSendEmail = () => {
@@ -130,8 +119,8 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     vistoria.grupos.forEach(grupo => {
       const fotosCount = (grupo.fotos || []).length;
       if (fotosCount > 0) {
-        // Primeira página + páginas adicionais com 4 fotos cada
-        totalPages += 1 + Math.ceil(Math.max(0, fotosCount - 0) / 4);
+        // Primeira página + páginas adicionais com 2 fotos cada
+        totalPages += 1 + Math.ceil(Math.max(0, fotosCount - 2) / 2);
       } else {
         totalPages += 1;
       }
@@ -268,24 +257,22 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     </div>
   );
 
-  const renderFotoCard = (foto: any, fotoIndex: number, grupoIndex: number, isCompact: boolean = false) => {
+  const renderFotoCard = (foto: any, fotoIndex: number, grupoIndex: number) => {
     const numeroFoto = fotoIndex + 1;
     const descricaoFoto = foto.descricao || 'Evidência fotográfica da vistoria';
-    const maxDescLength = isCompact ? 150 : 200;
     
     console.log(`Renderizando foto ${numeroFoto} do grupo ${grupoIndex + 1}:`, {
       url: foto.arquivo_url,
       nome: foto.arquivo_nome,
-      descricao: descricaoFoto,
-      isCompact
+      descricao: descricaoFoto
     });
     
     return (
-      <div className={`border rounded-lg p-2 ${isCompact ? 'flex-1' : 'flex-1'}`}>
+      <div className="border rounded-lg p-3 flex-1">
         <img
           src={foto.arquivo_url}
           alt={`Foto ${numeroFoto} - Sistema ${grupoIndex + 1}`}
-          className={`w-full ${isCompact ? 'aspect-[4/3]' : 'aspect-square'} object-cover rounded mb-2`}
+          className="w-full aspect-square object-cover rounded mb-3"
           crossOrigin="anonymous"
           loading="eager"
           style={{
@@ -308,15 +295,12 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           }}
         />
         <div>
-          <p className={`${isCompact ? 'text-xs' : 'text-xs'} font-medium mb-1`}>
+          <p className="text-sm font-medium mb-2">
             Foto {String(numeroFoto).padStart(2, '0')} - Sistema {grupoIndex + 1}
           </p>
-          <div 
-            className={`${isCompact ? 'text-xs' : 'text-xs'} text-gray-700 leading-relaxed break-words`}
-            dangerouslySetInnerHTML={{ 
-              __html: formatMarkdownText(descricaoFoto, maxDescLength) 
-            }}
-          />
+          <p className="text-xs text-gray-700 leading-relaxed break-words">
+            {truncateText(descricaoFoto, 150)}
+          </p>
         </div>
       </div>
     );
@@ -376,7 +360,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
 
               const pages = [];
               
-              // Primeira página com cabeçalho, tabela e fotos (se houver)
+              // Primeira página com cabeçalho, tabela e até 2 fotos
               currentPageNumber++;
               pages.push(
                 <div key={`${grupo.id}-primeira`} className="page flex flex-col gap-3 min-h-screen">
@@ -388,12 +372,12 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                     Evidências Fotográficas - Sistema {grupoIndex + 1}
                   </h4>
                   
-                  {/* Layout 2x2 para 4 fotos na primeira página */}
+                  {/* Layout com 2 fotos lado a lado na primeira página */}
                   {fotos.length > 0 && (
-                    <div className="grid grid-cols-2 gap-3 mb-4 flex-1">
-                      {fotos.slice(0, 4).map((foto, idx) => (
-                        <div key={`primeira-${idx}`}>
-                          {renderFotoCard(foto, idx, grupoIndex, true)}
+                    <div className="flex gap-4 mb-4 flex-1">
+                      {fotos.slice(0, 2).map((foto, idx) => (
+                        <div key={`primeira-${idx}`} className="flex-1">
+                          {renderFotoCard(foto, idx, grupoIndex)}
                         </div>
                       ))}
                     </div>
@@ -403,11 +387,11 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                 </div>
               );
 
-              // Páginas adicionais com 4 fotos cada (se necessário)
-              const fotosRestantes = fotos.slice(4);
-              for (let i = 0; i < fotosRestantes.length; i += 4) {
+              // Páginas adicionais com 2 fotos cada (se necessário)
+              const fotosRestantes = fotos.slice(2);
+              for (let i = 0; i < fotosRestantes.length; i += 2) {
                 currentPageNumber++;
-                const fotosPagina = fotosRestantes.slice(i, i + 4);
+                const fotosPagina = fotosRestantes.slice(i, i + 2);
                 
                 pages.push(
                   <div key={`${grupo.id}-adicional-${i}`} className="page flex flex-col gap-3 min-h-screen">
@@ -417,10 +401,10 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                       Evidências Fotográficas - Sistema {grupoIndex + 1} (Continuação)
                     </h4>
                     
-                    <div className="grid grid-cols-2 gap-3 mb-4 flex-1">
+                    <div className="flex gap-4 mb-4 flex-1">
                       {fotosPagina.map((foto, idx) => (
-                        <div key={`adicional-${i + idx}`}>
-                          {renderFotoCard(foto, i + idx + 4, grupoIndex, true)}
+                        <div key={`adicional-${i + idx}`} className="flex-1">
+                          {renderFotoCard(foto, i + idx + 2, grupoIndex)}
                         </div>
                       ))}
                     </div>
