@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -110,9 +111,20 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
   };
 
   const calculateTotalPages = () => {
+    // CORRIGIDO: Calcular páginas baseado em grupos existentes, não apenas em fotos
+    if (!vistoria.grupos || vistoria.grupos.length === 0) {
+      return 1; // Pelo menos uma página com informações básicas
+    }
+    
     let totalPages = 0;
     vistoria.grupos.forEach(grupo => {
-      totalPages += Math.ceil((grupo.fotos || []).length / 2);
+      const fotosCount = (grupo.fotos || []).length;
+      if (fotosCount > 0) {
+        totalPages += Math.ceil(fotosCount / 2);
+      } else {
+        // Mesmo sem fotos, incluir uma página para o grupo
+        totalPages += 1;
+      }
     });
     return Math.max(totalPages, 1);
   };
@@ -248,7 +260,6 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
 
   const renderFotoCard = (foto: any, fotoIndex: number, grupoIndex: number) => {
     const numeroFoto = fotoIndex + 1;
-    // CORRIGIDO: Garantir que a descrição seja exibida corretamente
     const descricaoFoto = foto.descricao || 'Evidência fotográfica da vistoria';
     
     console.log(`Renderizando foto ${numeroFoto} do grupo ${grupoIndex + 1}:`, {
@@ -326,55 +337,81 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           {(() => {
             let currentPageNumber = 0;
             
-            return vistoria.grupos.map((grupo, grupoIndex) => (
-              <div key={grupo.id}>
-                {(grupo.fotos || []).map((foto, idx) => {
-                  const isFirstOfPair = idx % 2 === 0;
-                  const isLastOfPair = idx % 2 === 1 || idx === (grupo.fotos || []).length - 1;
-
-                  if (isFirstOfPair) {
-                    currentPageNumber++;
-                  }
-
-                  return (
-                    <div key={`${grupo.id}-${idx}`}>
-                      {isFirstOfPair && (
-                        <div className="page flex flex-col gap-3 min-h-screen">
-                          {/* Cabeçalho + tabela só no idx === 0 */}
-                          {idx === 0 && renderCabecalho()}
-                          {idx === 0 && renderInformacoesVistoria()}
-                          {idx === 0 && renderTabelaGrupo(grupo, grupoIndex)}
-                          
-                          {/* Título das evidências fotográficas */}
-                          {idx === 0 ? (
-                            <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                              Evidências Fotográficas - Sistema {grupoIndex + 1}
-                            </h4>
-                          ) : (
-                            <div>
-                              {renderCabecalho()}
-                              <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                                Evidências Fotográficas - Sistema {grupoIndex + 1} (Continuação)
-                              </h4>
-                            </div>
-                          )}
-                          
-                          <div className="flex gap-4 mb-4 flex-1">
-                            {/* Renderizar a foto */}
-                            {renderFotoCard(foto, idx, grupoIndex)}
-                            
-                            {/* Renderizar a segunda foto se existir */}
-                            {!isLastOfPair && (grupo.fotos || [])[idx + 1] && renderFotoCard((grupo.fotos || [])[idx + 1], idx + 1, grupoIndex)}
-                          </div>
-                          
-                          {renderRodape(currentPageNumber)}
-                        </div>
-                      )}
+            return vistoria.grupos.map((grupo, grupoIndex) => {
+              const fotos = grupo.fotos || [];
+              
+              // Se não há fotos, ainda assim mostrar o grupo
+              if (fotos.length === 0) {
+                currentPageNumber++;
+                return (
+                  <div key={grupo.id} className="page flex flex-col gap-3 min-h-screen">
+                    {renderCabecalho()}
+                    {renderInformacoesVistoria()}
+                    {renderTabelaGrupo(grupo, grupoIndex)}
+                    
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <p className="text-sm">Nenhuma evidência fotográfica disponível para este sistema</p>
+                        <p className="text-xs mt-2">Sistema: {grupo.ambiente} - {grupo.grupo}</p>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            ));
+                    
+                    {renderRodape(currentPageNumber)}
+                  </div>
+                );
+              }
+
+              // Se há fotos, renderizar normalmente
+              return (
+                <div key={grupo.id}>
+                  {fotos.map((foto, idx) => {
+                    const isFirstOfPair = idx % 2 === 0;
+                    const isLastOfPair = idx % 2 === 1 || idx === fotos.length - 1;
+
+                    if (isFirstOfPair) {
+                      currentPageNumber++;
+                    }
+
+                    return (
+                      <div key={`${grupo.id}-${idx}`}>
+                        {isFirstOfPair && (
+                          <div className="page flex flex-col gap-3 min-h-screen">
+                            {/* Cabeçalho + tabela só no idx === 0 */}
+                            {idx === 0 && renderCabecalho()}
+                            {idx === 0 && renderInformacoesVistoria()}
+                            {idx === 0 && renderTabelaGrupo(grupo, grupoIndex)}
+                            
+                            {/* Título das evidências fotográficas */}
+                            {idx === 0 ? (
+                              <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                                Evidências Fotográficas - Sistema {grupoIndex + 1}
+                              </h4>
+                            ) : (
+                              <div>
+                                {renderCabecalho()}
+                                <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                                  Evidências Fotográficas - Sistema {grupoIndex + 1} (Continuação)
+                                </h4>
+                              </div>
+                            )}
+                            
+                            <div className="flex gap-4 mb-4 flex-1">
+                              {/* Renderizar a foto */}
+                              {renderFotoCard(foto, idx, grupoIndex)}
+                              
+                              {/* Renderizar a segunda foto se existir */}
+                              {!isLastOfPair && fotos[idx + 1] && renderFotoCard(fotos[idx + 1], idx + 1, grupoIndex)}
+                            </div>
+                            
+                            {renderRodape(currentPageNumber)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            });
           })()}
         </div>
       </Card>

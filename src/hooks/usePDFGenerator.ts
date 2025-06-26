@@ -45,31 +45,38 @@ export const usePDFGenerator = () => {
       console.log('⏳ Aguardando estabilização do DOM...');
       await new Promise(resolve => setTimeout(resolve, 3000));
 
-      // Verificar se há grupos com fotos
-      const gruposComFotos = vistoria.grupos?.filter(grupo => grupo.fotos && grupo.fotos.length > 0) || [];
-      console.log(`📸 Grupos com fotos: ${gruposComFotos.length}`);
-      
-      if (gruposComFotos.length === 0) {
-        throw new Error('Nenhum grupo com fotos encontrado para gerar o PDF');
+      // Verificar se há grupos - REMOVIDA A VALIDAÇÃO DE FOTOS OBRIGATÓRIAS
+      if (!vistoria.grupos || vistoria.grupos.length === 0) {
+        throw new Error('Nenhum grupo de vistoria encontrado');
       }
 
-      // Aguardar carregamento das imagens
-      toast({
-        title: "Gerando PDF",
-        description: "Aguardando carregamento das imagens...",
-      });
+      console.log(`📋 Grupos encontrados: ${vistoria.grupos.length}`);
+      
+      // Contar grupos com fotos para informação
+      const gruposComFotos = vistoria.grupos?.filter(grupo => grupo.fotos && grupo.fotos.length > 0) || [];
+      console.log(`📸 Grupos com fotos: ${gruposComFotos.length}`);
+      console.log(`📝 Grupos sem fotos: ${vistoria.grupos.length - gruposComFotos.length}`);
 
-      console.log('🖼️ Iniciando pré-carregamento de imagens...');
-      await preloadImages(reportElement);
-      console.log('✅ Pré-carregamento concluído');
+      // Se há fotos, aguardar carregamento das imagens
+      if (gruposComFotos.length > 0) {
+        toast({
+          title: "Gerando PDF",
+          description: "Aguardando carregamento das imagens...",
+        });
 
-      // Aguardar mais tempo após o carregamento das imagens
-      await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('🖼️ Iniciando pré-carregamento de imagens...');
+        await preloadImages(reportElement);
+        console.log('✅ Pré-carregamento concluído');
 
-      // Busca simplificada e robusta por páginas
+        // Aguardar mais tempo após o carregamento das imagens
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } else {
+        console.log('ℹ️ Nenhuma imagem para pré-carregar');
+      }
+
+      // Busca por páginas - busca mais flexível
       console.log('🔍 Iniciando busca por páginas...');
       
-      // Primeiro, tentar encontrar elementos com classe "page"
       let pages = Array.from(reportElement.querySelectorAll(".page")) as HTMLElement[];
       console.log(`📄 Páginas encontradas com classe .page: ${pages.length}`);
 
@@ -86,8 +93,8 @@ export const usePDFGenerator = () => {
           const allDivs = Array.from(reportElement.querySelectorAll('div')) as HTMLElement[];
           pages = allDivs.filter(div => {
             const rect = div.getBoundingClientRect();
-            const hasHeight = div.offsetHeight > 300 || div.scrollHeight > 300;
-            const hasContent = (div.textContent?.trim().length || 0) > 20;
+            const hasHeight = div.offsetHeight > 200 || div.scrollHeight > 200;
+            const hasContent = (div.textContent?.trim().length || 0) > 10;
             return hasHeight && hasContent && rect.width > 0;
           });
           console.log(`📄 Páginas encontradas por altura/conteúdo: ${pages.length}`);
