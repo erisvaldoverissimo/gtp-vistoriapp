@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -97,9 +96,21 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     return now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const truncateText = (text: string, maxLength: number) => {
-    if (!text || text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+  const formatMarkdownText = (text: string, maxLength: number = 300) => {
+    if (!text) return '';
+    
+    // Processar markdown básico
+    let formattedText = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold**
+      .replace(/\*(.*?)\*/g, '<em>$1</em>') // *italic*
+      .replace(/\n/g, '<br>'); // quebras de linha
+    
+    // Truncar se necessário
+    if (formattedText.length > maxLength) {
+      formattedText = formattedText.substring(0, maxLength) + '...';
+    }
+    
+    return formattedText;
   };
 
   const handleSendEmail = () => {
@@ -111,18 +122,17 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
   };
 
   const calculateTotalPages = () => {
-    // CORRIGIDO: Calcular páginas baseado em grupos existentes, não apenas em fotos
     if (!vistoria.grupos || vistoria.grupos.length === 0) {
-      return 1; // Pelo menos uma página com informações básicas
+      return 1;
     }
     
     let totalPages = 0;
     vistoria.grupos.forEach(grupo => {
       const fotosCount = (grupo.fotos || []).length;
       if (fotosCount > 0) {
-        totalPages += Math.ceil(fotosCount / 2);
+        // Primeira página + páginas adicionais com 4 fotos cada
+        totalPages += 1 + Math.ceil(Math.max(0, fotosCount - 0) / 4);
       } else {
-        // Mesmo sem fotos, incluir uma página para o grupo
         totalPages += 1;
       }
     });
@@ -258,23 +268,24 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     </div>
   );
 
-  const renderFotoCard = (foto: any, fotoIndex: number, grupoIndex: number) => {
+  const renderFotoCard = (foto: any, fotoIndex: number, grupoIndex: number, isCompact: boolean = false) => {
     const numeroFoto = fotoIndex + 1;
     const descricaoFoto = foto.descricao || 'Evidência fotográfica da vistoria';
+    const maxDescLength = isCompact ? 150 : 200;
     
     console.log(`Renderizando foto ${numeroFoto} do grupo ${grupoIndex + 1}:`, {
       url: foto.arquivo_url,
       nome: foto.arquivo_nome,
       descricao: descricaoFoto,
-      descricaoOriginal: foto.descricao
+      isCompact
     });
     
     return (
-      <div className="border rounded-lg p-2 flex-1">
+      <div className={`border rounded-lg p-2 ${isCompact ? 'flex-1' : 'flex-1'}`}>
         <img
           src={foto.arquivo_url}
           alt={`Foto ${numeroFoto} - Sistema ${grupoIndex + 1}`}
-          className="w-full aspect-square object-cover rounded mb-2"
+          className={`w-full ${isCompact ? 'aspect-[4/3]' : 'aspect-square'} object-cover rounded mb-2`}
           crossOrigin="anonymous"
           loading="eager"
           style={{
@@ -297,12 +308,15 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           }}
         />
         <div>
-          <p className="text-xs font-medium mb-1">
+          <p className={`${isCompact ? 'text-xs' : 'text-xs'} font-medium mb-1`}>
             Foto {String(numeroFoto).padStart(2, '0')} - Sistema {grupoIndex + 1}
           </p>
-          <p className="text-xs text-gray-700 leading-relaxed break-words">
-            {truncateText(descricaoFoto, 200)}
-          </p>
+          <div 
+            className={`${isCompact ? 'text-xs' : 'text-xs'} text-gray-700 leading-relaxed break-words`}
+            dangerouslySetInnerHTML={{ 
+              __html: formatMarkdownText(descricaoFoto, maxDescLength) 
+            }}
+          />
         </div>
       </div>
     );
@@ -340,7 +354,6 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
             return vistoria.grupos.map((grupo, grupoIndex) => {
               const fotos = grupo.fotos || [];
               
-              // Se não há fotos, ainda assim mostrar o grupo
               if (fotos.length === 0) {
                 currentPageNumber++;
                 return (
@@ -361,56 +374,63 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                 );
               }
 
-              // Se há fotos, renderizar normalmente
-              return (
-                <div key={grupo.id}>
-                  {fotos.map((foto, idx) => {
-                    const isFirstOfPair = idx % 2 === 0;
-                    const isLastOfPair = idx % 2 === 1 || idx === fotos.length - 1;
-
-                    if (isFirstOfPair) {
-                      currentPageNumber++;
-                    }
-
-                    return (
-                      <div key={`${grupo.id}-${idx}`}>
-                        {isFirstOfPair && (
-                          <div className="page flex flex-col gap-3 min-h-screen">
-                            {/* Cabeçalho + tabela só no idx === 0 */}
-                            {idx === 0 && renderCabecalho()}
-                            {idx === 0 && renderInformacoesVistoria()}
-                            {idx === 0 && renderTabelaGrupo(grupo, grupoIndex)}
-                            
-                            {/* Título das evidências fotográficas */}
-                            {idx === 0 ? (
-                              <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                                Evidências Fotográficas - Sistema {grupoIndex + 1}
-                              </h4>
-                            ) : (
-                              <div>
-                                {renderCabecalho()}
-                                <h4 className="text-sm font-semibold mb-3 text-brand-purple">
-                                  Evidências Fotográficas - Sistema {grupoIndex + 1} (Continuação)
-                                </h4>
-                              </div>
-                            )}
-                            
-                            <div className="flex gap-4 mb-4 flex-1">
-                              {/* Renderizar a foto */}
-                              {renderFotoCard(foto, idx, grupoIndex)}
-                              
-                              {/* Renderizar a segunda foto se existir */}
-                              {!isLastOfPair && fotos[idx + 1] && renderFotoCard(fotos[idx + 1], idx + 1, grupoIndex)}
-                            </div>
-                            
-                            {renderRodape(currentPageNumber)}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+              const pages = [];
+              
+              // Primeira página com cabeçalho, tabela e fotos (se houver)
+              currentPageNumber++;
+              pages.push(
+                <div key={`${grupo.id}-primeira`} className="page flex flex-col gap-3 min-h-screen">
+                  {renderCabecalho()}
+                  {renderInformacoesVistoria()}
+                  {renderTabelaGrupo(grupo, grupoIndex)}
+                  
+                  <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                    Evidências Fotográficas - Sistema {grupoIndex + 1}
+                  </h4>
+                  
+                  {/* Layout 2x2 para 4 fotos na primeira página */}
+                  {fotos.length > 0 && (
+                    <div className="grid grid-cols-2 gap-3 mb-4 flex-1">
+                      {fotos.slice(0, 4).map((foto, idx) => (
+                        <div key={`primeira-${idx}`}>
+                          {renderFotoCard(foto, idx, grupoIndex, true)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {renderRodape(currentPageNumber)}
                 </div>
               );
+
+              // Páginas adicionais com 4 fotos cada (se necessário)
+              const fotosRestantes = fotos.slice(4);
+              for (let i = 0; i < fotosRestantes.length; i += 4) {
+                currentPageNumber++;
+                const fotosPagina = fotosRestantes.slice(i, i + 4);
+                
+                pages.push(
+                  <div key={`${grupo.id}-adicional-${i}`} className="page flex flex-col gap-3 min-h-screen">
+                    {renderCabecalho()}
+                    
+                    <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                      Evidências Fotográficas - Sistema {grupoIndex + 1} (Continuação)
+                    </h4>
+                    
+                    <div className="grid grid-cols-2 gap-3 mb-4 flex-1">
+                      {fotosPagina.map((foto, idx) => (
+                        <div key={`adicional-${i + idx}`}>
+                          {renderFotoCard(foto, i + idx + 4, grupoIndex, true)}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {renderRodape(currentPageNumber)}
+                  </div>
+                );
+              }
+
+              return pages;
             });
           })()}
         </div>
