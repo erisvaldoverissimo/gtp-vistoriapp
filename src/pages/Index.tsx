@@ -37,12 +37,7 @@ const Index = () => {
       case 'usuarios':
         return <GerenciarUsuarios />;
       case 'condominios':
-        return (
-          <GerenciarCondominios 
-            condominios={condominios}
-            onCondominiosChange={() => {}}
-          />
-        );
+        return <GerenciarCondominios />;
       case 'ambientes-grupos':
         // Converter CondominioSupabase[] para o formato esperado
         const condominiosFormatted = condominios.map(cond => ({
