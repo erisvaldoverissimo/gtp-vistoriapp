@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -61,10 +60,10 @@ export const useCondominiosSupabase = () => {
     try {
       console.log('Adicionando condomínio:', dadosCondominio);
       
-      // Garantir que os campos obrigatórios estão presentes
+      // Criar objeto com apenas os campos necessários
       const novoCondominio = {
-        nome: dadosCondominio.nome.trim(),
-        endereco: dadosCondominio.endereco.trim(),
+        nome: dadosCondominio.nome?.trim() || '',
+        endereco: dadosCondominio.endereco?.trim() || '',
         cidade: dadosCondominio.cidade?.trim() || null,
         estado: dadosCondominio.estado?.trim() || 'SP',
         cep: dadosCondominio.cep?.trim() || null,
@@ -75,6 +74,8 @@ export const useCondominiosSupabase = () => {
         ativo: true
       };
 
+      console.log('Dados preparados para inserção:', novoCondominio);
+
       const { data, error } = await supabase
         .from('condominios')
         .insert([novoCondominio])
@@ -82,7 +83,7 @@ export const useCondominiosSupabase = () => {
         .single();
 
       if (error) {
-        console.error('Erro ao adicionar condomínio:', error);
+        console.error('Erro detalhado ao adicionar condomínio:', error);
         toast({
           title: "Erro",
           description: `Erro ao adicionar condomínio: ${error.message}`,
@@ -101,7 +102,7 @@ export const useCondominiosSupabase = () => {
 
       return data;
     } catch (error) {
-      console.error('Erro ao adicionar condomínio:', error);
+      console.error('Erro final ao adicionar condomínio:', error);
       throw error;
     }
   };

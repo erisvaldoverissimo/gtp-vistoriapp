@@ -6,12 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Edit, Trash2, Building, Save, X } from 'lucide-react';
 import { useCondominiosSupabase, CondominioSupabase } from '@/hooks/useCondominiosSupabase';
 
-interface GerenciarCondominiosProps {
-  condominios: CondominioSupabase[];
-  onCondominiosChange: (condominios: CondominioSupabase[]) => void;
-}
-
-const GerenciarCondominios = ({ condominios: propCondominios, onCondominiosChange }: GerenciarCondominiosProps) => {
+const GerenciarCondominios = () => {
   const { condominios, loading, adicionarCondominio, atualizarCondominio, removerCondominio } = useCondominiosSupabase();
   const [editando, setEditando] = useState<string | null>(null);
   const [dadosEdicao, setDadosEdicao] = useState<Partial<CondominioSupabase>>({});
