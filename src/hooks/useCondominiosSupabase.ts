@@ -28,10 +28,10 @@ export const useCondominiosSupabase = () => {
     try {
       console.log('Carregando condomínios do Supabase...');
       
-      // Com RLS, só vemos condomínios ativos
       const { data, error } = await supabase
         .from('condominios')
         .select('*')
+        .eq('ativo', true)
         .order('nome');
 
       if (error) {
@@ -61,18 +61,37 @@ export const useCondominiosSupabase = () => {
     try {
       console.log('Adicionando condomínio:', dadosCondominio);
       
+      // Garantir que os campos obrigatórios estão presentes
+      const novoCondominio = {
+        nome: dadosCondominio.nome.trim(),
+        endereco: dadosCondominio.endereco.trim(),
+        cidade: dadosCondominio.cidade?.trim() || null,
+        estado: dadosCondominio.estado?.trim() || 'SP',
+        cep: dadosCondominio.cep?.trim() || null,
+        telefone: dadosCondominio.telefone?.trim() || null,
+        email: dadosCondominio.email?.trim() || null,
+        responsavel: dadosCondominio.responsavel?.trim() || null,
+        telefone_responsavel: dadosCondominio.telefone_responsavel?.trim() || null,
+        ativo: true
+      };
+
       const { data, error } = await supabase
         .from('condominios')
-        .insert([dadosCondominio])
+        .insert([novoCondominio])
         .select()
         .single();
 
       if (error) {
         console.error('Erro ao adicionar condomínio:', error);
+        toast({
+          title: "Erro",
+          description: `Erro ao adicionar condomínio: ${error.message}`,
+          variant: "destructive",
+        });
         throw error;
       }
 
-      console.log('Condomínio adicionado:', data);
+      console.log('Condomínio adicionado com sucesso:', data);
       setCondominios(prev => [...prev, data]);
       
       toast({
@@ -83,11 +102,6 @@ export const useCondominiosSupabase = () => {
       return data;
     } catch (error) {
       console.error('Erro ao adicionar condomínio:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar o condomínio.",
-        variant: "destructive",
-      });
       throw error;
     }
   };

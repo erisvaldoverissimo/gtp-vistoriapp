@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,9 +12,10 @@ interface GerenciarCondominiosProps {
 }
 
 const GerenciarCondominios = ({ condominios: propCondominios, onCondominiosChange }: GerenciarCondominiosProps) => {
-  const { condominios, adicionarCondominio, atualizarCondominio, removerCondominio } = useCondominiosSupabase();
+  const { condominios, loading, adicionarCondominio, atualizarCondominio, removerCondominio } = useCondominiosSupabase();
   const [editando, setEditando] = useState<string | null>(null);
   const [dadosEdicao, setDadosEdicao] = useState<Partial<CondominioSupabase>>({});
+  const [adicionando, setAdicionando] = useState(false);
   const [novoCondominio, setNovoCondominio] = useState({
     nome: '',
     endereco: '',
@@ -29,12 +29,18 @@ const GerenciarCondominios = ({ condominios: propCondominios, onCondominiosChang
   });
 
   const handleAdicionarCondominio = async () => {
-    if (!novoCondominio.nome.trim()) {
+    if (!novoCondominio.nome.trim() || !novoCondominio.endereco.trim()) {
+      console.log('Campos obrigatórios não preenchidos');
       return;
     }
 
     try {
+      setAdicionando(true);
+      console.log('Tentando adicionar condomínio:', novoCondominio);
+      
       await adicionarCondominio(novoCondominio);
+      
+      // Limpar formulário após sucesso
       setNovoCondominio({ 
         nome: '', 
         endereco: '', 
@@ -47,12 +53,18 @@ const GerenciarCondominios = ({ condominios: propCondominios, onCondominiosChang
         telefone_responsavel: ''
       });
     } catch (error) {
-      // Erro já tratado no hook
+      console.error('Erro no componente ao adicionar condomínio:', error);
+    } finally {
+      setAdicionando(false);
     }
   };
 
   const handleRemoverCondominio = async (id: string) => {
-    await removerCondominio(id);
+    try {
+      await removerCondominio(id);
+    } catch (error) {
+      console.error('Erro ao remover condomínio:', error);
+    }
   };
 
   const iniciarEdicao = (condominio: CondominioSupabase) => {
@@ -89,6 +101,14 @@ const GerenciarCondominios = ({ condominios: propCondominios, onCondominiosChang
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-lg">Carregando condomínios...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -112,16 +132,18 @@ const GerenciarCondominios = ({ condominios: propCondominios, onCondominiosChang
                 value={novoCondominio.nome}
                 onChange={(e) => setNovoCondominio(prev => ({ ...prev, nome: e.target.value }))}
                 placeholder="Ex: Condomínio Edifício Artur Ramos"
+                required
               />
             </div>
             
             <div>
-              <Label htmlFor="endereco">Endereço</Label>
+              <Label htmlFor="endereco">Endereço *</Label>
               <Input
                 id="endereco"
                 value={novoCondominio.endereco}
                 onChange={(e) => setNovoCondominio(prev => ({ ...prev, endereco: e.target.value }))}
                 placeholder="Endereço completo"
+                required
               />
             </div>
             
@@ -166,9 +188,13 @@ const GerenciarCondominios = ({ condominios: propCondominios, onCondominiosChang
             </div>
           </div>
           
-          <Button onClick={handleAdicionarCondominio} className="bg-teal-600 hover:bg-teal-700">
+          <Button 
+            onClick={handleAdicionarCondominio} 
+            className="bg-teal-600 hover:bg-teal-700"
+            disabled={adicionando || !novoCondominio.nome.trim() || !novoCondominio.endereco.trim()}
+          >
             <Plus size={18} className="mr-2" />
-            Cadastrar Condomínio
+            {adicionando ? 'Cadastrando...' : 'Cadastrar Condomínio'}
           </Button>
         </CardContent>
       </Card>
