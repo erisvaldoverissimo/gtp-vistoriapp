@@ -299,7 +299,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
             Foto {String(numeroFoto).padStart(2, '0')} - Sistema {grupoIndex + 1}
           </p>
           <p className="text-xs text-gray-700 leading-relaxed break-words">
-            {truncateText(descricaoFoto, 150)}
+            {descricaoFoto}
           </p>
         </div>
       </div>
