@@ -87,9 +87,17 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
   }, [vistoriaInicial.id]);
 
   const formatDate = (dateString: string) => {
+    console.log('=== formatDate Debug ===');
+    console.log('dateString recebido:', dateString);
+    
     // Parse a data como local para evitar problemas de timezone
     const [year, month, day] = dateString.split('-');
+    console.log('Componentes da data:', { year, month, day });
+    
     const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    console.log('Data criada:', date);
+    console.log('Data formatada:', date.toLocaleDateString('pt-BR'));
+    
     return date.toLocaleDateString('pt-BR');
   };
 
