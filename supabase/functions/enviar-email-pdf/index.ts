@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Resend } from 'npm:resend@4.0.0';
+import { renderAsync } from 'npm:@react-email/components@0.0.22';
+import React from 'npm:react@18.3.1';
+import { RelatorioVistoriaEmail } from './_templates/relatorio-vistoria.tsx';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -104,86 +108,36 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Destinatários:', destinatarios);
 
-    // Preparar conteúdo do email
+    // Inicializar Resend
+    const resend = new Resend(resendApiKey);
+
+    // Preparar conteúdo do email usando React Email
     const assunto = `Relatório de Vistoria - ${nomeCondominio} (${numeroInterno})`;
-    const conteudoHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Relatório de Vistoria</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #6B46C1; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
-          .content { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-          .button { display: inline-block; background: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 10px 0; }
-          .info { background: #EBF8FF; border-left: 4px solid #3B82F6; padding: 15px; margin: 15px 0; }
-          .footer { font-size: 12px; color: #666; text-align: center; margin-top: 30px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>Sistema de Vistorias GTP</h1>
-          <p>Relatório de Vistoria Técnica</p>
-        </div>
-        
-        <div class="content">
-          <h2>Relatório Disponível</h2>
-          <p>Olá!</p>
-          <p>O relatório de vistoria técnica está pronto para visualização:</p>
-          
-          <div class="info">
-            <strong>Empreendimento:</strong> ${nomeCondominio}<br>
-            <strong>Número Interno:</strong> ${numeroInterno}<br>
-            <strong>Data da Vistoria:</strong> ${new Date(dataVistoria).toLocaleDateString('pt-BR')}<br>
-            <strong>Data de Envio:</strong> ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-          </div>
-          
-          <p>Clique no botão abaixo para acessar e visualizar o relatório:</p>
-          
-          <div style="text-align: center; margin: 20px 0;">
-            <a href="${accessUrl}" class="button">Acessar Relatório PDF</a>
-          </div>
-          
-          <div class="info">
-            <strong>⚠️ Importante:</strong><br>
-            • Este link é válido por 7 dias<br>
-            • O acesso é seguro e validado<br>
-            • Você pode baixar o PDF diretamente da página
-          </div>
-        </div>
-        
-        <div class="footer">
-          <p>Este email foi enviado automaticamente pelo Sistema de Vistorias GTP.<br>
-          Em caso de dúvidas, entre em contato com o responsável pela vistoria.</p>
-          <p><strong>Não responda este email.</strong></p>
-        </div>
-      </body>
-      </html>
-    `;
+    
+    // Renderizar template React Email
+    const conteudoHtml = await renderAsync(
+      React.createElement(RelatorioVistoriaEmail, {
+        nomeCondominio,
+        numeroInterno,
+        dataVistoria,
+        accessUrl,
+      })
+    );
 
     // Enviar email usando Resend
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Sistema GTP <vistoria@resend.dev>',
-        to: destinatarios,
-        subject: assunto,
-        html: conteudoHtml,
-      }),
+    const { data: emailData, error: emailError } = await resend.emails.send({
+      from: 'Sistema GTP <vistoria@resend.dev>',
+      to: destinatarios,
+      subject: assunto,
+      html: conteudoHtml,
     });
 
-    const resendData = await resendResponse.json();
-    console.log('Resposta do Resend:', resendData);
+    console.log('Resposta do Resend:', emailData);
 
-    if (!resendResponse.ok) {
-      console.error('Erro no Resend:', resendData);
+    if (emailError) {
+      console.error('Erro no Resend:', emailError);
       return new Response(
-        JSON.stringify({ error: 'Erro ao enviar email', details: resendData }),
+        JSON.stringify({ error: 'Erro ao enviar email', details: emailError }),
         { 
           status: 500, 
           headers: { 'Content-Type': 'application/json', ...corsHeaders } 
@@ -198,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
         message: 'Email enviado com sucesso',
         accessToken: token,
         destinatarios,
-        emailId: resendData.id
+        emailId: emailData?.id
       }),
       {
         status: 200,
