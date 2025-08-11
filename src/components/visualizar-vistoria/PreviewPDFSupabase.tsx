@@ -124,12 +124,90 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     return text.substring(0, maxLength) + '...';
   };
 
-  const handleSendEmail = () => {
-    toast({
-      title: "Email Enviado",
-      description: "O relatório foi enviado por email com sucesso.",
-    });
-    console.log('Enviando email com dados:', vistoria);
+  const handleSendEmail = async () => {
+    try {
+      // Buscar dados do usuário atual
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        toast({
+          title: "Erro",
+          description: "Usuário não autenticado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Buscar perfil do usuário para obter os emails
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('email, email_copia_1, email_copia_2, email_copia_3')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Erro ao buscar perfil:', profileError);
+        toast({
+          title: "Erro",
+          description: "Erro ao buscar dados do usuário.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const emailsCopia = [
+        profileData.email_copia_1,
+        profileData.email_copia_2,
+        profileData.email_copia_3
+      ].filter(email => email && email.trim());
+
+      const requestData = {
+        vistoriaId: vistoria.id,
+        emailPrincipal: profileData.email,
+        emailsCopia: emailsCopia,
+        nomeCondominio: vistoria.condominio?.nome || 'Não informado',
+        numeroInterno: vistoria.numero_interno,
+        dataVistoria: vistoria.data_vistoria
+      };
+
+      console.log('Enviando email com dados:', requestData);
+
+      const { data, error } = await supabase.functions.invoke('enviar-email-pdf', {
+        body: requestData
+      });
+
+      if (error) {
+        console.error('Erro ao enviar email:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao enviar email. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Resposta da função:', data);
+
+      if (data.success) {
+        toast({
+          title: "Email Enviado",
+          description: `Relatório enviado com sucesso para ${data.destinatarios.length} destinatário(s).`,
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: data.error || "Erro desconhecido ao enviar email.",
+          variant: "destructive",
+        });
+      }
+
+    } catch (error) {
+      console.error('Erro ao enviar email:', error);
+      toast({
+        title: "Erro",
+        description: "Erro interno. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const calculateTotalPages = () => {

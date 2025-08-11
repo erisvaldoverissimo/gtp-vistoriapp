@@ -382,6 +382,50 @@ export type Database = {
           },
         ]
       }
+      pdf_access_links: {
+        Row: {
+          acessado_em: string | null
+          acessos_count: number | null
+          created_at: string
+          email_enviado_para: string
+          expires_at: string
+          id: string
+          token: string
+          updated_at: string
+          vistoria_id: string
+        }
+        Insert: {
+          acessado_em?: string | null
+          acessos_count?: number | null
+          created_at?: string
+          email_enviado_para: string
+          expires_at?: string
+          id?: string
+          token: string
+          updated_at?: string
+          vistoria_id: string
+        }
+        Update: {
+          acessado_em?: string | null
+          acessos_count?: number | null
+          created_at?: string
+          email_enviado_para?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          updated_at?: string
+          vistoria_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_access_links_vistoria_id_fkey"
+            columns: ["vistoria_id"]
+            isOneToOne: false
+            referencedRelation: "vistorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ativo: boolean | null
@@ -585,6 +629,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_pdf_links: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       has_condominio_access: {
         Args: { _user_id: string; _condominio_id: string }
         Returns: boolean

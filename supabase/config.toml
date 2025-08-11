@@ -1,1 +1,4 @@
 project_id = "wavialznxjylwuenybih"
+
+[functions.enviar-email-pdf]
+verify_jwt = true
