@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useBaseConhecimento, BaseConhecimento } from '@/hooks/useBaseConhecimento';
-import { Upload, BookOpen, Plus, Trash2, Edit, FileText, Settings, Search } from 'lucide-react';
+import { Upload, BookOpen, Plus, Trash2, Edit, FileText, Settings, Search, Brain, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const GerenciarBaseConhecimento: React.FC = () => {
@@ -20,7 +20,8 @@ const GerenciarBaseConhecimento: React.FC = () => {
     adicionarConhecimento, 
     atualizarConhecimento, 
     removerConhecimento,
-    uploadPDF
+    uploadPDF,
+    extrairConteudoPDF
   } = useBaseConhecimento();
 
   const { toast } = useToast();
@@ -29,6 +30,8 @@ const GerenciarBaseConhecimento: React.FC = () => {
   const [filtroCategoria, setFiltroCategoria] = useState<string>('');
   const [filtroTipo, setFiltroTipo] = useState<string>('');
   const [buscaTexto, setBuscaTexto] = useState<string>('');
+  const [processandoPDF, setProcessandoPDF] = useState(false);
+  const [multiplosArquivos, setMultiplosArquivos] = useState<File[]>([]);
 
   // Formulário
   const [formData, setFormData] = useState({
@@ -37,7 +40,10 @@ const GerenciarBaseConhecimento: React.FC = () => {
     categoria: '',
     conteudo_extraido: '',
     palavras_chave: '',
-    arquivo: null as File | null
+    arquivo: null as File | null,
+    resumo: '',
+    topicos_principais: '',
+    normas_referencias: ''
   });
 
   const tiposDocumento = [
@@ -60,11 +66,96 @@ const GerenciarBaseConhecimento: React.FC = () => {
     { value: 'geral', label: 'Geral' }
   ];
 
-  // Extração simples de texto de PDF (aqui você poderia usar uma biblioteca mais robusta)
-  const extrairTextoPDF = async (arquivo: File): Promise<string> => {
-    // Por simplicidade, retornaremos uma mensagem indicando que o texto foi extraído
-    // Em uma implementação real, você usaria uma biblioteca como pdf-parse
-    return `Conteúdo extraído do arquivo: ${arquivo.name}\n\nEste texto seria extraído automaticamente do PDF usando bibliotecas especializadas.`;
+  // Extração inteligente de conteúdo do PDF
+  const processarPDFComIA = async (arquivo: File): Promise<void> => {
+    setProcessandoPDF(true);
+    
+    try {
+      // 1. Upload do arquivo
+      const arquivoUrl = await uploadPDF(arquivo);
+      if (!arquivoUrl) {
+        throw new Error('Falha no upload');
+      }
+
+      // 2. Extração inteligente do conteúdo
+      const dadosExtraidos = await extrairConteudoPDF(
+        arquivoUrl,
+        formData.titulo || arquivo.name.replace('.pdf', ''),
+        formData.categoria,
+        formData.tipo_documento
+      );
+
+      if (dadosExtraidos) {
+        // 3. Atualizar formulário com dados extraídos
+        setFormData(prev => ({
+          ...prev,
+          titulo: prev.titulo || arquivo.name.replace('.pdf', ''),
+          conteudo_extraido: dadosExtraidos.conteudo_extraido || '',
+          palavras_chave: (dadosExtraidos.palavras_chave || []).join(', '),
+          resumo: dadosExtraidos.resumo || '',
+          topicos_principais: (dadosExtraidos.topicos_principais || []).join(', '),
+          normas_referencias: (dadosExtraidos.normas_referencias || []).join(', ')
+        }));
+
+        toast({
+          title: "Extração Concluída",
+          description: "Conteúdo extraído automaticamente! Revise as informações antes de salvar.",
+        });
+      }
+      
+    } catch (error) {
+      console.error('Erro no processamento:', error);
+      toast({
+        title: "Erro no Processamento",
+        description: "Falha na extração automática. Você pode preencher manualmente.",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessandoPDF(false);
+    }
+  };
+
+  // Processamento em lote de múltiplos PDFs
+  const processarMultiplosArquivos = async (): Promise<void> => {
+    if (multiplosArquivos.length === 0) return;
+
+    setProcessandoPDF(true);
+    
+    for (const arquivo of multiplosArquivos) {
+      try {
+        const arquivoUrl = await uploadPDF(arquivo);
+        if (!arquivoUrl) continue;
+
+        const dadosExtraidos = await extrairConteudoPDF(
+          arquivoUrl,
+          arquivo.name.replace('.pdf', ''),
+          'geral',
+          'pdf'
+        );
+
+        if (dadosExtraidos) {
+          await adicionarConhecimento({
+            titulo: arquivo.name.replace('.pdf', ''),
+            tipo_documento: 'pdf',
+            categoria: 'geral',
+            conteudo_extraido: dadosExtraidos.conteudo_extraido,
+            palavras_chave: dadosExtraidos.palavras_chave || [],
+            arquivo_url: arquivoUrl,
+            tamanho_bytes: arquivo.size
+          });
+        }
+      } catch (error) {
+        console.error(`Erro ao processar ${arquivo.name}:`, error);
+      }
+    }
+
+    setMultiplosArquivos([]);
+    setProcessandoPDF(false);
+    
+    toast({
+      title: "Processamento Concluído",
+      description: `${multiplosArquivos.length} arquivos processados!`
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,7 +205,10 @@ const GerenciarBaseConhecimento: React.FC = () => {
         categoria: '',
         conteudo_extraido: '',
         palavras_chave: '',
-        arquivo: null
+        arquivo: null,
+        resumo: '',
+        topicos_principais: '',
+        normas_referencias: ''
       });
     }
   };
@@ -124,18 +218,23 @@ const GerenciarBaseConhecimento: React.FC = () => {
     if (file && file.type === 'application/pdf') {
       setFormData(prev => ({ ...prev, arquivo: file }));
       
-      // Tentar extrair texto automaticamente
-      try {
-        const textoExtraido = await extrairTextoPDF(file);
-        setFormData(prev => ({
-          ...prev,
-          conteudo_extraido: textoExtraido,
-          titulo: prev.titulo || file.name.replace('.pdf', '')
-        }));
-      } catch (error) {
-        console.error('Erro ao extrair texto do PDF:', error);
+      // Processar automaticamente com IA se os campos obrigatórios estiverem preenchidos
+      if (formData.tipo_documento) {
+        await processarPDFComIA(file);
+      } else {
+        toast({
+          title: "Configuração Necessária",
+          description: "Selecione o tipo de documento antes de fazer upload para processamento automático.",
+          variant: "destructive"
+        });
       }
     }
+  };
+
+  const handleMultipleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const pdfFiles = files.filter(file => file.type === 'application/pdf');
+    setMultiplosArquivos(pdfFiles);
   };
 
   const handleEdit = (item: BaseConhecimento) => {
@@ -146,7 +245,10 @@ const GerenciarBaseConhecimento: React.FC = () => {
       categoria: item.categoria || '',
       conteudo_extraido: item.conteudo_extraido,
       palavras_chave: item.palavras_chave.join(', '),
-      arquivo: null
+      arquivo: null,
+      resumo: '',
+      topicos_principais: '',
+      normas_referencias: ''
     });
     setIsDialogOpen(true);
   };
@@ -283,7 +385,14 @@ const GerenciarBaseConhecimento: React.FC = () => {
                       accept=".pdf"
                       onChange={handleFileChange}
                       className="cursor-pointer"
+                      disabled={processandoPDF}
                     />
+                    {processandoPDF && (
+                      <div className="flex items-center mt-2 text-blue-600">
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <span className="text-sm">Processando PDF com IA...</span>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -306,6 +415,36 @@ const GerenciarBaseConhecimento: React.FC = () => {
                     />
                   </div>
 
+                  {(formData.resumo || formData.topicos_principais || formData.normas_referencias) && (
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium text-green-700 mb-3 flex items-center">
+                        <Brain className="h-4 w-4 mr-2" />
+                        Dados Extraídos pela IA
+                      </h4>
+                      
+                      {formData.resumo && (
+                        <div className="mb-3">
+                          <label className="text-sm font-medium text-gray-600">Resumo</label>
+                          <p className="text-sm bg-green-50 p-2 rounded">{formData.resumo}</p>
+                        </div>
+                      )}
+                      
+                      {formData.topicos_principais && (
+                        <div className="mb-3">
+                          <label className="text-sm font-medium text-gray-600">Tópicos Principais</label>
+                          <p className="text-sm bg-green-50 p-2 rounded">{formData.topicos_principais}</p>
+                        </div>
+                      )}
+                      
+                      {formData.normas_referencias && (
+                        <div className="mb-3">
+                          <label className="text-sm font-medium text-gray-600">Normas/Referências</label>
+                          <p className="text-sm bg-green-50 p-2 rounded">{formData.normas_referencias}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <DialogFooter>
                     <Button 
                       type="button" 
@@ -314,14 +453,85 @@ const GerenciarBaseConhecimento: React.FC = () => {
                     >
                       Cancelar
                     </Button>
-                    <Button type="submit" disabled={uploading}>
-                      {uploading ? 'Processando...' : editandoItem ? 'Salvar' : 'Adicionar'}
+                    <Button type="submit" disabled={uploading || processandoPDF}>
+                      {uploading || processandoPDF ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          {processandoPDF ? 'Processando...' : 'Salvando...'}
+                        </>
+                      ) : (
+                        editandoItem ? 'Salvar' : 'Adicionar'
+                      )}
                     </Button>
                   </DialogFooter>
                 </form>
               </DialogContent>
             </Dialog>
           </div>
+
+          {/* Processamento em Lote */}
+          {multiplosArquivos.length > 0 && (
+            <Card className="mb-6 border-blue-200 bg-blue-50">
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-blue-900">
+                      {multiplosArquivos.length} arquivo(s) selecionado(s)
+                    </h4>
+                    <p className="text-sm text-blue-700">
+                      {multiplosArquivos.map(f => f.name).join(', ')}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMultiplosArquivos([])}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={processarMultiplosArquivos}
+                      disabled={processandoPDF}
+                    >
+                      {processandoPDF ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processando...
+                        </>
+                      ) : (
+                        <>
+                          <Brain className="h-4 w-4 mr-2" />
+                          Processar com IA
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Upload em Lote */}
+          <Card className="mb-6">
+            <CardContent className="pt-4">
+              <div className="text-center">
+                <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <h4 className="font-medium mb-2">Processamento em Lote</h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  Selecione múltiplos PDFs para processamento automático com IA
+                </p>
+                <Input
+                  type="file"
+                  multiple
+                  accept=".pdf"
+                  onChange={handleMultipleFiles}
+                  className="cursor-pointer"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
           <Separator className="mb-6" />
 

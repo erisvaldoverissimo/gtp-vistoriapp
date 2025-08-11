@@ -183,6 +183,40 @@ export const useBaseConhecimento = () => {
     }
   };
 
+  const extrairConteudoPDF = async (
+    arquivoUrl: string, 
+    titulo: string, 
+    categoria: string, 
+    tipo_documento: string
+  ): Promise<any> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('extrair-pdf', {
+        body: {
+          file_url: arquivoUrl,
+          titulo,
+          categoria,
+          tipo_documento
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'Erro na extração');
+      }
+
+      return data.data;
+    } catch (error) {
+      console.error('Erro ao extrair conteúdo do PDF:', error);
+      toast({
+        title: "Erro na Extração",
+        description: "Não foi possível extrair o conteúdo automaticamente. Você pode adicionar manualmente.",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
   const buscarConhecimentoRelevante = async (contexto: string, categoria?: string): Promise<BaseConhecimento[]> => {
     try {
       let query = supabase
@@ -225,6 +259,7 @@ export const useBaseConhecimento = () => {
     atualizarConhecimento,
     removerConhecimento,
     uploadPDF,
+    extrairConteudoPDF,
     buscarConhecimentoRelevante
   };
 };
