@@ -4,6 +4,7 @@ import { VistoriaSupabase, GrupoVistoriaSupabase, useVistoriasSupabase } from '@
 import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
 import { useFotosSupabase, FotoUpload } from '@/hooks/useFotosSupabase';
 import { useWeatherData, WeatherData } from '@/hooks/useWeatherData';
+import { TemplateVistoria } from '@/hooks/useTemplatesVistoria';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useNovaVistoriaForm = (onBack?: () => void) => {
@@ -350,6 +351,59 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     return true;
   }, [formData.condominio_id, toast]);
 
+  const carregarTemplate = useCallback(async (template: TemplateVistoria) => {
+    try {
+      console.log('Carregando template:', template);
+      
+      // Se o template tem condomínio específico, usar ele
+      if (template.condominio_id) {
+        await handleCondominioChange(template.condominio_id);
+      }
+      
+      // Converter grupos do template para grupos de vistoria
+      const gruposDoTemplate: GrupoVistoriaSupabase[] = (template.grupos || []).map((grupo, index) => ({
+        ambiente: grupo.ambiente,
+        grupo: grupo.grupo,
+        item: grupo.item,
+        status: '', // Status será preenchido pelo usuário
+        parecer: '', // Parecer será preenchido pelo usuário
+        ordem: index
+      }));
+      
+      // Se não há grupos no template, manter pelo menos um grupo vazio
+      const gruposParaUsar = gruposDoTemplate.length > 0 ? gruposDoTemplate : [{
+        ambiente: '',
+        grupo: '',
+        item: '',
+        status: '',
+        parecer: '',
+        ordem: 0
+      }];
+      
+      setFormData(prev => ({
+        ...prev,
+        grupos: gruposParaUsar,
+        template_usado_id: template.id
+      }));
+      
+      // Limpar fotos existentes
+      setGrupoFotos({});
+      
+      toast({
+        title: "Template Carregado",
+        description: `Template "${template.nome}" aplicado com ${gruposParaUsar.length} grupo(s).`,
+      });
+      
+    } catch (error) {
+      console.error('Erro ao carregar template:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar o template.",
+        variant: "destructive",
+      });
+    }
+  }, [handleCondominioChange, toast]);
+
   return {
     formData,
     saving,
@@ -366,6 +420,7 @@ export const useNovaVistoriaForm = (onBack?: () => void) => {
     handleFotosChange,
     handleBuscarDadosMeteorologicos,
     handleSave,
-    handlePreview
+    handlePreview,
+    carregarTemplate
   };
 };

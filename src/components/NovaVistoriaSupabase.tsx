@@ -10,6 +10,7 @@ import DadosBasicos from './nova-vistoria/DadosBasicos';
 import DadosMeteorologicos from './nova-vistoria/DadosMeteorologicos';
 import GrupoVistoria from './nova-vistoria/GrupoVistoria';
 import ObservacoesGerais from './nova-vistoria/ObservacoesGerais';
+import SeletorTemplate from './nova-vistoria/SeletorTemplate';
 import { useNovaVistoriaForm } from './nova-vistoria/useNovaVistoriaForm';
 
 interface NovaVistoriaSupabaseProps {
@@ -36,7 +37,8 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
     handleFotosChange,
     handleBuscarDadosMeteorologicos,
     handleSave,
-    handlePreview
+    handlePreview,
+    carregarTemplate
   } = useNovaVistoriaForm(onBack);
 
   // Obter ambientes e grupos baseados no condomínio selecionado
@@ -87,6 +89,20 @@ const NovaVistoriaSupabase = ({ onPreview, onBack }: NovaVistoriaSupabaseProps) 
             </Button>
           )}
         </div>
+      </div>
+
+      {/* Seletor de Template */}
+      <div className="bg-white p-6 rounded-lg border shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-gray-900">Template de Vistoria</h3>
+          <SeletorTemplate 
+            condominioId={formData.condominio_id}
+            onTemplateSelected={carregarTemplate}
+          />
+        </div>
+        <p className="text-sm text-gray-600">
+          Use um template para pré-preencher os grupos de vistoria com itens padrão.
+        </p>
       </div>
 
       {/* Dados Básicos */}
