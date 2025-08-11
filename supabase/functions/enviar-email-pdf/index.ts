@@ -159,29 +159,36 @@ const handler = async (req: Request): Promise<Response> => {
     // Enviar emails de cópia separadamente
     const emailsEnviados = [emailPrincipal];
     const respostasEmails = [emailPrincipalData];
+    const errosEnvio = [];
 
     if (emailsCopia && emailsCopia.length > 0) {
       const emailsValidosCopia = emailsCopia.filter(email => email && email.trim());
       
       for (const emailCopia of emailsValidosCopia) {
-        console.log('=== ENVIANDO EMAIL DE CÓPIA ===');
-        console.log('Para:', emailCopia);
-        
-        const { data: emailCopiaData, error: emailCopiaError } = await resend.emails.send({
-          from: 'Sistema GTP <vistoria@resend.dev>',
-          to: [emailCopia],
-          subject: assunto,
-          html: conteudoHtml,
-        });
+        try {
+          console.log('=== ENVIANDO EMAIL DE CÓPIA ===');
+          console.log('Para:', emailCopia);
+          
+          const { data: emailCopiaData, error: emailCopiaError } = await resend.emails.send({
+            from: 'Sistema GTP <vistoria@resend.dev>',
+            to: [emailCopia],
+            subject: assunto,
+            html: conteudoHtml,
+          });
 
-        console.log('Resposta email cópia:', emailCopiaData);
-        
-        if (emailCopiaError) {
-          console.error('Erro no email de cópia para', emailCopia, ':', emailCopiaError);
-          // Continua mesmo se um email de cópia falhar
-        } else {
-          emailsEnviados.push(emailCopia);
-          respostasEmails.push(emailCopiaData);
+          console.log('Resposta email cópia:', emailCopiaData);
+          
+          if (emailCopiaError) {
+            console.error('Erro no email de cópia para', emailCopia, ':', emailCopiaError);
+            errosEnvio.push(`${emailCopia}: ${emailCopiaError.message || 'Erro desconhecido'}`);
+          } else {
+            emailsEnviados.push(emailCopia);
+            respostasEmails.push(emailCopiaData);
+            console.log('Email de cópia enviado com sucesso para:', emailCopia);
+          }
+        } catch (error) {
+          console.error('Erro fatal ao enviar email de cópia para', emailCopia, ':', error);
+          errosEnvio.push(`${emailCopia}: ${error.message || 'Erro fatal'}`);
         }
       }
     }
@@ -190,17 +197,25 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Emails enviados com sucesso:', emailsEnviados);
     console.log('Total de emails enviados:', emailsEnviados.length);
     console.log('IDs dos emails:', respostasEmails.map(r => r?.id));
+    if (errosEnvio.length > 0) {
+      console.log('Erros encontrados:', errosEnvio);
+    }
     console.log('======================');
 
-    console.log('Todos os emails enviados com sucesso!');
+    const responseMessage = errosEnvio.length > 0 
+      ? `Emails enviados com sucesso (${emailsEnviados.length}), mas houve erros em alguns envios`
+      : `Todos os emails (${emailsEnviados.length}) enviados com sucesso`;
+
+    console.log(responseMessage);
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Emails enviados com sucesso',
+        message: responseMessage,
         accessToken: token,
         destinatarios: emailsEnviados,
         emailIds: respostasEmails.map(r => r?.id),
-        totalEnviados: emailsEnviados.length
+        totalEnviados: emailsEnviados.length,
+        erros: errosEnvio.length > 0 ? errosEnvio : undefined
       }),
       {
         status: 200,
