@@ -166,9 +166,9 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Tipo de emailsCopia:', typeof emailsCopia);
     console.log('Array.isArray(emailsCopia):', Array.isArray(emailsCopia));
 
-    if (emailsCopia && emailsCopia.length > 0) {
+    if (emailsCopia && Array.isArray(emailsCopia) && emailsCopia.length > 0) {
       const emailsValidosCopia = emailsCopia.filter(email => {
-        const isValid = email && email.trim();
+        const isValid = email && typeof email === 'string' && email.trim() !== '';
         console.log(`Email ${email} é válido:`, isValid);
         return isValid;
       });
@@ -176,9 +176,10 @@ const handler = async (req: Request): Promise<Response> => {
       console.log('Emails válidos de cópia:', emailsValidosCopia);
       console.log('Quantidade de emails de cópia válidos:', emailsValidosCopia.length);
       
-      for (const emailCopia of emailsValidosCopia) {
+      for (let i = 0; i < emailsValidosCopia.length; i++) {
+        const emailCopia = emailsValidosCopia[i];
         try {
-          console.log('=== ENVIANDO EMAIL DE CÓPIA ===');
+          console.log(`=== ENVIANDO EMAIL DE CÓPIA ${i + 1}/${emailsValidosCopia.length} ===`);
           console.log('Para:', emailCopia);
           
           const { data: emailCopiaData, error: emailCopiaError } = await resend.emails.send({
@@ -188,25 +189,30 @@ const handler = async (req: Request): Promise<Response> => {
             html: conteudoHtml,
           });
 
-          console.log('Resposta email cópia:', emailCopiaData);
+          console.log(`Resposta email cópia ${i + 1}:`, emailCopiaData);
           
           if (emailCopiaError) {
-            console.error('Erro no email de cópia para', emailCopia, ':', emailCopiaError);
+            console.error(`Erro no email de cópia ${i + 1} para`, emailCopia, ':', emailCopiaError);
             errosEnvio.push(`${emailCopia}: ${emailCopiaError.message || 'Erro desconhecido'}`);
           } else {
             emailsEnviados.push(emailCopia);
             respostasEmails.push(emailCopiaData);
-            console.log('Email de cópia enviado com sucesso para:', emailCopia);
+            console.log(`Email de cópia ${i + 1} enviado com sucesso para:`, emailCopia);
           }
         } catch (error) {
-          console.error('Erro fatal ao enviar email de cópia para', emailCopia, ':', error);
+          console.error(`Erro fatal ao enviar email de cópia ${i + 1} para`, emailCopia, ':', error);
           errosEnvio.push(`${emailCopia}: ${error.message || 'Erro fatal'}`);
         }
+        
+        // Pequena pausa entre os envios
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     } else {
       console.log('=== NÃO ENTRANDO NO LOOP DE EMAILS DE CÓPIA ===');
       console.log('Condição emailsCopia:', !!emailsCopia);
-      console.log('emailsCopia && emailsCopia.length > 0:', emailsCopia && emailsCopia.length > 0);
+      console.log('emailsCopia é array:', Array.isArray(emailsCopia));
+      console.log('emailsCopia.length:', emailsCopia?.length);
+      console.log('emailsCopia valor:', emailsCopia);
       console.log('=======================================');
     }
 
