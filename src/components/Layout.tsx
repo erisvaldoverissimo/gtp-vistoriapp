@@ -47,8 +47,9 @@ const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
 
-  const { isSindico } = useCurrentProfile();
-  const itemsToShow = isSindico
+  const { isSindico, loading: loadingRole } = useCurrentProfile();
+  const isRestrict = isSindico || loadingRole;
+  const itemsToShow = isRestrict
     ? menuItems.filter((item) => ['vistorias'].includes(item.id))
     : menuItems;
 

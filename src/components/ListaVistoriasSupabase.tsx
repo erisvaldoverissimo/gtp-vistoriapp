@@ -19,7 +19,8 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
   const [filtro, setFiltro] = useState('');
   const [vistoriaSelecionada, setVistoriaSelecionada] = useState<string | null>(null);
   const [modoEdicao, setModoEdicao] = useState(false);
-  const { isSindico } = useCurrentProfile();
+  const { isSindico, loading: loadingRole } = useCurrentProfile();
+  const isRestrict = isSindico || loadingRole;
 
   const vistoriasFiltradas = vistorias.filter(vistoria =>
     vistoria.numero_interno.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -90,7 +91,7 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
     }
 
     return (
-      isSindico ? (
+      isRestrict ? (
         <DetalhesVistoria 
           vistoria={vistoria} 
           onBack={handleVoltar}
@@ -120,7 +121,7 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Vistorias</h2>
-        {!isSindico && (
+        {!isRestrict && (
           <Button onClick={onNovaVistoria} className="bg-teal-600 hover:bg-teal-700">
             <Plus size={18} className="mr-2" />
             Nova Vistoria
@@ -153,7 +154,7 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
               ? 'Comece criando sua primeira vistoria.' 
               : 'Tente ajustar os filtros de busca.'}
           </p>
-          {vistorias.length === 0 && !isSindico && (
+          {vistorias.length === 0 && !isRestrict && (
             <Button onClick={onNovaVistoria} className="bg-teal-600 hover:bg-teal-700">
               <Plus size={18} className="mr-2" />
               Criar Primeira Vistoria
@@ -181,7 +182,7 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
                       <Eye size={16} className="mr-1" />
                       Ver
                     </Button>
-                    {!isSindico && (
+                    {!isRestrict && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="outline" size="sm">
