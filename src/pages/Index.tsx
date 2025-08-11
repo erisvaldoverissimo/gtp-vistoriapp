@@ -9,6 +9,7 @@ import GerenciarAmbientesGrupos from '@/components/GerenciarAmbientesGrupos';
 import ChatIAPersistente from '@/components/ChatIAPersistente';
 import GerenciarUsuarios from '@/components/GerenciarUsuarios';
 import GerenciarTemplates from '@/components/GerenciarTemplates';
+import TesteDescricaoIAAvancada from '@/components/TesteDescricaoIAAvancada';
 import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
 
 const Index = () => {
@@ -62,6 +63,8 @@ const Index = () => {
         return <ChatIAPersistente />;
       case 'configuracoes':
         return <Configuracoes />;
+      case 'teste-ia-avancada':
+        return <TesteDescricaoIAAvancada />;
       case 'vistorias':
       default:
         return <ListaVistoriasSupabase onNovaVistoria={handleNovaVistoria} />;

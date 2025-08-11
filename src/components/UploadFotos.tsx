@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, X, Image as ImageIcon, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DescricaoAutomatica from './DescricaoAutomatica';
+import DescricaoAutomaticaAvancada from './DescricaoAutomaticaAvancada';
 import FotoPreview from './upload/FotoPreview';
 import FotoModal from './upload/FotoModal';
 import UploadProgress from './upload/UploadProgress';
@@ -462,9 +463,10 @@ const UploadFotos = ({
                       </AlertDescription>
                     </Alert>
                   )}
-                  <DescricaoAutomatica
+                  <DescricaoAutomaticaAvancada
                     imageFile={foto.file}
                     onDescriptionGenerated={(description) => handleDescriptionGenerated(index, description)}
+                    currentDescription={foto.descricao}
                   />
                 </div>
               </Card>

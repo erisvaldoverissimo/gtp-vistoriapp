@@ -12,7 +12,8 @@ import {
   BookTemplate,
   LogOut,
   Menu,
-  X
+  X,
+  Brain
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
@@ -39,6 +40,7 @@ const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
     { id: 'condominios', label: 'Condomínios', icon: Building },
     { id: 'ambientes-grupos', label: 'Ambientes e Grupos', icon: Layers },
     { id: 'chat-ia', label: 'Chat IA', icon: MessageSquare },
+    { id: 'teste-ia-avancada', label: 'IA Avançada - Teste', icon: Brain },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
 
