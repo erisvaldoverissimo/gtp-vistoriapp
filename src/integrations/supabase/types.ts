@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      base_conhecimento: {
+        Row: {
+          arquivo_url: string | null
+          categoria: string | null
+          conteudo_extraido: string
+          created_at: string
+          id: string
+          palavras_chave: string[] | null
+          tamanho_bytes: number | null
+          tipo_documento: string
+          titulo: string
+          updated_at: string
+          usuario_id: string | null
+        }
+        Insert: {
+          arquivo_url?: string | null
+          categoria?: string | null
+          conteudo_extraido: string
+          created_at?: string
+          id?: string
+          palavras_chave?: string[] | null
+          tamanho_bytes?: number | null
+          tipo_documento: string
+          titulo: string
+          updated_at?: string
+          usuario_id?: string | null
+        }
+        Update: {
+          arquivo_url?: string | null
+          categoria?: string | null
+          conteudo_extraido?: string
+          created_at?: string
+          id?: string
+          palavras_chave?: string[] | null
+          tamanho_bytes?: number | null
+          tipo_documento?: string
+          titulo?: string
+          updated_at?: string
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       condominios: {
         Row: {
           ativo: boolean | null

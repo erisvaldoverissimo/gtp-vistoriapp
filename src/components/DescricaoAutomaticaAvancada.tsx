@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Brain, Loader2, Sparkles, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useConfiguracoes } from '@/hooks/useConfiguracoes';
+import { useBaseConhecimento } from '@/hooks/useBaseConhecimento';
 import { Badge } from '@/components/ui/badge';
 
 interface DescricaoAutomaticaAvancadaProps {
@@ -34,6 +35,7 @@ const DescricaoAutomaticaAvancada: React.FC<DescricaoAutomaticaAvancadaProps> = 
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string>('auto');
   const { obterConfiguracao, loading } = useConfiguracoes();
+  const { buscarConhecimentoRelevante } = useBaseConhecimento();
 
   // Tipos de análise especializada
   const analysisMode = {
@@ -58,10 +60,20 @@ const DescricaoAutomaticaAvancada: React.FC<DescricaoAutomaticaAvancadaProps> = 
   };
 
   // Gerar contexto inteligente baseado nas informações disponíveis
-  const buildContextualPrompt = (mode: string) => {
+  const buildContextualPrompt = async (mode: string) => {
     const exemploDescricoes = obterConfiguracao('agente_exemplos_descricoes', []);
     const exemplosTexto = exemploDescricoes.length > 0 
       ? `\n\nEXEMPLOS DO SEU PADRÃO DE ESCRITA:\n${exemploDescricoes.map((ex: string, i: number) => `${i + 1}. ${ex}`).join('\n')}\n\nSiga este mesmo estilo e estrutura nos exemplos acima.`
+      : '';
+
+    // Buscar conhecimento relevante baseado no contexto
+    const contextoAnalise = `${ambiente || ''} ${grupo || ''} ${selectedMode}`.trim();
+    const conhecimentoRelevante = await buscarConhecimentoRelevante(contextoAnalise, grupo?.toLowerCase());
+    
+    const conhecimentoTexto = conhecimentoRelevante.length > 0
+      ? `\n\nBASE DE CONHECIMENTO TÉCNICO RELEVANTE:\n${conhecimentoRelevante.map((c, i) => 
+          `${i + 1}. ${c.titulo} (${c.categoria}):\n${c.conteudo_extraido.substring(0, 500)}...\n`
+        ).join('\n')}\n\nUse este conhecimento técnico para enriquecer sua análise quando aplicável.`
       : '';
 
     const baseContext = `
@@ -73,7 +85,7 @@ ${ambiente ? `- Ambiente: ${ambiente}` : ''}
 ${grupo ? `- Grupo de Vistoria: ${grupo}` : ''}
 ${status ? `- Status Atual: ${status}` : ''}
 ${condominioInfo?.nome ? `- Condomínio: ${condominioInfo.nome}` : ''}
-${condominioInfo?.tipo ? `- Tipo: ${condominioInfo.tipo}` : ''}${exemplosTexto}
+${condominioInfo?.tipo ? `- Tipo: ${condominioInfo.tipo}` : ''}${exemplosTexto}${conhecimentoTexto}
 `;
 
     const specificPrompts = {
@@ -245,7 +257,7 @@ ANÁLISE TÉCNICA DETALHADA:
         ];
       } else {
         // Modo contextual inteligente
-        const systemPrompt = buildContextualPrompt(selectedMode);
+        const systemPrompt = await buildContextualPrompt(selectedMode);
         
         messages = [
           { role: 'system', content: systemPrompt },

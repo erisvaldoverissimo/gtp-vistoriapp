@@ -10,6 +10,7 @@ import ChatIAPersistente from '@/components/ChatIAPersistente';
 import GerenciarUsuarios from '@/components/GerenciarUsuarios';
 import GerenciarTemplates from '@/components/GerenciarTemplates';
 import TesteDescricaoIAAvancada from '@/components/TesteDescricaoIAAvancada';
+import GerenciarBaseConhecimento from '@/components/GerenciarBaseConhecimento';
 import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
 
 const Index = () => {
@@ -59,6 +60,8 @@ const Index = () => {
             condominios={condominiosFormatted}
           />
         );
+      case 'base-conhecimento':
+        return <GerenciarBaseConhecimento />;
       case 'chat-ia':
         return <ChatIAPersistente />;
       case 'configuracoes':
