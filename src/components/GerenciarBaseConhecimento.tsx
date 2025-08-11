@@ -27,8 +27,8 @@ const GerenciarBaseConhecimento: React.FC = () => {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editandoItem, setEditandoItem] = useState<BaseConhecimento | null>(null);
-  const [filtroCategoria, setFiltroCategoria] = useState<string>('');
-  const [filtroTipo, setFiltroTipo] = useState<string>('');
+  const [filtroCategoria, setFiltroCategoria] = useState<string>('todas');
+  const [filtroTipo, setFiltroTipo] = useState<string>('todos');
   const [buscaTexto, setBuscaTexto] = useState<string>('');
   const [processandoPDF, setProcessandoPDF] = useState(false);
   const [multiplosArquivos, setMultiplosArquivos] = useState<File[]>([]);
@@ -259,8 +259,8 @@ const GerenciarBaseConhecimento: React.FC = () => {
 
   // Filtrar itens
   const itensFiltrados = baseConhecimento.filter(item => {
-    const matchCategoria = !filtroCategoria || item.categoria === filtroCategoria;
-    const matchTipo = !filtroTipo || item.tipo_documento === filtroTipo;
+    const matchCategoria = filtroCategoria === 'todas' || item.categoria === filtroCategoria;
+    const matchTipo = filtroTipo === 'todos' || item.tipo_documento === filtroTipo;
     const matchTexto = !buscaTexto || 
       item.titulo.toLowerCase().includes(buscaTexto.toLowerCase()) ||
       item.conteudo_extraido.toLowerCase().includes(buscaTexto.toLowerCase()) ||
@@ -297,7 +297,7 @@ const GerenciarBaseConhecimento: React.FC = () => {
                 <SelectValue placeholder="Filtrar por categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as categorias</SelectItem>
+                <SelectItem value="todas">Todas as categorias</SelectItem>
                 {categorias.map(cat => (
                   <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                 ))}
@@ -308,7 +308,7 @@ const GerenciarBaseConhecimento: React.FC = () => {
                 <SelectValue placeholder="Filtrar por tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os tipos</SelectItem>
+                <SelectItem value="todos">Todos os tipos</SelectItem>
                 {tiposDocumento.map(tipo => (
                   <SelectItem key={tipo.value} value={tipo.value}>{tipo.label}</SelectItem>
                 ))}
