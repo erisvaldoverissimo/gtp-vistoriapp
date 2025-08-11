@@ -388,6 +388,9 @@ export type Database = {
           cargo: string | null
           created_at: string | null
           email: string
+          email_copia_1: string | null
+          email_copia_2: string | null
+          email_copia_3: string | null
           id: string
           nome: string
           role: Database["public"]["Enums"]["user_role"] | null
@@ -399,6 +402,9 @@ export type Database = {
           cargo?: string | null
           created_at?: string | null
           email: string
+          email_copia_1?: string | null
+          email_copia_2?: string | null
+          email_copia_3?: string | null
           id: string
           nome: string
           role?: Database["public"]["Enums"]["user_role"] | null
@@ -410,6 +416,9 @@ export type Database = {
           cargo?: string | null
           created_at?: string | null
           email?: string
+          email_copia_1?: string | null
+          email_copia_2?: string | null
+          email_copia_3?: string | null
           id?: string
           nome?: string
           role?: Database["public"]["Enums"]["user_role"] | null

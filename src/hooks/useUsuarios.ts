@@ -42,7 +42,10 @@ export const useUsuarios = () => {
         telefone: profile.telefone || '',
         cargo: profile.cargo || 'Vistoriador',
         ativo: profile.ativo,
-        role: profile.role || 'sindico'
+        role: profile.role || 'sindico',
+        email_copia_1: profile.email_copia_1 || '',
+        email_copia_2: profile.email_copia_2 || '',
+        email_copia_3: profile.email_copia_3 || ''
       }));
 
       setUsuarios(usuariosFormatados);
@@ -92,7 +95,10 @@ export const useUsuarios = () => {
           telefone: dadosAtualizados.telefone,
           cargo: dadosAtualizados.cargo,
           ativo: dadosAtualizados.ativo,
-          role: dadosAtualizados.role
+          role: dadosAtualizados.role,
+          email_copia_1: dadosAtualizados.email_copia_1,
+          email_copia_2: dadosAtualizados.email_copia_2,
+          email_copia_3: dadosAtualizados.email_copia_3
         })
         .eq('id', id);
 
