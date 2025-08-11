@@ -82,6 +82,21 @@ export const useWeatherData = () => {
       return null;
     }
 
+    // Validar se a data não é muito antiga (Open-Meteo histórico vai até ~1940)
+    const dataVistoria = new Date(data);
+    const agora = new Date();
+    const umAnoAtras = new Date();
+    umAnoAtras.setFullYear(agora.getFullYear() - 1);
+
+    if (dataVistoria > agora) {
+      toast({
+        title: "Data futura",
+        description: "Não é possível obter dados meteorológicos para datas futuras.",
+        variant: "destructive",
+      });
+      return null;
+    }
+
     setLoading(true);
     try {
       console.log('Buscando dados meteorológicos para:', { data, cidade });
@@ -89,8 +104,13 @@ export const useWeatherData = () => {
       // Obter coordenadas da cidade
       const coordenadas = await obterCoordenadas(cidade);
       
-      // Buscar dados meteorológicos usando Open-Meteo (gratuito, sem API key)
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordenadas.latitude}&longitude=${coordenadas.longitude}&start_date=${data}&end_date=${data}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,relative_humidity_2m_max,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant&timezone=America/Sao_Paulo`;
+      // Para dados históricos (>7 dias), usar o endpoint histórico
+      const diasAtras = Math.floor((agora.getTime() - dataVistoria.getTime()) / (1000 * 60 * 60 * 24));
+      const isHistorico = diasAtras > 7;
+      
+      // Buscar dados meteorológicos usando Open-Meteo
+      const baseUrl = isHistorico ? 'https://archive-api.open-meteo.com/v1/archive' : 'https://api.open-meteo.com/v1/forecast';
+      const weatherUrl = `${baseUrl}?latitude=${coordenadas.latitude}&longitude=${coordenadas.longitude}&start_date=${data}&end_date=${data}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,relative_humidity_2m_max,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant&timezone=America/Sao_Paulo`;
       
       console.log('URL da API:', weatherUrl);
       
