@@ -8,6 +8,7 @@ import { useVistoriasSupabase } from '@/hooks/useVistoriasSupabase';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import DetalhesVistoria from './visualizar-vistoria/DetalhesVistoria';
 import EditarVistoriaSupabase from './EditarVistoriaSupabase';
+import { useCurrentProfile } from '@/hooks/useCurrentProfile';
 
 interface ListaVistoriasSupabaseProps {
   onNovaVistoria: () => void;
@@ -18,6 +19,7 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
   const [filtro, setFiltro] = useState('');
   const [vistoriaSelecionada, setVistoriaSelecionada] = useState<string | null>(null);
   const [modoEdicao, setModoEdicao] = useState(false);
+  const { isSindico } = useCurrentProfile();
 
   const vistoriasFiltradas = vistorias.filter(vistoria =>
     vistoria.numero_interno.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -88,11 +90,18 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
     }
 
     return (
-      <DetalhesVistoria 
-        vistoria={vistoria} 
-        onBack={handleVoltar}
-        onEdit={handleEditar}
-      />
+      isSindico ? (
+        <DetalhesVistoria 
+          vistoria={vistoria} 
+          onBack={handleVoltar}
+        />
+      ) : (
+        <DetalhesVistoria 
+          vistoria={vistoria} 
+          onBack={handleVoltar}
+          onEdit={handleEditar}
+        />
+      )
     );
   }
 
@@ -111,10 +120,12 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Vistorias</h2>
-        <Button onClick={onNovaVistoria} className="bg-teal-600 hover:bg-teal-700">
-          <Plus size={18} className="mr-2" />
-          Nova Vistoria
-        </Button>
+        {!isSindico && (
+          <Button onClick={onNovaVistoria} className="bg-teal-600 hover:bg-teal-700">
+            <Plus size={18} className="mr-2" />
+            Nova Vistoria
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center space-x-4">
@@ -142,7 +153,7 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
               ? 'Comece criando sua primeira vistoria.' 
               : 'Tente ajustar os filtros de busca.'}
           </p>
-          {vistorias.length === 0 && (
+          {vistorias.length === 0 && !isSindico && (
             <Button onClick={onNovaVistoria} className="bg-teal-600 hover:bg-teal-700">
               <Plus size={18} className="mr-2" />
               Criar Primeira Vistoria
@@ -170,32 +181,34 @@ const ListaVistoriasSupabase = ({ onNovaVistoria }: ListaVistoriasSupabaseProps)
                       <Eye size={16} className="mr-1" />
                       Ver
                     </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Trash2 size={16} className="mr-1" />
-                          Excluir
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja excluir a vistoria #{vistoria.numero_interno}? 
-                            Esta ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleExcluir(vistoria.id!)}
-                            className="bg-red-600 hover:bg-red-700"
-                          >
+                    {!isSindico && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Trash2 size={16} className="mr-1" />
                             Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir a vistoria #{vistoria.numero_interno}? 
+                              Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleExcluir(vistoria.id!)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </div>
               </CardHeader>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
+import { useCurrentProfile } from '@/hooks/useCurrentProfile';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -45,6 +46,11 @@ const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
     { id: 'teste-ia-avancada', label: 'IA Avançada - Teste', icon: Brain },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
+
+  const { isSindico } = useCurrentProfile();
+  const itemsToShow = isSindico
+    ? menuItems.filter((item) => ['vistorias'].includes(item.id))
+    : menuItems;
 
   const handleNavigate = (page: string) => {
     onNavigate(page);
@@ -84,7 +90,7 @@ const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
         </div>
         
         <nav className="px-4 pb-4">
-          {menuItems.map((item) => {
+          {itemsToShow.map((item) => {
             const Icon = item.icon;
             return (
               <Button
@@ -128,7 +134,7 @@ const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
             <Menu className="h-5 w-5" />
           </Button>
           <h2 className="font-semibold text-gray-900 truncate">
-            {menuItems.find(item => item.id === currentPage)?.label || 'Sistema de Vistorias'}
+            {itemsToShow.find(item => item.id === currentPage)?.label || 'Sistema de Vistorias'}
           </h2>
           <div className="w-10" /> {/* Spacer for centering */}
         </div>
