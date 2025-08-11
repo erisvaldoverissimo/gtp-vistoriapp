@@ -49,7 +49,7 @@ const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
 
   const { isSindico, loading: loadingRole } = useCurrentProfile();
   const isRestrict = isSindico || loadingRole;
-  const itemsToShow = isRestrict
+  const visibleMenuItems = isRestrict
     ? menuItems.filter((item) => ['vistorias'].includes(item.id))
     : menuItems;
 
@@ -91,7 +91,7 @@ const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
         </div>
         
         <nav className="px-4 pb-4">
-          {itemsToShow.map((item) => {
+          {visibleMenuItems.map((item) => {
             const Icon = item.icon;
             return (
               <Button
@@ -135,7 +135,7 @@ const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
             <Menu className="h-5 w-5" />
           </Button>
           <h2 className="font-semibold text-gray-900 truncate">
-            {itemsToShow.find(item => item.id === currentPage)?.label || 'Sistema de Vistorias'}
+            {visibleMenuItems.find(item => item.id === currentPage)?.label || 'Sistema de Vistorias'}
           </h2>
           <div className="w-10" /> {/* Spacer for centering */}
         </div>
