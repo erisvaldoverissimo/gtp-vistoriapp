@@ -21,7 +21,10 @@ const GerenciarUsuarios = () => {
     telefone: '',
     cargo: '',
     ativo: true,
-    role: 'sindico'
+    role: 'sindico',
+    email_copia_1: '',
+    email_copia_2: '',
+    email_copia_3: ''
   });
 
   const resetForm = () => {
@@ -31,7 +34,10 @@ const GerenciarUsuarios = () => {
       telefone: '',
       cargo: '',
       ativo: true,
-      role: 'sindico'
+      role: 'sindico',
+      email_copia_1: '',
+      email_copia_2: '',
+      email_copia_3: ''
     });
     setEditandoId(null);
     setMostrarFormulario(false);
@@ -73,7 +79,10 @@ const GerenciarUsuarios = () => {
       telefone: usuario.telefone,
       cargo: usuario.cargo,
       ativo: usuario.ativo,
-      role: usuario.role
+      role: usuario.role,
+      email_copia_1: usuario.email_copia_1 || '',
+      email_copia_2: usuario.email_copia_2 || '',
+      email_copia_3: usuario.email_copia_3 || ''
     });
     setEditandoId(usuario.id);
     setMostrarFormulario(true);
@@ -182,6 +191,43 @@ const GerenciarUsuarios = () => {
                       </SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              {/* Seção de E-mails para Cópia */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="text-lg font-medium mb-3 text-gray-700">E-mails para Cópia (Administradores e Conselheiros)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="email_copia_1">E-mail Cópia 1</Label>
+                    <Input
+                      id="email_copia_1"
+                      type="email"
+                      value={formData.email_copia_1}
+                      onChange={(e) => handleInputChange('email_copia_1', e.target.value)}
+                      placeholder="email1@exemplo.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email_copia_2">E-mail Cópia 2</Label>
+                    <Input
+                      id="email_copia_2"
+                      type="email"
+                      value={formData.email_copia_2}
+                      onChange={(e) => handleInputChange('email_copia_2', e.target.value)}
+                      placeholder="email2@exemplo.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email_copia_3">E-mail Cópia 3</Label>
+                    <Input
+                      id="email_copia_3"
+                      type="email"
+                      value={formData.email_copia_3}
+                      onChange={(e) => handleInputChange('email_copia_3', e.target.value)}
+                      placeholder="email3@exemplo.com"
+                    />
+                  </div>
                 </div>
               </div>
               

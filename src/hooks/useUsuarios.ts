@@ -11,6 +11,9 @@ export interface Usuario {
   cargo: string;
   ativo: boolean;
   role: 'admin' | 'sindico';
+  email_copia_1?: string;
+  email_copia_2?: string;
+  email_copia_3?: string;
 }
 
 export const useUsuarios = () => {
