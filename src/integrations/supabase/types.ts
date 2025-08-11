@@ -62,6 +62,33 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_produtividade: {
+        Row: {
+          chave: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          valor: Json
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          valor: Json
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          valor?: Json
+        }
+        Relationships: []
+      }
       configuracoes_sistema: {
         Row: {
           categoria: string
@@ -187,6 +214,44 @@ export type Database = {
           },
         ]
       }
+      grupos_template: {
+        Row: {
+          ambiente: string
+          created_at: string
+          grupo: string
+          id: string
+          item: string
+          ordem: number
+          template_id: string
+        }
+        Insert: {
+          ambiente: string
+          created_at?: string
+          grupo: string
+          id?: string
+          item: string
+          ordem?: number
+          template_id: string
+        }
+        Update: {
+          ambiente?: string
+          created_at?: string
+          grupo?: string
+          id?: string
+          item?: string
+          ordem?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupos_template_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates_vistoria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grupos_vistoria: {
         Row: {
           ambiente: string
@@ -302,9 +367,54 @@ export type Database = {
         }
         Relationships: []
       }
+      templates_vistoria: {
+        Row: {
+          ativo: boolean
+          condominio_id: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          is_publico: boolean
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          condominio_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_publico?: boolean
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          condominio_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_publico?: boolean
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "templates_vistoria_condominio_id_fkey"
+            columns: ["condominio_id"]
+            isOneToOne: false
+            referencedRelation: "condominios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vistorias: {
         Row: {
           condominio_id: string
+          copiado_de_vistoria_id: string | null
           created_at: string | null
           data_vistoria: string
           id: string
@@ -313,11 +423,14 @@ export type Database = {
           observacoes_gerais: string | null
           responsavel: string
           status: string
+          template_usado_id: string | null
+          tempo_criacao_minutos: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           condominio_id: string
+          copiado_de_vistoria_id?: string | null
           created_at?: string | null
           data_vistoria: string
           id?: string
@@ -326,11 +439,14 @@ export type Database = {
           observacoes_gerais?: string | null
           responsavel: string
           status?: string
+          template_usado_id?: string | null
+          tempo_criacao_minutos?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           condominio_id?: string
+          copiado_de_vistoria_id?: string | null
           created_at?: string | null
           data_vistoria?: string
           id?: string
@@ -339,6 +455,8 @@ export type Database = {
           observacoes_gerais?: string | null
           responsavel?: string
           status?: string
+          template_usado_id?: string | null
+          tempo_criacao_minutos?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -348,6 +466,20 @@ export type Database = {
             columns: ["condominio_id"]
             isOneToOne: false
             referencedRelation: "condominios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vistorias_copiado_de_vistoria_id_fkey"
+            columns: ["copiado_de_vistoria_id"]
+            isOneToOne: false
+            referencedRelation: "vistorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vistorias_template_usado_id_fkey"
+            columns: ["template_usado_id"]
+            isOneToOne: false
+            referencedRelation: "templates_vistoria"
             referencedColumns: ["id"]
           },
         ]
