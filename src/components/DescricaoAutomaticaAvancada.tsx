@@ -84,7 +84,8 @@ ANÁLISE INTELIGENTE:
 - Escreva um texto descritivo corrido e natural, como um parágrafo técnico
 - Inicie descrevendo o elemento e sua condição, seguindo com detalhes em sequência natural
 - Priorize informações mais relevantes para decisões de manutenção
-- MÁXIMO 300 caracteres
+- IMPORTANTE: Mantenha o texto COMPLETO dentro de 280 caracteres para evitar cortes
+- Finalize frases adequadamente sem cortar no meio
 
 ESTILO: Texto descritivo técnico corrido, como um relatório de vistoria profissional`,
 
@@ -116,7 +117,7 @@ FOCO ACABAMENTOS:
 - Observe pintura, azulejos, cerâmica, pedras naturais
 - Note desgaste, manchas, descolamentos, trincas em parágrafo natural
 - Avalie necessidade de reforma ou manutenção
-- MÁXIMO 300 caracteres`,
+- IMPORTANTE: Mantenha o texto COMPLETO dentro de 280 caracteres para evitar cortes`,
 
       seguranca: `
 FOCO SEGURANÇA:
@@ -136,7 +137,7 @@ FOCO CONSERVAÇÃO:
 - Identifique sinais de deterioração natural ou acelerada
 - Note áreas que precisam de intervenção imediata
 - Classifique: Bom, Regular, Ruim, Crítico
-- MÁXIMO 300 caracteres`,
+- IMPORTANTE: Mantenha o texto COMPLETO dentro de 280 caracteres para evitar cortes`,
 
       manutencao: `
 FOCO MANUTENÇÃO:
@@ -267,14 +268,14 @@ ANÁLISE TÉCNICA DETALHADA:
       }
 
       const maxTokens = {
-        auto: 200,
-        estrutural: 250,
-        instalacoes: 220,
-        acabamentos: 200,
-        seguranca: 220,
-        conservacao: 200,
-        manutencao: 250,
-        detalhado: 400
+        auto: 150,
+        estrutural: 200,
+        instalacoes: 180,
+        acabamentos: 150,
+        seguranca: 180,
+        conservacao: 150,
+        manutencao: 200,
+        detalhado: 350
       };
 
       const requestBody = {
