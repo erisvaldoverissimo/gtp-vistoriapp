@@ -227,6 +227,26 @@ const GrupoVistoria = ({
               </div>
             )}
 
+            {/* Status - Sempre presente */}
+            <div className="space-y-2">
+              <Label>Status da Vistoria</Label>
+              <Select
+                value={grupo.status}
+                onValueChange={(value) => onGrupoChange(index, 'status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Observações Técnicas */}
             <div className="space-y-2">
               <Label>Observações Técnicas</Label>
