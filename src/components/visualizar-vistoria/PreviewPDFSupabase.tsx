@@ -506,6 +506,24 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           {(() => {
             let currentPageNumber = 0;
             
+            // Se não houver grupos, renderiza uma página-resumo para permitir visualização e geração de PDF
+            if (!vistoria.grupos || vistoria.grupos.length === 0) {
+              currentPageNumber++;
+              return (
+                <div className="page flex flex-col gap-3 min-h-screen">
+                  {renderCabecalho()}
+                  {renderInformacoesVistoria()}
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center text-gray-500">
+                      <p className="text-sm">Nenhum sistema de vistoria cadastrado.</p>
+                      <p className="text-xs mt-2">O relatório contém apenas informações gerais.</p>
+                    </div>
+                  </div>
+                  {renderRodape(currentPageNumber)}
+                </div>
+              );
+            }
+            
             return vistoria.grupos.map((grupo, grupoIndex) => {
               const fotos = grupo.fotos || [];
               
@@ -529,7 +547,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                 );
               }
 
-              const pages = [];
+              const pages = [] as React.ReactNode[];
               
               // Primeira página com cabeçalho, tabela e até 2 fotos
               currentPageNumber++;

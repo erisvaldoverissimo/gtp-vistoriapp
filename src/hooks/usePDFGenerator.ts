@@ -45,9 +45,9 @@ export const usePDFGenerator = () => {
       console.log('⏳ Aguardando estabilização do DOM...');
       await new Promise(resolve => setTimeout(resolve, 3000));
 
-      // Verificar se há grupos - REMOVIDA A VALIDAÇÃO DE FOTOS OBRIGATÓRIAS
+      // Se não houver grupos, seguir com uma página de resumo (tratado no componente)
       if (!vistoria.grupos || vistoria.grupos.length === 0) {
-        throw new Error('Nenhum grupo de vistoria encontrado');
+        console.warn('Nenhum grupo de vistoria encontrado - gerando PDF apenas com página de resumo.');
       }
 
       console.log(`📋 Grupos encontrados: ${vistoria.grupos.length}`);
