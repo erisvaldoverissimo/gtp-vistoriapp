@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, ArrowLeft, Mail } from 'lucide-react';
+import { VerificacaoEnvioEmail } from '@/components/email/VerificacaoEnvioEmail';
 import { useToast } from '@/hooks/use-toast';
 import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 import { usePDFGenerator } from '@/hooks/usePDFGenerator';
@@ -18,6 +19,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
   const { reportRef, generatePDF } = usePDFGenerator();
   const { sistemasDisponiveis } = useChecklistVistoria();
   const [vistoria, setVistoria] = useState(vistoriaInicial);
+  const [mostrarVerificacaoEmail, setMostrarVerificacaoEmail] = useState(false);
 
   // Recarregar dados mais recentes quando o componente montar
   useEffect(() => {
@@ -124,55 +126,19 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     return text.substring(0, maxLength) + '...';
   };
 
-  const handleSendEmail = async () => {
+  const handleConfirmarEnvioEmail = async (dadosEnvio: {
+    vistoriaId: string;
+    emailPrincipal: string;
+    emailsCopia: string[];
+    nomeCondominio: string;
+    numeroInterno: string;
+    dataVistoria: string;
+  }) => {
     try {
-      // Buscar dados do usuário atual
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData.user) {
-        toast({
-          title: "Erro",
-          description: "Usuário não autenticado.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Buscar perfil do usuário para obter os emails
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('email, email_copia_1, email_copia_2, email_copia_3')
-        .eq('id', userData.user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Erro ao buscar perfil:', profileError);
-        toast({
-          title: "Erro",
-          description: "Erro ao buscar dados do usuário.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const emailsCopia = [
-        profileData.email_copia_1,
-        profileData.email_copia_2,
-        profileData.email_copia_3
-      ].filter(email => email && email.trim());
-
-      const requestData = {
-        vistoriaId: vistoria.id,
-        emailPrincipal: profileData.email,
-        emailsCopia: emailsCopia,
-        nomeCondominio: vistoria.condominio?.nome || 'Não informado',
-        numeroInterno: vistoria.numero_interno,
-        dataVistoria: vistoria.data_vistoria
-      };
-
-      console.log('Enviando email com dados:', requestData);
+      console.log('Enviando email com dados confirmados:', dadosEnvio);
 
       const { data, error } = await supabase.functions.invoke('enviar-email-pdf', {
-        body: requestData
+        body: dadosEnvio
       });
 
       if (error) {
@@ -513,7 +479,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           <h2 className="text-2xl font-bold text-gray-900">Visualizar Relatório PDF</h2>
         </div>
         <div className="flex space-x-2">
-          <Button onClick={handleSendEmail} variant="outline">
+          <Button onClick={() => setMostrarVerificacaoEmail(true)} variant="outline">
             <Mail size={18} className="mr-2" />
             Enviar Email
           </Button>
@@ -614,6 +580,14 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           })()}
         </div>
       </Card>
+
+      {/* Modal de Verificação de Email */}
+      <VerificacaoEnvioEmail
+        open={mostrarVerificacaoEmail}
+        onClose={() => setMostrarVerificacaoEmail(false)}
+        dadosVistoria={vistoria}
+        onEnviar={handleConfirmarEnvioEmail}
+      />
     </div>
   );
 };
