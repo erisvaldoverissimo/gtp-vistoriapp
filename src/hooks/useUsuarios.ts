@@ -67,7 +67,8 @@ export const useUsuarios = () => {
 
   const adicionarUsuario = async (
     dadosUsuario: Omit<Usuario, 'id'>,
-    condominioId?: string
+    condominioId?: string,
+    password?: string
   ): Promise<{ userId?: string; tempPassword?: string; error?: any }> => {
     try {
       const { data, error } = await supabase.functions.invoke('criar-usuario', {
@@ -75,6 +76,7 @@ export const useUsuarios = () => {
           dadosUsuario: {
             ...dadosUsuario,
             condominioId,
+            password,
           },
           condominioId,
         },

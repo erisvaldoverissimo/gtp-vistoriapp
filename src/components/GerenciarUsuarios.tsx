@@ -25,6 +25,9 @@ const GerenciarUsuarios = () => {
   const [novoUsuarioId, setNovoUsuarioId] = useState<string>('');
   const [novoUsuarioEmail, setNovoUsuarioEmail] = useState<string>('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [definirSenhaManual, setDefinirSenhaManual] = useState(false);
+  const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [formData, setFormData] = useState<Omit<Usuario, 'id'>>({
     nome: '',
     email: '',
@@ -52,6 +55,9 @@ const GerenciarUsuarios = () => {
     setCondominioSelecionado(undefined);
     setEditandoId(null);
     setMostrarFormulario(false);
+    setDefinirSenhaManual(false);
+    setSenha('');
+    setConfirmarSenha('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,15 +79,33 @@ const GerenciarUsuarios = () => {
         description: "Os dados do usuário foram atualizados com sucesso.",
       });
     } else {
-      const result = await adicionarUsuario(formData, condominioSelecionado);
+      if (definirSenhaManual) {
+        if (!senha || senha.length < 8) {
+          toast({ title: 'Senha inválida', description: 'A senha deve ter pelo menos 8 caracteres.', variant: 'destructive' });
+          return;
+        }
+        if (senha !== confirmarSenha) {
+          toast({ title: 'Senhas não coincidem', description: 'Confirme a senha corretamente.', variant: 'destructive' });
+          return;
+        }
+      }
+
+      const result = await adicionarUsuario(
+        formData,
+        condominioSelecionado,
+        definirSenhaManual ? senha : undefined
+      );
+
       if (!result?.error) {
         setSenhaGerada(result?.tempPassword || '');
         setNovoUsuarioId(result?.userId || '');
         setNovoUsuarioEmail(formData.email);
         setSenhaModalAberto(true);
         toast({
-          title: "Usuário cadastrado",
-          description: "Usuário criado com sucesso. A senha temporária está abaixo.",
+          title: 'Usuário cadastrado',
+          description: definirSenhaManual
+            ? 'Usuário criado com a senha definida.'
+            : 'Usuário criado com sucesso. A senha temporária está abaixo.',
         });
       }
     }
@@ -227,6 +251,28 @@ const GerenciarUsuarios = () => {
                   </Select>
                 </div>
               </div>
+
+              {/* Senha de acesso - somente no cadastro */}
+              {!editandoId && (
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Switch id="definir-senha" checked={definirSenhaManual} onCheckedChange={setDefinirSenhaManual} />
+                    <Label htmlFor="definir-senha">Definir senha manualmente</Label>
+                  </div>
+                  {definirSenhaManual && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="senha">Senha</Label>
+                        <Input id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Mínimo 8 caracteres" />
+                      </div>
+                      <div>
+                        <Label htmlFor="confirmarSenha">Confirmar senha</Label>
+                        <Input id="confirmarSenha" type="password" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} placeholder="Repita a senha" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Seção de E-mails para Cópia */}
               <div className="border-t pt-4 mt-4">
