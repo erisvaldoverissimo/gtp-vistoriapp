@@ -10,6 +10,7 @@ export interface Usuario {
   telefone: string;
   cargo: string;
   ativo: boolean;
+  role: 'admin' | 'sindico';
 }
 
 export const useUsuarios = () => {
@@ -20,7 +21,7 @@ export const useUsuarios = () => {
   // Carregar usuários do Supabase
   const carregarUsuarios = async () => {
     try {
-      // Com RLS, só conseguimos ver perfis ativos de outros usuários
+      // Carregar todos os usuários (RLS permite para admins)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -37,7 +38,8 @@ export const useUsuarios = () => {
         email: profile.email,
         telefone: profile.telefone || '',
         cargo: profile.cargo || 'Vistoriador',
-        ativo: profile.ativo
+        ativo: profile.ativo,
+        role: profile.role || 'sindico'
       }));
 
       setUsuarios(usuariosFormatados);
@@ -86,7 +88,8 @@ export const useUsuarios = () => {
           nome: dadosAtualizados.nome,
           telefone: dadosAtualizados.telefone,
           cargo: dadosAtualizados.cargo,
-          ativo: dadosAtualizados.ativo
+          ativo: dadosAtualizados.ativo,
+          role: dadosAtualizados.role
         })
         .eq('id', id);
 
@@ -143,6 +146,86 @@ export const useUsuarios = () => {
     return usuarios.filter(usuario => usuario.ativo);
   };
 
+  // Associar usuário a condomínio
+  const associarCondominio = async (userId: string, condominioId: string) => {
+    try {
+      const { error } = await supabase
+        .from('usuario_condominios')
+        .insert({
+          user_id: userId,
+          condominio_id: condominioId
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Usuário associado ao condomínio com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao associar usuário:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível associar o usuário ao condomínio.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Remover associação usuário-condomínio
+  const removerAssociacao = async (userId: string, condominioId: string) => {
+    try {
+      const { error } = await supabase
+        .from('usuario_condominios')
+        .delete()
+        .eq('user_id', userId)
+        .eq('condominio_id', condominioId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Associação removida com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao remover associação:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover a associação.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Obter condomínios do usuário
+  const obterCondominiosUsuario = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('usuario_condominios')
+        .select(`
+          condominio_id,
+          condominios (
+            id,
+            nome
+          )
+        `)
+        .eq('user_id', userId);
+
+      if (error) {
+        throw error;
+      }
+
+      return data?.map(item => item.condominios).filter(Boolean) || [];
+    } catch (error) {
+      console.error('Erro ao obter condomínios do usuário:', error);
+      return [];
+    }
+  };
+
   return {
     usuarios,
     loading,
@@ -150,6 +233,9 @@ export const useUsuarios = () => {
     atualizarUsuario,
     removerUsuario,
     obterUsuariosAtivos,
+    associarCondominio,
+    removerAssociacao,
+    obterCondominiosUsuario,
     recarregar: carregarUsuarios
   };
 };

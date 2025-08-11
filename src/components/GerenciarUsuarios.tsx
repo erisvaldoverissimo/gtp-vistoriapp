@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Edit, Trash2, Users } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Edit, Trash2, Users, Shield, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Usuario, useUsuarios } from '@/hooks/useUsuarios';
 
@@ -20,6 +21,7 @@ const GerenciarUsuarios = () => {
     telefone: '',
     cargo: '',
     ativo: true,
+    role: 'sindico'
   });
 
   const resetForm = () => {
@@ -29,6 +31,7 @@ const GerenciarUsuarios = () => {
       telefone: '',
       cargo: '',
       ativo: true,
+      role: 'sindico'
     });
     setEditandoId(null);
     setMostrarFormulario(false);
@@ -70,6 +73,7 @@ const GerenciarUsuarios = () => {
       telefone: usuario.telefone,
       cargo: usuario.cargo,
       ativo: usuario.ativo,
+      role: usuario.role
     });
     setEditandoId(usuario.id);
     setMostrarFormulario(true);
@@ -154,6 +158,31 @@ const GerenciarUsuarios = () => {
                     placeholder="Ex: Engenheiro Civil"
                   />
                 </div>
+                <div>
+                  <Label htmlFor="role">Perfil de Acesso</Label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value: 'admin' | 'sindico') => handleInputChange('role', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o perfil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sindico">
+                        <div className="flex items-center">
+                          <User size={16} className="mr-2" />
+                          Síndico
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="admin">
+                        <div className="flex items-center">
+                          <Shield size={16} className="mr-2" />
+                          Administrador
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               <div className="flex items-center space-x-2">
@@ -199,6 +228,7 @@ const GerenciarUsuarios = () => {
                     <th className="border border-gray-300 p-3 text-left">Email</th>
                     <th className="border border-gray-300 p-3 text-left">Telefone</th>
                     <th className="border border-gray-300 p-3 text-left">Cargo</th>
+                    <th className="border border-gray-300 p-3 text-center">Perfil</th>
                     <th className="border border-gray-300 p-3 text-center">Status</th>
                     <th className="border border-gray-300 p-3 text-center">Ações</th>
                   </tr>
@@ -210,6 +240,25 @@ const GerenciarUsuarios = () => {
                       <td className="border border-gray-300 p-3">{usuario.email}</td>
                       <td className="border border-gray-300 p-3">{usuario.telefone}</td>
                       <td className="border border-gray-300 p-3">{usuario.cargo}</td>
+                      <td className="border border-gray-300 p-3 text-center">
+                        <span className={`inline-flex items-center px-2 py-1 rounded text-xs ${
+                          usuario.role === 'admin' 
+                            ? 'bg-purple-200 text-purple-800' 
+                            : 'bg-blue-200 text-blue-800'
+                        }`}>
+                          {usuario.role === 'admin' ? (
+                            <>
+                              <Shield size={12} className="mr-1" />
+                              Admin
+                            </>
+                          ) : (
+                            <>
+                              <User size={12} className="mr-1" />
+                              Síndico
+                            </>
+                          )}
+                        </span>
+                      </td>
                       <td className="border border-gray-300 p-3 text-center">
                         <span className={`px-2 py-1 rounded text-xs ${
                           usuario.ativo 

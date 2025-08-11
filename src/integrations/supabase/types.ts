@@ -390,6 +390,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          role: Database["public"]["Enums"]["user_role"] | null
           telefone: string | null
           updated_at: string | null
         }
@@ -400,6 +401,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          role?: Database["public"]["Enums"]["user_role"] | null
           telefone?: string | null
           updated_at?: string | null
         }
@@ -410,6 +412,7 @@ export type Database = {
           email?: string
           id?: string
           nome?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
           telefone?: string | null
           updated_at?: string | null
         }
@@ -455,6 +458,42 @@ export type Database = {
             columns: ["condominio_id"]
             isOneToOne: false
             referencedRelation: "condominios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usuario_condominios: {
+        Row: {
+          condominio_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          condominio_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          condominio_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_condominios_condominio_id_fkey"
+            columns: ["condominio_id"]
+            isOneToOne: false
+            referencedRelation: "condominios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_condominios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -537,13 +576,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_condominio_access: {
+        Args: { _user_id: string; _condominio_id: string }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       obter_proximo_numero_sequencial: {
         Args: { condominio_uuid: string }
         Returns: number
       }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "sindico"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -670,6 +724,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["admin", "sindico"],
+    },
   },
 } as const
