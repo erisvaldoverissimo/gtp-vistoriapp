@@ -5,6 +5,7 @@ import { Download, ArrowLeft, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 import { usePDFGenerator } from '@/hooks/usePDFGenerator';
+import { useChecklistVistoria } from '@/hooks/useChecklistVistoria';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PreviewPDFSupabaseProps {
@@ -15,6 +16,7 @@ interface PreviewPDFSupabaseProps {
 const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSupabaseProps) => {
   const { toast } = useToast();
   const { reportRef, generatePDF } = usePDFGenerator();
+  const { sistemasDisponiveis } = useChecklistVistoria();
   const [vistoria, setVistoria] = useState(vistoriaInicial);
 
   // Recarregar dados mais recentes quando o componente montar
@@ -42,17 +44,27 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           return;
         }
 
-        const grupos = (vistoriaData.grupos_vistoria || []).map(grupo => ({
-          id: grupo.id,
-          vistoria_id: grupo.vistoria_id,
-          ambiente: grupo.ambiente,
-          grupo: grupo.grupo,
-          item: grupo.item,
-          status: grupo.status,
-          parecer: grupo.parecer || '',
-          ordem: grupo.ordem || 0,
-          fotos: grupo.fotos_vistoria || []
-        }));
+        const grupos = (vistoriaData.grupos_vistoria || []).map(grupo => {
+          const grupoAny = grupo as any; // Type assertion para campos novos
+          return {
+            id: grupo.id,
+            vistoria_id: grupo.vistoria_id,
+            ambiente: grupo.ambiente,
+            grupo: grupo.grupo,
+            item: grupo.item,
+            status: grupo.status,
+            parecer: grupo.parecer || '',
+            ordem: grupo.ordem || 0,
+            fotos: grupo.fotos_vistoria || [],
+            // Campos do checklist técnico
+            modo_checklist: grupoAny.modo_checklist || false,
+            checklist_tecnico: grupoAny.checklist_tecnico ? 
+              (typeof grupoAny.checklist_tecnico === 'string' ? 
+                JSON.parse(grupoAny.checklist_tecnico) : 
+                grupoAny.checklist_tecnico) : 
+              undefined
+          };
+        });
 
         const vistoriaAtualizada: VistoriaSupabase = {
           id: vistoriaData.id,
@@ -204,28 +216,43 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     </div>
   );
 
-  const renderTabelaGrupo = (grupo: any, grupoIndex: number) => (
-    <div className="mb-4">
-      <h3 className="text-base font-semibold mb-2 text-brand-purple">
-        Sistema de Vistoria {grupoIndex + 1}
-      </h3>
-      <table className="w-full border-collapse border border-gray-300 text-xs">
-        <thead>
-          <tr className="bg-brand-purple text-white">
-            <th className="border border-gray-300 p-2 text-center w-[15%]">Ambiente</th>
-            <th className="border border-gray-300 p-2 text-center w-[15%]">Sistema</th>
-            <th className="border border-gray-300 p-2 text-center w-[15%]">Subsistema</th>
-            <th className="border border-gray-300 p-2 text-center w-[12%]">Status</th>
-            <th className="border border-gray-300 p-2 text-center w-[43%]">Parecer</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td className="border border-gray-300 p-2 text-center align-middle">{grupo.ambiente}</td>
-            <td className="border border-gray-300 p-2 text-center align-middle">{grupo.grupo}</td>
-            <td className="border border-gray-300 p-2 text-center align-middle">{grupo.item}</td>
-            <td className="border border-gray-300 p-2 text-center align-middle">
-              <div className="flex justify-center items-center">
+  const renderTabelaGrupo = (grupo: any, grupoIndex: number) => {
+    // Se for modo checklist técnico, renderizar informações estruturadas
+    if (grupo.modo_checklist && grupo.checklist_tecnico) {
+      const checklist = grupo.checklist_tecnico;
+      const sistema = sistemasDisponiveis.find(s => s.id === checklist.sistemaId);
+      const elemento = sistema?.elementos.find(e => e.id === checklist.elementoId);
+      const manifestacoesSelecionadas = elemento?.manifestacoes.filter(m => 
+        checklist.manifestacoesIds?.includes(m.id)
+      ) || [];
+
+      return (
+        <div className="mb-4">
+          <h3 className="text-base font-semibold mb-2 text-brand-purple">
+            Sistema de Vistoria {grupoIndex + 1} - <span className="text-sm bg-blue-100 px-2 py-1 rounded">Checklist Técnico</span>
+          </h3>
+          
+          {/* Informações Técnicas Estruturadas */}
+          <div className="bg-blue-50 p-3 rounded-lg mb-3">
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="font-semibold text-blue-800">Sistema:</span>
+                <br />
+                {sistema?.nome || 'Não informado'}
+              </div>
+              <div>
+                <span className="font-semibold text-blue-800">Elemento:</span>
+                <br />
+                {elemento?.nome || 'Não informado'}
+              </div>
+              <div>
+                <span className="font-semibold text-blue-800">Tipo de Material:</span>
+                <br />
+                {checklist.tipo || 'Não informado'}
+              </div>
+              <div>
+                <span className="font-semibold text-blue-800">Status:</span>
+                <br />
                 <span className={`inline-block px-2 py-1 rounded text-xs ${
                   grupo.status === 'N/A' ? 'bg-gray-200' :
                   grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
@@ -235,15 +262,95 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                   {grupo.status}
                 </span>
               </div>
-            </td>
-            <td className="border border-gray-300 p-2 text-center align-middle break-words">
-              {truncateText(grupo.parecer, 200)}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
+            </div>
+          </div>
+
+          {/* Manifestações Patológicas */}
+          {manifestacoesSelecionadas.length > 0 && (
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold mb-2 text-red-600">Manifestações Patológicas Identificadas:</h4>
+              <div className="space-y-1">
+                {manifestacoesSelecionadas.map((manifestacao, index) => (
+                  <div key={manifestacao.id} className="bg-red-50 p-2 rounded border-l-4 border-red-400">
+                    <div className="flex items-start gap-2">
+                      <span className="font-mono text-xs bg-red-100 px-2 py-1 rounded text-red-700 min-w-fit">
+                        {manifestacao.codigo}
+                      </span>
+                      <span className="text-xs text-gray-700 leading-relaxed">
+                        {manifestacao.descricao}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Observações Técnicas */}
+          {checklist.observacoesTecnicas && (
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold mb-2 text-gray-700">Observações Técnicas:</h4>
+              <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded leading-relaxed">
+                {checklist.observacoesTecnicas}
+              </p>
+            </div>
+          )}
+
+          {/* Parecer Geral (se existir) */}
+          {grupo.parecer && (
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold mb-2 text-gray-700">Parecer Geral:</h4>
+              <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded leading-relaxed">
+                {truncateText(grupo.parecer, 200)}
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Modo tradicional - tabela original
+    return (
+      <div className="mb-4">
+        <h3 className="text-base font-semibold mb-2 text-brand-purple">
+          Sistema de Vistoria {grupoIndex + 1}
+        </h3>
+        <table className="w-full border-collapse border border-gray-300 text-xs">
+          <thead>
+            <tr className="bg-brand-purple text-white">
+              <th className="border border-gray-300 p-2 text-center w-[15%]">Ambiente</th>
+              <th className="border border-gray-300 p-2 text-center w-[15%]">Sistema</th>
+              <th className="border border-gray-300 p-2 text-center w-[15%]">Subsistema</th>
+              <th className="border border-gray-300 p-2 text-center w-[12%]">Status</th>
+              <th className="border border-gray-300 p-2 text-center w-[43%]">Parecer</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="border border-gray-300 p-2 text-center align-middle">{grupo.ambiente}</td>
+              <td className="border border-gray-300 p-2 text-center align-middle">{grupo.grupo}</td>
+              <td className="border border-gray-300 p-2 text-center align-middle">{grupo.item}</td>
+              <td className="border border-gray-300 p-2 text-center align-middle">
+                <div className="flex justify-center items-center">
+                  <span className={`inline-block px-2 py-1 rounded text-xs ${
+                    grupo.status === 'N/A' ? 'bg-gray-200' :
+                    grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
+                    grupo.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
+                    'bg-yellow-200 text-yellow-800'
+                  }`}>
+                    {grupo.status}
+                  </span>
+                </div>
+              </td>
+              <td className="border border-gray-300 p-2 text-center align-middle break-words">
+                {truncateText(grupo.parecer, 200)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   const renderObservacoesGerais = () => (
     vistoria.observacoes_gerais && (
