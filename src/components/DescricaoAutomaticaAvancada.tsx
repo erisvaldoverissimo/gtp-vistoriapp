@@ -59,6 +59,11 @@ const DescricaoAutomaticaAvancada: React.FC<DescricaoAutomaticaAvancadaProps> = 
 
   // Gerar contexto inteligente baseado nas informações disponíveis
   const buildContextualPrompt = (mode: string) => {
+    const exemploDescricoes = obterConfiguracao('agente_exemplos_descricoes', []);
+    const exemplosTexto = exemploDescricoes.length > 0 
+      ? `\n\nEXEMPLOS DO SEU PADRÃO DE ESCRITA:\n${exemploDescricoes.map((ex: string, i: number) => `${i + 1}. ${ex}`).join('\n')}\n\nSiga este mesmo estilo e estrutura nos exemplos acima.`
+      : '';
+
     const baseContext = `
 Você é um engenheiro especialista em vistorias prediais com 20+ anos de experiência.
 Analise esta imagem de vistoria predial e forneça uma descrição técnica precisa e útil.
@@ -68,7 +73,7 @@ ${ambiente ? `- Ambiente: ${ambiente}` : ''}
 ${grupo ? `- Grupo de Vistoria: ${grupo}` : ''}
 ${status ? `- Status Atual: ${status}` : ''}
 ${condominioInfo?.nome ? `- Condomínio: ${condominioInfo.nome}` : ''}
-${condominioInfo?.tipo ? `- Tipo: ${condominioInfo.tipo}` : ''}
+${condominioInfo?.tipo ? `- Tipo: ${condominioInfo.tipo}` : ''}${exemplosTexto}
 `;
 
     const specificPrompts = {

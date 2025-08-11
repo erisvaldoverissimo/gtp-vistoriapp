@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Mail, Image, Save, Upload, Bot, Brain } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Bot, Brain, Key, Settings, Trash2, Plus, BookOpen, Save, Upload, Mail, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useConfiguracoes } from '@/hooks/useConfiguracoes';
 
@@ -49,6 +50,7 @@ Baseie-se nas normas brasileiras e internacionais (como ABNT), boas práticas da
 Adapte a linguagem conforme o meio de divulgação (relatórios técnicos, blogs, redes sociais ou materiais didáticos).
 
 Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
+    exemploDescricoes: [],
     enableAgente: true,
     
     // Configurações Gerais
@@ -56,6 +58,9 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
     tamanhoMaximoFoto: '5',
     formatosPermitidos: 'JPEG, PNG, WebP'
   });
+
+  const [novoExemplo, setNovoExemplo] = useState('');
+  const [editandoExemplo, setEditandoExemplo] = useState<number | null>(null);
 
   // Atualizar estado local quando as configurações do Supabase forem carregadas
   useEffect(() => {
@@ -78,10 +83,11 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
         apiKeyOpenAI: obterConfiguracao('api_key_openai', ''),
         enableAutoDescription: obterConfiguracao('ia_auto_descricao', true),
         
-        nomeAgente: obterConfiguracao('agente_nome', 'Theo'),
-        promptPersona: obterConfiguracao('agente_prompt_persona', 'Seu nome é Theo, atue como um Tutor virtual e Mentor de estudo no Seminário Teológico de Guarulhos...'),
-        promptObjetivo: obterConfiguracao('agente_prompt_objetivo', 'Esclarecer dúvidas em tempo real sobre Cosmovisão e Espiritualidade...'),
-        promptComportamento: obterConfiguracao('agente_prompt_comportamento', '### COMPORTAMENTO E AÇÕES...'),
+        nomeAgente: obterConfiguracao('agente_nome', 'PrediBot'),
+        promptPersona: obterConfiguracao('agente_prompt_persona', 'Você é um especialista em edição de textos técnicos com foco em engenharia civil...'),
+        promptObjetivo: obterConfiguracao('agente_prompt_objetivo', 'Sua missão é transformar informações técnicas obtidas a partir de fotografias...'),
+        promptComportamento: obterConfiguracao('agente_prompt_comportamento', 'Analise imagens e descrições complementares de vistorias técnicas...'),
+        exemploDescricoes: obterConfiguracao('agente_exemplos_descricoes', []),
         enableAgente: obterConfiguracao('agente_enable', true),
         
         limiteFotos: obterConfiguracao('upload_limite_fotos', 10),
@@ -91,7 +97,7 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
     }
   }, [loading, configuracoes]);
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | any[]) => {
     setConfig(prev => ({ ...prev, [field]: value }));
   };
 
@@ -120,6 +126,7 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
       agente_prompt_persona: config.promptPersona,
       agente_prompt_objetivo: config.promptObjetivo,
       agente_prompt_comportamento: config.promptComportamento,
+      agente_exemplos_descricoes: config.exemploDescricoes,
       agente_enable: config.enableAgente,
       
       upload_limite_fotos: config.limiteFotos,
@@ -168,6 +175,39 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
         ? "Agente configurado para descrições técnicas de vistorias." 
         : "Configure os prompts para otimizar descrições de vistorias.",
       variant: isValidConfig ? "default" : "destructive"
+    });
+  };
+
+  const adicionarExemplo = () => {
+    if (novoExemplo.trim()) {
+      const novosExemplos = [...config.exemploDescricoes, novoExemplo.trim()];
+      handleInputChange('exemploDescricoes', novosExemplos);
+      setNovoExemplo('');
+      toast({
+        title: "Exemplo Adicionado",
+        description: "Novo exemplo de descrição cadastrado."
+      });
+    }
+  };
+
+  const removerExemplo = (index: number) => {
+    const novosExemplos = config.exemploDescricoes.filter((_, i) => i !== index);
+    handleInputChange('exemploDescricoes', novosExemplos);
+    setEditandoExemplo(null);
+    toast({
+      title: "Exemplo Removido",
+      description: "Exemplo de descrição removido."
+    });
+  };
+
+  const editarExemplo = (index: number, novoTexto: string) => {
+    const novosExemplos = [...config.exemploDescricoes];
+    novosExemplos[index] = novoTexto;
+    handleInputChange('exemploDescricoes', novosExemplos);
+    setEditandoExemplo(null);
+    toast({
+      title: "Exemplo Atualizado",
+      description: "Exemplo de descrição atualizado."
     });
   };
 
@@ -410,6 +450,98 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
                 rows={8}
                 className="font-mono text-sm"
               />
+            </div>
+
+            {/* Seção de Exemplos */}
+            <div className="space-y-4 border-t pt-6">
+              <div className="flex items-center gap-2">
+                <BookOpen size={18} className="text-blue-600" />
+                <Label className="text-base font-semibold">
+                  Exemplos do Seu Padrão de Descrições
+                </Label>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                Adicione exemplos de como você costuma descrever vistorias. O agente aprenderá seu estilo de escrita.
+              </p>
+
+              {/* Adicionar novo exemplo */}
+              <div className="space-y-2">
+                <Label htmlFor="novoExemplo">Novo Exemplo</Label>
+                <div className="flex gap-2">
+                  <Textarea
+                    id="novoExemplo"
+                    value={novoExemplo}
+                    onChange={(e) => setNovoExemplo(e.target.value)}
+                    placeholder="Ex: Fissura horizontal na alvenaria - bloco cerâmico - movimentação térmica..."
+                    rows={2}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={adicionarExemplo}
+                    disabled={!novoExemplo.trim()}
+                    size="sm"
+                    className="self-end"
+                  >
+                    <Plus size={16} />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Lista de exemplos */}
+              {config.exemploDescricoes.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Seus Exemplos ({config.exemploDescricoes.length})</Label>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {config.exemploDescricoes.map((exemplo, index) => (
+                      <div key={index} className="flex items-start gap-2 p-3 border rounded-lg bg-muted/30">
+                        {editandoExemplo === index ? (
+                          <Textarea
+                            value={exemplo}
+                            onChange={(e) => {
+                              const novosExemplos = [...config.exemploDescricoes];
+                              novosExemplos[index] = e.target.value;
+                              handleInputChange('exemploDescricoes', novosExemplos);
+                            }}
+                            onBlur={() => setEditandoExemplo(null)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && e.ctrlKey) {
+                                setEditandoExemplo(null);
+                              }
+                            }}
+                            rows={2}
+                            className="flex-1 text-sm"
+                            autoFocus
+                          />
+                        ) : (
+                          <div 
+                            className="flex-1 text-sm cursor-pointer hover:bg-muted/50 p-2 rounded"
+                            onClick={() => setEditandoExemplo(index)}
+                            title="Clique para editar"
+                          >
+                            {exemplo}
+                          </div>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removerExemplo(index)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+                    <Badge variant="secondary" className="text-xs">
+                      ✓ {config.exemploDescricoes.length} exemplos
+                    </Badge>
+                    <span>O agente usará estes exemplos para aprender seu estilo</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button onClick={handleTestAgente} variant="outline" className="w-full">
