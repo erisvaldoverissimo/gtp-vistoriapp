@@ -82,7 +82,6 @@ export const useVistoriasSupabase = () => {
             fotos_vistoria(*)
           )
         `)
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
