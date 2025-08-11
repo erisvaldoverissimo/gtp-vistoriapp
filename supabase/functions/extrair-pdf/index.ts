@@ -25,9 +25,14 @@ serve(async (req) => {
 
     // Baixar o arquivo PDF
     console.log('Baixando PDF:', file_url);
-    const pdfResponse = await fetch(file_url);
+    const pdfResponse = await fetch(file_url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Supabase-Bot/1.0)'
+      }
+    });
     if (!pdfResponse.ok) {
-      throw new Error('Falha ao baixar o PDF');
+      console.error('Erro HTTP:', pdfResponse.status, pdfResponse.statusText);
+      throw new Error(`Falha ao baixar o PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
     }
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
