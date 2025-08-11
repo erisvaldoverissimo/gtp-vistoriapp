@@ -233,22 +233,29 @@ export const useVistoriasSupabase = () => {
     try {
       console.log('Obtendo próximo número sequencial para condomínio:', condominioId);
       
+      // Usar a função do banco de dados que previne condições de corrida
       const { data, error } = await supabase
-        .from('vistorias')
-        .select('id_sequencial')
-        .eq('condominio_id', condominioId)
-        .order('id_sequencial', { ascending: false })
-        .limit(1);
+        .rpc('obter_proximo_numero_sequencial', {
+          condominio_uuid: condominioId
+        });
 
       if (error) {
         console.error('Erro ao obter próximo número:', error);
-        return 1;
+        // Fallback para o método antigo em caso de erro
+        const fallbackResult = await supabase
+          .from('vistorias')
+          .select('id_sequencial')
+          .eq('condominio_id', condominioId)
+          .order('id_sequencial', { ascending: false })
+          .limit(1);
+        
+        const ultimoNumero = fallbackResult.data && fallbackResult.data.length > 0 ? 
+          fallbackResult.data[0].id_sequencial : 0;
+        return ultimoNumero + 1;
       }
 
-      const ultimoNumero = data && data.length > 0 ? data[0].id_sequencial : 0;
-      const proximoNumero = ultimoNumero + 1;
-      
-      console.log('Próximo número sequencial:', proximoNumero);
+      const proximoNumero = data || 1;
+      console.log('Próximo número sequencial (atômico):', proximoNumero);
       return proximoNumero;
     } catch (error) {
       console.error('Erro ao obter próximo número:', error);
