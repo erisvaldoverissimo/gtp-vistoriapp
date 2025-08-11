@@ -100,22 +100,6 @@ const handler = async (req: Request): Promise<Response> => {
     const accessUrl = `https://${baseUrl}.lovable.app/pdf-access/${token}`;
     console.log('URL de acesso criada:', accessUrl);
 
-    // Preparar lista de destinatários
-    const destinatarios = [emailPrincipal];
-    console.log('Email principal adicionado:', emailPrincipal);
-    
-    if (emailsCopia && emailsCopia.length > 0) {
-      const emailsValidosCopia = emailsCopia.filter(email => email && email.trim());
-      console.log('Emails de cópia recebidos:', emailsCopia);
-      console.log('Emails de cópia válidos:', emailsValidosCopia);
-      destinatarios.push(...emailsValidosCopia);
-    }
-
-    console.log('=== DESTINATÁRIOS FINAIS ===');
-    console.log('Total de destinatários:', destinatarios.length);
-    console.log('Lista completa:', destinatarios);
-    console.log('==========================');
-
     // Inicializar Resend
     const resend = new Resend(resendApiKey);
 
@@ -132,27 +116,39 @@ const handler = async (req: Request): Promise<Response> => {
       })
     );
 
-    // Enviar email usando Resend
-    console.log('=== ENVIANDO EMAIL ===');
-    console.log('Para:', destinatarios);
-    console.log('Assunto:', assunto);
-    console.log('======================');
+    // Preparar lista de destinatários
+    const todosDestinatarios = [emailPrincipal];
+    console.log('Email principal:', emailPrincipal);
     
-    const { data: emailData, error: emailError } = await resend.emails.send({
+    if (emailsCopia && emailsCopia.length > 0) {
+      const emailsValidosCopia = emailsCopia.filter(email => email && email.trim());
+      console.log('Emails de cópia recebidos:', emailsCopia);
+      console.log('Emails de cópia válidos:', emailsValidosCopia);
+      todosDestinatarios.push(...emailsValidosCopia);
+    }
+
+    console.log('=== TODOS OS DESTINATÁRIOS ===');
+    console.log('Total:', todosDestinatarios.length);
+    console.log('Lista:', todosDestinatarios);
+    console.log('==============================');
+
+    // Enviar email principal
+    console.log('=== ENVIANDO EMAIL PRINCIPAL ===');
+    console.log('Para:', emailPrincipal);
+    
+    const { data: emailPrincipalData, error: emailPrincipalError } = await resend.emails.send({
       from: 'Sistema GTP <vistoria@resend.dev>',
-      to: destinatarios,
+      to: [emailPrincipal],
       subject: assunto,
       html: conteudoHtml,
     });
 
-    console.log('=== RESPOSTA DO RESEND ===');
-    console.log('Dados da resposta:', emailData);
-    console.log('==========================');
-
-    if (emailError) {
-      console.error('Erro no Resend:', emailError);
+    console.log('Resposta email principal:', emailPrincipalData);
+    
+    if (emailPrincipalError) {
+      console.error('Erro no email principal:', emailPrincipalError);
       return new Response(
-        JSON.stringify({ error: 'Erro ao enviar email', details: emailError }),
+        JSON.stringify({ error: 'Erro ao enviar email principal', details: emailPrincipalError }),
         { 
           status: 500, 
           headers: { 'Content-Type': 'application/json', ...corsHeaders } 
@@ -160,14 +156,51 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('Email enviado com sucesso!');
+    // Enviar emails de cópia separadamente
+    const emailsEnviados = [emailPrincipal];
+    const respostasEmails = [emailPrincipalData];
+
+    if (emailsCopia && emailsCopia.length > 0) {
+      const emailsValidosCopia = emailsCopia.filter(email => email && email.trim());
+      
+      for (const emailCopia of emailsValidosCopia) {
+        console.log('=== ENVIANDO EMAIL DE CÓPIA ===');
+        console.log('Para:', emailCopia);
+        
+        const { data: emailCopiaData, error: emailCopiaError } = await resend.emails.send({
+          from: 'Sistema GTP <vistoria@resend.dev>',
+          to: [emailCopia],
+          subject: assunto,
+          html: conteudoHtml,
+        });
+
+        console.log('Resposta email cópia:', emailCopiaData);
+        
+        if (emailCopiaError) {
+          console.error('Erro no email de cópia para', emailCopia, ':', emailCopiaError);
+          // Continua mesmo se um email de cópia falhar
+        } else {
+          emailsEnviados.push(emailCopia);
+          respostasEmails.push(emailCopiaData);
+        }
+      }
+    }
+
+    console.log('=== RESUMO DO ENVIO ===');
+    console.log('Emails enviados com sucesso:', emailsEnviados);
+    console.log('Total de emails enviados:', emailsEnviados.length);
+    console.log('IDs dos emails:', respostasEmails.map(r => r?.id));
+    console.log('======================');
+
+    console.log('Todos os emails enviados com sucesso!');
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Email enviado com sucesso',
+        message: 'Emails enviados com sucesso',
         accessToken: token,
-        destinatarios,
-        emailId: emailData?.id
+        destinatarios: emailsEnviados,
+        emailIds: respostasEmails.map(r => r?.id),
+        totalEnviados: emailsEnviados.length
       }),
       {
         status: 200,
