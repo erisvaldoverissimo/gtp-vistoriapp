@@ -56,7 +56,7 @@ const UploadFotos = ({
   const [selectedFoto, setSelectedFoto] = useState<{ url: string; nome: string; descricao?: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const MAX_DESCRICAO_LENGTH = 200;
+  const MAX_DESCRICAO_LENGTH = 300;
 
   // Carregar fotos existentes quando o componente monta ou fotosExistentes muda
   useEffect(() => {
