@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Edit, Trash2, Users, Shield, User } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Plus, Edit, Trash2, Users, Shield, User, Copy, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Usuario, useUsuarios } from '@/hooks/useUsuarios';
 import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
+import { supabase } from '@/integrations/supabase/client';
 
 const GerenciarUsuarios = () => {
   const { toast } = useToast();
@@ -18,6 +20,11 @@ const GerenciarUsuarios = () => {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [condominioSelecionado, setCondominioSelecionado] = useState<string | undefined>(undefined);
+  const [senhaModalAberto, setSenhaModalAberto] = useState(false);
+  const [senhaGerada, setSenhaGerada] = useState<string>('');
+  const [novoUsuarioId, setNovoUsuarioId] = useState<string>('');
+  const [novoUsuarioEmail, setNovoUsuarioEmail] = useState<string>('');
+  const [resetLoading, setResetLoading] = useState(false);
   const [formData, setFormData] = useState<Omit<Usuario, 'id'>>({
     nome: '',
     email: '',
@@ -66,11 +73,17 @@ const GerenciarUsuarios = () => {
         description: "Os dados do usuário foram atualizados com sucesso.",
       });
     } else {
-      await adicionarUsuario(formData, condominioSelecionado);
-      toast({
-        title: "Usuário cadastrado",
-        description: "Usuário cadastrado com sucesso.",
-      });
+      const result = await adicionarUsuario(formData, condominioSelecionado);
+      if (!result?.error) {
+        setSenhaGerada(result?.tempPassword || '');
+        setNovoUsuarioId(result?.userId || '');
+        setNovoUsuarioEmail(formData.email);
+        setSenhaModalAberto(true);
+        toast({
+          title: "Usuário cadastrado",
+          description: "Usuário criado com sucesso. A senha temporária está abaixo.",
+        });
+      }
     }
     
     resetForm();
@@ -144,13 +157,14 @@ const GerenciarUsuarios = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     placeholder="email@exemplo.com"
+                    required
                   />
                 </div>
                 <div>
@@ -361,6 +375,61 @@ const GerenciarUsuarios = () => {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={senhaModalAberto} onOpenChange={setSenhaModalAberto}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Dados de acesso do novo usuário</DialogTitle>
+            <DialogDescription>Copie e envie por e-mail. Recomende que altere a senha no primeiro acesso.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Email</Label>
+              <div className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
+                <span className="truncate">{novoUsuarioEmail}</span>
+                <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(novoUsuarioEmail)}>
+                  <Copy className="mr-2 h-4 w-4" /> Copiar
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label>Senha temporária</Label>
+              <div className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
+                <span className="font-mono tracking-wider">{senhaGerada}</span>
+                <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(senhaGerada)}>
+                  <Copy className="mr-2 h-4 w-4" /> Copiar
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                if (!novoUsuarioId) return;
+                try {
+                  setResetLoading(true);
+                  const { data, error } = await supabase.functions.invoke('resetar-senha-usuario', {
+                    body: { userId: novoUsuarioId },
+                  });
+                  if (error) throw error;
+                  const nova = (data as any)?.tempPassword as string;
+                  setSenhaGerada(nova);
+                  toast({ title: 'Senha atualizada', description: 'Nova senha temporária gerada.' });
+                } catch (e) {
+                  toast({ title: 'Erro', description: 'Não foi possível gerar nova senha.', variant: 'destructive' });
+                } finally {
+                  setResetLoading(false);
+                }
+              }}
+              disabled={resetLoading}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> {resetLoading ? 'Gerando...' : 'Gerar nova senha'}
+            </Button>
+            <Button onClick={() => setSenhaModalAberto(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

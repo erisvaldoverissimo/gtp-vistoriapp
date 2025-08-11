@@ -2,3 +2,9 @@ project_id = "wavialznxjylwuenybih"
 
 [functions.enviar-email-pdf]
 verify_jwt = true
+
+[functions.criar-usuario]
+verify_jwt = true
+
+[functions.resetar-senha-usuario]
+verify_jwt = true
