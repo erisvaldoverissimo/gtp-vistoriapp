@@ -81,19 +81,19 @@ ${condominioInfo?.tipo ? `- Tipo: ${condominioInfo.tipo}` : ''}${exemplosTexto}
 ANÁLISE INTELIGENTE:
 - Identifique automaticamente o principal elemento/atividade/problema
 - Use linguagem técnica clara e objetiva, NUNCA comece com "A imagem mostra" ou similares
-- Seja direto: inicie descrevendo o elemento e sua condição (ex: "viga de concreto com sinais evidentes de deterioração")
+- Escreva um texto descritivo corrido e natural, como um parágrafo técnico
+- Inicie descrevendo o elemento e sua condição, seguindo com detalhes em sequência natural
 - Priorize informações mais relevantes para decisões de manutenção
-- Descreva trabalhos em andamento, condições estruturais ou anomalias
 - MÁXIMO 300 caracteres
 
-FORMATO OBRIGATÓRIO: "[Elemento e material] com [condição/anomalia]. [Detalhes técnicos observados]. [Consequências/observações]"`,
+ESTILO: Texto descritivo técnico corrido, como um relatório de vistoria profissional`,
 
       estrutural: `
 FOCO ESTRUTURAL:
 - NUNCA comece com "A imagem mostra" ou similares
-- Inicie diretamente: "[elemento estrutural] com [condição]" (ex: "viga de concreto com fissuras visíveis")
+- Escreva um texto descritivo corrido e técnico sobre elementos estruturais
 - Analise elementos estruturais: lajes, vigas, pilares, paredes, fundações
-- Identifique fissuras, rachaduras, deformações, deslocamentos
+- Identifique fissuras, rachaduras, deformações, deslocamentos em um parágrafo fluido
 - Avalie materiais: concreto, alvenaria, estrutura metálica
 - Note sinais de deterioração, corrosão ou sobrecarga
 - MÁXIMO 400 caracteres`,
@@ -101,29 +101,29 @@ FOCO ESTRUTURAL:
       instalacoes: `
 FOCO INSTALAÇÕES:
 - NUNCA comece com "A imagem mostra" ou similares
-- Inicie diretamente: "[tipo de instalação] com [condição]" (ex: "tubulação hidráulica com vazamento aparente")
+- Escreva um texto descritivo corrido sobre as instalações observadas
 - Identifique instalações elétricas: quadros, cabos, tomadas, luminárias
 - Observe instalações hidráulicas: tubulações, registros, válvulas
-- Note condições de funcionamento, adequação às normas
+- Note condições de funcionamento, adequação às normas em texto fluido
 - Identifique problemas: vazamentos, sobrecarga, obsolescência
 - MÁXIMO 350 caracteres`,
 
       acabamentos: `
 FOCO ACABAMENTOS:
 - NUNCA comece com "A imagem mostra" ou similares
-- Inicie diretamente: "[tipo de acabamento] com [condição]" (ex: "revestimento cerâmico com descolamentos")
-- Analise revestimentos: pisos, paredes, tetos
+- Escreva um texto descritivo corrido sobre revestimentos e acabamentos
+- Analise revestimentos: pisos, paredes, tetos em descrição fluida
 - Observe pintura, azulejos, cerâmica, pedras naturais
-- Note desgaste, manchas, descolamentos, trincas
+- Note desgaste, manchas, descolamentos, trincas em parágrafo natural
 - Avalie necessidade de reforma ou manutenção
 - MÁXIMO 300 caracteres`,
 
       seguranca: `
 FOCO SEGURANÇA:
 - NUNCA comece com "A imagem mostra" ou similares
-- Inicie diretamente: "[elemento de segurança] com [condição]" (ex: "corrimão metálico com oxidação severa")
+- Escreva um texto descritivo corrido sobre aspectos de segurança
 - Identifique elementos de segurança: grades, portões, corrimãos
-- Observe acessibilidade: rampas, sinalização, obstáculos
+- Observe acessibilidade: rampas, sinalização, obstáculos em descrição fluida
 - Note riscos: superfícies escorregadias, obstáculos, iluminação inadequada
 - Avalie conformidade com normas de segurança
 - MÁXIMO 350 caracteres`,
@@ -131,8 +131,8 @@ FOCO SEGURANÇA:
       conservacao: `
 FOCO CONSERVAÇÃO:
 - NUNCA comece com "A imagem mostra" ou similares
-- Inicie diretamente: "[elemento] em estado [classificação]" (ex: "fachada em estado crítico de conservação")
-- Avalie estado geral de conservação dos elementos
+- Escreva um texto descritivo corrido sobre o estado de conservação
+- Avalie estado geral de conservação dos elementos em parágrafo fluido
 - Identifique sinais de deterioração natural ou acelerada
 - Note áreas que precisam de intervenção imediata
 - Classifique: Bom, Regular, Ruim, Crítico
@@ -141,8 +141,8 @@ FOCO CONSERVAÇÃO:
       manutencao: `
 FOCO MANUTENÇÃO:
 - NUNCA comece com "A imagem mostra" ou similares
-- Inicie diretamente: "[elemento] necessita [tipo de manutenção]" (ex: "impermeabilização necessita manutenção corretiva urgente")
-- Identifique necessidades de manutenção preventiva ou corretiva
+- Escreva um texto descritivo corrido sobre necessidades de manutenção
+- Identifique necessidades de manutenção preventiva ou corretiva em parágrafo fluido
 - Priorize intervenções por urgência e impacto
 - Sugira prazos para ações necessárias
 - Note materiais e métodos recomendados
@@ -151,10 +151,10 @@ FOCO MANUTENÇÃO:
       detalhado: `
 ANÁLISE TÉCNICA DETALHADA:
 - NUNCA comece com "A imagem mostra" ou similares
-- Inicie diretamente com o elemento e sua condição
-- Forneça análise completa e minuciosa
+- Escreva um texto descritivo técnico corrido e detalhado
+- Forneça análise completa e minuciosa em parágrafo fluido
 - Inclua aspectos técnicos, normativos e de segurança
-- Detalhe materiais, métodos construtivos, patologias
+- Detalhe materiais, métodos construtivos, patologias em texto natural
 - Sugira investigações adicionais se necessário
 - MÁXIMO 600 caracteres`
     };
