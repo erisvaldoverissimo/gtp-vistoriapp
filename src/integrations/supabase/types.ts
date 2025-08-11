@@ -297,10 +297,12 @@ export type Database = {
       grupos_vistoria: {
         Row: {
           ambiente: string
+          checklist_tecnico: Json | null
           created_at: string | null
           grupo: string
           id: string
           item: string
+          modo_checklist: boolean | null
           ordem: number | null
           parecer: string | null
           status: string
@@ -309,10 +311,12 @@ export type Database = {
         }
         Insert: {
           ambiente: string
+          checklist_tecnico?: Json | null
           created_at?: string | null
           grupo: string
           id?: string
           item: string
+          modo_checklist?: boolean | null
           ordem?: number | null
           parecer?: string | null
           status: string
@@ -321,10 +325,12 @@ export type Database = {
         }
         Update: {
           ambiente?: string
+          checklist_tecnico?: Json | null
           created_at?: string | null
           grupo?: string
           id?: string
           item?: string
+          modo_checklist?: boolean | null
           ordem?: number | null
           parecer?: string | null
           status?: string
