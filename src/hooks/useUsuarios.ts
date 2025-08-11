@@ -65,24 +65,43 @@ export const useUsuarios = () => {
     carregarUsuarios();
   }, []);
 
-  const adicionarUsuario = async (dadosUsuario: Omit<Usuario, 'id'>) => {
+  const adicionarUsuario = async (
+    dadosUsuario: Omit<Usuario, 'id'>,
+    condominioId?: string
+  ): Promise<{ userId?: string; tempPassword?: string; error?: any }> => {
     try {
-      // Como estamos trabalhando com profiles que são criados automaticamente
-      // quando um usuário se registra, esta função serve mais para demonstração
-      // Em um cenário real, novos usuários seriam criados através do registro
-      console.log('Adicionando usuário:', dadosUsuario);
-      
-      toast({
-        title: "Informação",
-        description: "Novos usuários devem se registrar através da página de autenticação.",
+      const { data, error } = await supabase.functions.invoke('criar-usuario', {
+        body: {
+          dadosUsuario: {
+            ...dadosUsuario,
+            condominioId,
+          },
+          condominioId,
+        },
       });
+
+      if (error) throw error;
+
+      await carregarUsuarios();
+
+      const tempPassword = (data as any)?.tempPassword as string | undefined;
+
+      toast({
+        title: 'Sucesso',
+        description: tempPassword
+          ? `Usuário criado. Senha temporária: ${tempPassword}`
+          : 'Usuário criado com sucesso.',
+      });
+
+      return { userId: (data as any)?.userId, tempPassword };
     } catch (error) {
       console.error('Erro ao adicionar usuário:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível adicionar o usuário.",
-        variant: "destructive",
+        title: 'Erro',
+        description: 'Não foi possível adicionar o usuário.',
+        variant: 'destructive',
       });
+      return { error };
     }
   };
 

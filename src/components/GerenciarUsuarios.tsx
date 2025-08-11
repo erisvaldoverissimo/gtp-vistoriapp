@@ -9,12 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Edit, Trash2, Users, Shield, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Usuario, useUsuarios } from '@/hooks/useUsuarios';
+import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
 
 const GerenciarUsuarios = () => {
   const { toast } = useToast();
   const { usuarios, adicionarUsuario, atualizarUsuario, removerUsuario } = useUsuarios();
+  const { condominios } = useCondominiosSupabase();
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [condominioSelecionado, setCondominioSelecionado] = useState<string | undefined>(undefined);
   const [formData, setFormData] = useState<Omit<Usuario, 'id'>>({
     nome: '',
     email: '',
@@ -39,11 +42,12 @@ const GerenciarUsuarios = () => {
       email_copia_2: '',
       email_copia_3: ''
     });
+    setCondominioSelecionado(undefined);
     setEditandoId(null);
     setMostrarFormulario(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.nome.trim()) {
@@ -56,13 +60,13 @@ const GerenciarUsuarios = () => {
     }
 
     if (editandoId) {
-      atualizarUsuario(editandoId, formData);
+      await atualizarUsuario(editandoId, formData);
       toast({
         title: "Usuário atualizado",
         description: "Os dados do usuário foram atualizados com sucesso.",
       });
     } else {
-      adicionarUsuario(formData);
+      await adicionarUsuario(formData, condominioSelecionado);
       toast({
         title: "Usuário cadastrado",
         description: "Usuário cadastrado com sucesso.",
@@ -189,6 +193,22 @@ const GerenciarUsuarios = () => {
                           Administrador
                         </div>
                       </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="condominio">Condomínio (acesso)</Label>
+                  <Select
+                    value={condominioSelecionado || undefined}
+                    onValueChange={(value) => setCondominioSelecionado(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um condomínio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {condominios.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
