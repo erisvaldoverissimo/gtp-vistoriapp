@@ -25,6 +25,7 @@ const GerenciarUsuarios = () => {
   const [novoUsuarioId, setNovoUsuarioId] = useState<string>('');
   const [novoUsuarioEmail, setNovoUsuarioEmail] = useState<string>('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [definirSenhaLoading, setDefinirSenhaLoading] = useState(false);
   const [definirSenhaManual, setDefinirSenhaManual] = useState(false);
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
@@ -310,6 +311,66 @@ const GerenciarUsuarios = () => {
                   </div>
                 </div>
               </div>
+              
+              {/* Redefinição de senha - somente na edição */}
+              {editandoId && (
+                <div className="border-t pt-4 mt-4 space-y-3">
+                  <h4 className="text-lg font-medium mb-1 text-gray-700">Redefinir senha do usuário</h4>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="redefinir-senha" checked={definirSenhaManual} onCheckedChange={setDefinirSenhaManual} />
+                    <Label htmlFor="redefinir-senha">Redefinir senha manualmente</Label>
+                  </div>
+                  {definirSenhaManual && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="senha-edit">Nova senha</Label>
+                          <Input id="senha-edit" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Mínimo 8 caracteres" />
+                        </div>
+                        <div>
+                          <Label htmlFor="confirmarSenha-edit">Confirmar nova senha</Label>
+                          <Input id="confirmarSenha-edit" type="password" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} placeholder="Repita a senha" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          onClick={async () => {
+                            if (!editandoId) return;
+                            if (!senha || senha.length < 8) {
+                              toast({ title: 'Senha inválida', description: 'A senha deve ter pelo menos 8 caracteres.', variant: 'destructive' });
+                              return;
+                            }
+                            if (senha !== confirmarSenha) {
+                              toast({ title: 'Senhas não coincidem', description: 'Confirme a senha corretamente.', variant: 'destructive' });
+                              return;
+                            }
+                            try {
+                              setDefinirSenhaLoading(true);
+                              const { error } = await supabase.functions.invoke('resetar-senha-usuario', {
+                                body: { userId: editandoId, newPassword: senha },
+                              });
+                              if (error) throw error;
+                              toast({ title: 'Senha atualizada', description: 'A nova senha foi aplicada com sucesso.' });
+                              setSenha('');
+                              setConfirmarSenha('');
+                              setDefinirSenhaManual(false);
+                            } catch (err) {
+                              toast({ title: 'Erro', description: 'Não foi possível atualizar a senha.', variant: 'destructive' });
+                            } finally {
+                              setDefinirSenhaLoading(false);
+                            }
+                          }}
+                          disabled={definirSenhaLoading}
+                          className="bg-teal-600 hover:bg-teal-700"
+                        >
+                          {definirSenhaLoading ? 'Aplicando...' : 'Aplicar nova senha'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div className="flex items-center space-x-2">
                 <Switch
