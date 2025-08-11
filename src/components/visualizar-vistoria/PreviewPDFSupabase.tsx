@@ -208,25 +208,25 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
   const totalPages = calculateTotalPages();
 
   const renderCabecalho = () => (
-    <div className="bg-brand-purple text-white p-4 rounded-t-lg mb-4">
+    <div className="bg-brand-purple text-white p-3 rounded-t-lg mb-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center justify-center">
           <img 
             src="/lovable-uploads/9e07dcd0-b996-4996-9028-7daeb90e3140.png" 
             alt="Logo GTP Esquerda" 
-            className="w-20 h-20 object-contain"
+            className="w-16 h-16 object-contain"
             crossOrigin="anonymous"
           />
         </div>
         <div className="text-center">
-          <h1 className="text-xl font-bold">Relatório de Vistoria Técnica - GTP</h1>
-          <p className="text-purple-200 text-sm">Sistema de Vistorias Prediais</p>
+          <h1 className="text-lg font-bold">Relatório de Vistoria Técnica - GTP</h1>
+          <p className="text-purple-200 text-xs">Sistema de Vistorias Prediais</p>
         </div>
         <div className="flex items-center justify-center">
           <img 
             src="/lovable-uploads/bfe02df4-f545-4232-ad0a-e69690083a38.png" 
             alt="Logo GTP Direita" 
-            className="w-20 h-20 object-contain"
+            className="w-16 h-16 object-contain"
             crossOrigin="anonymous"
           />
         </div>
@@ -235,8 +235,8 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
   );
 
   const renderInformacoesVistoria = () => (
-    <div className="bg-gray-100 p-3 rounded-lg mb-4">
-      <div className="grid grid-cols-4 gap-3 text-xs">
+    <div className="bg-gray-100 p-2 rounded-lg mb-3">
+      <div className="grid grid-cols-4 gap-2 text-[11px]">
         <div>
           <span className="font-semibold">Data de emissão:</span>
           <br />
@@ -283,13 +283,13 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
 
       return (
         <div className="mb-4">
-          <h3 className="text-base font-semibold mb-2 text-brand-purple">
-            Sistema de Vistoria {grupoIndex + 1} - <span className="text-sm bg-blue-100 px-2 py-1 rounded">Checklist Técnico</span>
+          <h3 className="text-sm font-semibold mb-1 text-brand-purple">
+            Sistema de Vistoria {grupoIndex + 1} - <span className="text-xs bg-blue-100 px-1 py-0.5 rounded">Checklist Técnico</span>
           </h3>
           
           {/* Informações Técnicas Estruturadas */}
-          <div className="bg-blue-50 p-3 rounded-lg mb-3">
-            <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="bg-blue-50 p-2 rounded-lg mb-2">
+            <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
                 <span className="font-semibold text-blue-800">Sistema:</span>
                 <br />
@@ -308,7 +308,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
               <div>
                 <span className="font-semibold text-blue-800">Status:</span>
                 <br />
-                <span className={`inline-block px-2 py-1 rounded text-xs ${
+                <span className={`inline-block px-1 py-0.5 rounded text-xs ${
                   grupo.status === 'N/A' ? 'bg-gray-200' :
                   grupo.status === 'Conforme' ? 'bg-brand-green text-white' :
                   grupo.status === 'Não Conforme' ? 'bg-red-200 text-red-800' :
@@ -323,7 +323,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           {/* Manifestações Patológicas */}
           {manifestacoesSelecionadas.length > 0 && (
             <div className="mb-3">
-              <h4 className="text-sm font-semibold mb-2 text-red-600">Manifestações Patológicas Identificadas:</h4>
+              <h4 className="text-sm font-semibold mb-1 text-red-600">Manifestações Patológicas Identificadas:</h4>
               <div className="space-y-1">
                 {manifestacoesSelecionadas.map((manifestacao, index) => (
                   <div key={manifestacao.id} className="bg-red-50 p-2 rounded border-l-4 border-red-400">
@@ -331,7 +331,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                       <span className="font-mono text-xs bg-red-100 px-2 py-1 rounded text-red-700 min-w-fit">
                         {manifestacao.codigo}
                       </span>
-                      <span className="text-xs text-gray-700 leading-relaxed">
+                      <span className="text-xs text-gray-700 leading-tight">
                         {manifestacao.descricao}
                       </span>
                     </div>
@@ -344,8 +344,8 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           {/* Observações Técnicas */}
           {checklist.observacoesTecnicas && (
             <div className="mb-3">
-              <h4 className="text-sm font-semibold mb-2 text-gray-700">Observações Técnicas:</h4>
-              <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded leading-relaxed">
+              <h4 className="text-sm font-semibold mb-1 text-gray-700">Observações Técnicas:</h4>
+              <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded leading-tight">
                 {checklist.observacoesTecnicas}
               </p>
             </div>
@@ -354,8 +354,8 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           {/* Parecer Geral (se existir) */}
           {grupo.parecer && (
             <div className="mb-3">
-              <h4 className="text-sm font-semibold mb-2 text-gray-700">Parecer Geral:</h4>
-              <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded leading-relaxed">
+              <h4 className="text-sm font-semibold mb-1 text-gray-700">Parecer Geral:</h4>
+              <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded leading-tight">
                 {truncateText(grupo.parecer, 200)}
               </p>
             </div>
@@ -367,7 +367,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     // Modo tradicional - tabela original
     return (
       <div className="mb-4">
-        <h3 className="text-base font-semibold mb-2 text-brand-purple">
+        <h3 className="text-sm font-semibold mb-2 text-brand-purple">
           Sistema de Vistoria {grupoIndex + 1}
         </h3>
         <table className="w-full border-collapse border border-gray-300 text-xs">
@@ -412,7 +412,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
       <div className="mb-2">
         <h3 className="text-sm font-semibold mb-1 text-brand-purple">Observações Gerais</h3>
         <p className="text-xs text-gray-700 bg-gray-50 p-2 rounded leading-tight break-words">
-          {truncateText(vistoria.observacoes_gerais, 150)}
+          {truncateText(vistoria.observacoes_gerais, 120)}
         </p>
       </div>
     )
@@ -422,7 +422,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     <div className="mt-auto">
       {renderObservacoesGerais()}
       
-      <div className="border-t pt-2 text-xs text-gray-600 flex justify-between items-center">
+      <div className="border-t pt-1 text-xs text-gray-600 flex justify-between items-center">
         <p>Relatório gerado automaticamente pelo Sistema de Vistorias - {formatDate(new Date().toISOString())} às {getCurrentTime()}</p>
         <p className="font-medium">Página {currentPageNumber}/{totalPages}</p>
       </div>
@@ -440,7 +440,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     });
     
     return (
-      <div className="border rounded-lg p-3 flex-1">
+      <div className="border rounded-lg p-2 flex-1">
         <AspectRatio ratio={4/3}>
           <img
             src={foto.arquivo_url}
@@ -468,10 +468,10 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
           />
         </AspectRatio>
         <div>
-          <p className="text-sm font-medium mb-2">
+          <p className="text-xs font-medium mb-1">
             Foto {String(numeroFoto).padStart(2, '0')} - Sistema {grupoIndex + 1}
           </p>
-          <p className="text-xs text-gray-700 leading-relaxed break-words">
+          <p className="text-xs text-gray-700 leading-tight break-words">
             {descricaoFoto}
           </p>
         </div>
@@ -559,13 +559,13 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                   {renderInformacoesVistoria()}
                   {renderTabelaGrupo(grupo, grupoIndex)}
                   
-                  <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                  <h4 className="text-sm font-semibold mb-2 text-brand-purple">
                     Evidências Fotográficas - Sistema {grupoIndex + 1}
                   </h4>
                   
                   {/* Layout com 2 fotos lado a lado na primeira página */}
                   {fotos.length > 0 && (
-                    <div className="flex gap-4 mb-4">
+                    <div className="flex gap-3 mb-3">
                       {fotos.slice(0, 2).map((foto, idx) => (
                         <div key={`primeira-${idx}`} className="flex-1">
                           {renderFotoCard(foto, idx, grupoIndex)}
@@ -588,11 +588,11 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                   <div key={`${grupo.id}-adicional-${i}`} className="page flex flex-col gap-3 min-h-screen">
                     {renderCabecalho()}
                     
-                    <h4 className="text-sm font-semibold mb-3 text-brand-purple">
+                    <h4 className="text-sm font-semibold mb-2 text-brand-purple">
                       Evidências Fotográficas - Sistema {grupoIndex + 1} (Continuação)
                     </h4>
                     
-                    <div className="flex gap-4 mb-4">
+                    <div className="flex gap-3 mb-3">
                       {fotosPagina.map((foto, idx) => (
                         <div key={`adicional-${i + idx}`} className="flex-1">
                           {renderFotoCard(foto, i + idx + 2, grupoIndex)}
