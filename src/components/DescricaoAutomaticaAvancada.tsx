@@ -80,15 +80,18 @@ ${condominioInfo?.tipo ? `- Tipo: ${condominioInfo.tipo}` : ''}${exemplosTexto}
       auto: `
 ANÁLISE INTELIGENTE:
 - Identifique automaticamente o principal elemento/atividade/problema
-- Use linguagem técnica clara e objetiva
+- Use linguagem técnica clara e objetiva, NUNCA comece com "A imagem mostra" ou similares
+- Seja direto: inicie descrevendo o elemento e sua condição (ex: "viga de concreto com sinais evidentes de deterioração")
 - Priorize informações mais relevantes para decisões de manutenção
 - Descreva trabalhos em andamento, condições estruturais ou anomalias
 - MÁXIMO 300 caracteres
 
-FORMATO: "[Elemento principal] - [Condição/Atividade] - [Observação técnica relevante]"`,
+FORMATO OBRIGATÓRIO: "[Elemento e material] com [condição/anomalia]. [Detalhes técnicos observados]. [Consequências/observações]"`,
 
       estrutural: `
 FOCO ESTRUTURAL:
+- NUNCA comece com "A imagem mostra" ou similares
+- Inicie diretamente: "[elemento estrutural] com [condição]" (ex: "viga de concreto com fissuras visíveis")
 - Analise elementos estruturais: lajes, vigas, pilares, paredes, fundações
 - Identifique fissuras, rachaduras, deformações, deslocamentos
 - Avalie materiais: concreto, alvenaria, estrutura metálica
@@ -97,6 +100,8 @@ FOCO ESTRUTURAL:
 
       instalacoes: `
 FOCO INSTALAÇÕES:
+- NUNCA comece com "A imagem mostra" ou similares
+- Inicie diretamente: "[tipo de instalação] com [condição]" (ex: "tubulação hidráulica com vazamento aparente")
 - Identifique instalações elétricas: quadros, cabos, tomadas, luminárias
 - Observe instalações hidráulicas: tubulações, registros, válvulas
 - Note condições de funcionamento, adequação às normas
@@ -105,6 +110,8 @@ FOCO INSTALAÇÕES:
 
       acabamentos: `
 FOCO ACABAMENTOS:
+- NUNCA comece com "A imagem mostra" ou similares
+- Inicie diretamente: "[tipo de acabamento] com [condição]" (ex: "revestimento cerâmico com descolamentos")
 - Analise revestimentos: pisos, paredes, tetos
 - Observe pintura, azulejos, cerâmica, pedras naturais
 - Note desgaste, manchas, descolamentos, trincas
@@ -113,6 +120,8 @@ FOCO ACABAMENTOS:
 
       seguranca: `
 FOCO SEGURANÇA:
+- NUNCA comece com "A imagem mostra" ou similares
+- Inicie diretamente: "[elemento de segurança] com [condição]" (ex: "corrimão metálico com oxidação severa")
 - Identifique elementos de segurança: grades, portões, corrimãos
 - Observe acessibilidade: rampas, sinalização, obstáculos
 - Note riscos: superfícies escorregadias, obstáculos, iluminação inadequada
@@ -121,6 +130,8 @@ FOCO SEGURANÇA:
 
       conservacao: `
 FOCO CONSERVAÇÃO:
+- NUNCA comece com "A imagem mostra" ou similares
+- Inicie diretamente: "[elemento] em estado [classificação]" (ex: "fachada em estado crítico de conservação")
 - Avalie estado geral de conservação dos elementos
 - Identifique sinais de deterioração natural ou acelerada
 - Note áreas que precisam de intervenção imediata
@@ -129,6 +140,8 @@ FOCO CONSERVAÇÃO:
 
       manutencao: `
 FOCO MANUTENÇÃO:
+- NUNCA comece com "A imagem mostra" ou similares
+- Inicie diretamente: "[elemento] necessita [tipo de manutenção]" (ex: "impermeabilização necessita manutenção corretiva urgente")
 - Identifique necessidades de manutenção preventiva ou corretiva
 - Priorize intervenções por urgência e impacto
 - Sugira prazos para ações necessárias
@@ -137,6 +150,8 @@ FOCO MANUTENÇÃO:
 
       detalhado: `
 ANÁLISE TÉCNICA DETALHADA:
+- NUNCA comece com "A imagem mostra" ou similares
+- Inicie diretamente com o elemento e sua condição
 - Forneça análise completa e minuciosa
 - Inclua aspectos técnicos, normativos e de segurança
 - Detalhe materiais, métodos construtivos, patologias
