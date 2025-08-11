@@ -4,6 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
+export interface ChecklistTecnico {
+  sistemaId: string;
+  elementoId: string;
+  tipo: string;
+  manifestacoesIds: string[];
+  observacoesTecnicas: string;
+}
+
 export interface GrupoVistoriaSupabase {
   id?: string;
   vistoria_id?: string;
@@ -14,6 +22,9 @@ export interface GrupoVistoriaSupabase {
   parecer: string;
   ordem?: number;
   fotos?: FotoVistoriaSupabase[];
+  // Novos campos para checklist técnico
+  modo_checklist?: boolean;
+  checklist_tecnico?: ChecklistTecnico;
 }
 
 export interface FotoVistoriaSupabase {
@@ -95,17 +106,27 @@ export const useVistoriasSupabase = () => {
         created_at: vistoria.created_at,
         updated_at: vistoria.updated_at,
         condominio: Array.isArray(vistoria.condominio) ? vistoria.condominio[0] : vistoria.condominio,
-        grupos: (vistoria.grupos_vistoria || []).map(grupo => ({
-          id: grupo.id,
-          vistoria_id: grupo.vistoria_id,
-          ambiente: grupo.ambiente,
-          grupo: grupo.grupo,
-          item: grupo.item,
-          status: grupo.status,
-          parecer: grupo.parecer || '',
-          ordem: grupo.ordem || 0,
-          fotos: grupo.fotos_vistoria || []
-        }))
+        grupos: (vistoria.grupos_vistoria || []).map(grupo => {
+          const grupoAny = grupo as any; // Type assertion temporária
+          return {
+            id: grupo.id,
+            vistoria_id: grupo.vistoria_id,
+            ambiente: grupo.ambiente,
+            grupo: grupo.grupo,
+            item: grupo.item,
+            status: grupo.status,
+            parecer: grupo.parecer || '',
+            ordem: grupo.ordem || 0,
+            fotos: grupo.fotos_vistoria || [],
+            // Campos do checklist técnico
+            modo_checklist: grupoAny.modo_checklist || false,
+            checklist_tecnico: grupoAny.checklist_tecnico ? 
+              (typeof grupoAny.checklist_tecnico === 'string' ? 
+                JSON.parse(grupoAny.checklist_tecnico) : 
+                grupoAny.checklist_tecnico) : 
+              undefined
+          };
+        })
       }));
 
       setVistorias(vistoriasFormatadas);
@@ -170,7 +191,10 @@ export const useVistoriasSupabase = () => {
           item: grupo.item,
           status: grupo.status,
           parecer: grupo.parecer || '',
-          ordem: grupo.ordem || 0
+          ordem: grupo.ordem || 0,
+          // Campos do checklist técnico
+          modo_checklist: grupo.modo_checklist || false,
+          checklist_tecnico: grupo.checklist_tecnico ? JSON.stringify(grupo.checklist_tecnico) : null
         }));
 
         const { data: gruposData, error: gruposError } = await supabase

@@ -229,8 +229,230 @@ const DADOS_CHECKLIST: SistemaVistoria[] = [
         ]
       }
     ]
+  },
+  {
+    id: '4',
+    nome: 'SISTEMAS DE COBERTURA',
+    elementos: [
+      {
+        id: '4.1',
+        nome: 'Telhamento',
+        tipos: ['Cerâmico', 'Fibrocimento', 'Metálico', 'Vidro temperado', 'Madeira', 'PVC', 'Concreto', 'Alumínio', 'Fibra de vidro', 'Pré-moldada', 'Outro'],
+        manifestacoes: [
+          { id: '4.1.1', codigo: '4.1.1', descricao: 'Formação de fissuras por sobrecargas, falhas de armaduras, movimentações estruturais, assentamento plástico' },
+          { id: '4.1.2', codigo: '4.1.2', descricao: 'Irregularidades geométricas, deformações excessivas' },
+          { id: '4.1.3', codigo: '4.1.3', descricao: 'Falha nos elementos de fixação' },
+          { id: '4.1.4', codigo: '4.1.4', descricao: 'Desagregação de elementos, partes soltas, partes quebradas, trincas' },
+          { id: '4.1.5', codigo: '4.1.5', descricao: 'Eflorescência, desenvolvimento de organismos biológicos' },
+          { id: '4.1.6', codigo: '4.1.6', descricao: 'Degradação do material, oxidação/corrosão, apodrecimento' },
+          { id: '4.1.7', codigo: '4.1.7', descricao: 'Perda de estanqueidade, porosidade excessiva' },
+          { id: '4.1.8', codigo: '4.1.8', descricao: 'Manchamento, sujidades' },
+          { id: '4.1.9', codigo: '4.1.9', descricao: 'Deterioração do concreto, destacamento, desagregação, segregação' },
+          { id: '4.1.10', codigo: '4.1.10', descricao: 'Ataque de pragas biológicas' },
+          { id: '4.1.11', codigo: '4.1.11', descricao: 'Ineficiência nas emendas' },
+          { id: '4.1.12', codigo: '4.1.12', descricao: 'Impermeabilização ineficiente, infiltrações' },
+          { id: '4.1.13', codigo: '4.1.13', descricao: 'Subdimensionamento' },
+          { id: '4.1.14', codigo: '4.1.14', descricao: 'Obstrução por sujidades' },
+          { id: '4.1.15', codigo: '4.1.15', descricao: 'Outro' }
+        ]
+      },
+      {
+        id: '4.2',
+        nome: 'Estrutura do telhamento',
+        tipos: ['Madeira', 'Metálico', 'Concreto', 'Pré-moldada', 'Outro'],
+        manifestacoes: [
+          { id: '4.2.1', codigo: '4.2.1', descricao: 'Formação de fissuras por sobrecargas, falhas de armaduras, movimentações estruturais, assentamento plástico' },
+          { id: '4.2.2', codigo: '4.2.2', descricao: 'Irregularidades geométricas, deformações excessivas' },
+          { id: '4.2.3', codigo: '4.2.3', descricao: 'Falha nos elementos de fixação' },
+          { id: '4.2.4', codigo: '4.2.4', descricao: 'Desagregação de elementos, partes soltas, partes quebradas, trincas' },
+          { id: '4.2.5', codigo: '4.2.5', descricao: 'Eflorescência, desenvolvimento de organismos biológicos' },
+          { id: '4.2.6', codigo: '4.2.6', descricao: 'Degradação do material, oxidação/corrosão, apodrecimento' },
+          { id: '4.2.7', codigo: '4.2.7', descricao: 'Deterioração do concreto, destacamento, desagregação, segregação' },
+          { id: '4.2.8', codigo: '4.2.8', descricao: 'Ataque de pragas biológicas' },
+          { id: '4.2.9', codigo: '4.2.9', descricao: 'Outro' }
+        ]
+      },
+      {
+        id: '4.3',
+        nome: 'Rufos e calhas',
+        tipos: ['Alumínio', 'Metálico', 'PVC', 'Concreto', 'Fibrocimento', 'Outro'],
+        manifestacoes: [
+          { id: '4.3.1', codigo: '4.3.1', descricao: 'Degradação do material, oxidação/corrosão' },
+          { id: '4.3.2', codigo: '4.3.2', descricao: 'Desagregação de elementos, partes soltas, partes quebradas' },
+          { id: '4.3.3', codigo: '4.3.3', descricao: 'Perda de estanqueidade, infiltrações' },
+          { id: '4.3.4', codigo: '4.3.4', descricao: 'Subdimensionamento' },
+          { id: '4.3.5', codigo: '4.3.5', descricao: 'Obstrução por sujidades' },
+          { id: '4.3.6', codigo: '4.3.6', descricao: 'Ineficiência nas emendas' },
+          { id: '4.3.7', codigo: '4.3.7', descricao: 'Outro' }
+        ]
+      },
+      {
+        id: '4.4',
+        nome: 'Lajes impermeabilizadas',
+        tipos: ['Concreto armado', 'Pré-moldada', 'Outro'],
+        manifestacoes: [
+          { id: '4.4.1', codigo: '4.4.1', descricao: 'Formação de fissuras por sobrecargas, falhas de armaduras, movimentações estruturais' },
+          { id: '4.4.2', codigo: '4.4.2', descricao: 'Deterioração do concreto, destacamento, desagregação, segregação' },
+          { id: '4.4.3', codigo: '4.4.3', descricao: 'Impermeabilização ineficiente, infiltrações' },
+          { id: '4.4.4', codigo: '4.4.4', descricao: 'Eflorescência, desenvolvimento de organismos biológicos' },
+          { id: '4.4.5', codigo: '4.4.5', descricao: 'Irregularidades geométricas, deformações excessivas' },
+          { id: '4.4.6', codigo: '4.4.6', descricao: 'Outro' }
+        ]
+      }
+    ]
+  },
+  {
+    id: '5',
+    nome: 'SISTEMAS DE RESERVATÓRIOS',
+    elementos: [
+      {
+        id: '5.1',
+        nome: 'Caixas d\'água e cisternas',
+        tipos: ['Concreto armado', 'Metálico', 'Polietileno', 'Fibrocimento', 'Fibra de vidro', 'Outro'],
+        manifestacoes: [
+          { id: '5.1.1', codigo: '5.1.1', descricao: 'Formação de fissuras por sobrecargas, falhas de armaduras, movimentações estruturais, assentamento plástico, recalques' },
+          { id: '5.1.2', codigo: '5.1.2', descricao: 'Deterioração do concreto, destacamento, desagregação, segregação' },
+          { id: '5.1.3', codigo: '5.1.3', descricao: 'Degradação/desgaste do material, oxidação, corrosão' },
+          { id: '5.1.4', codigo: '5.1.4', descricao: 'Eflorescência, desenvolvimento de microorganismos biológicos' },
+          { id: '5.1.5', codigo: '5.1.5', descricao: 'Irregularidades geométricas, falhas de concretagem' },
+          { id: '5.1.6', codigo: '5.1.6', descricao: 'Armadura exposta' },
+          { id: '5.1.7', codigo: '5.1.7', descricao: 'Vazamento/infiltrações de umidade' },
+          { id: '5.1.8', codigo: '5.1.8', descricao: 'Colapso do solo' },
+          { id: '5.1.9', codigo: '5.1.9', descricao: 'Ausência/ineficiência de tampa dos reservatórios' },
+          { id: '5.1.10', codigo: '5.1.10', descricao: 'Outro' }
+        ]
+      }
+    ]
+  },
+  {
+    id: '6',
+    nome: 'SISTEMAS DE INSTALAÇÕES PASSÍVEIS DE VERIFICAÇÃO VISUAL',
+    elementos: [
+      {
+        id: '6.1',
+        nome: 'Hidrossanitárias',
+        tipos: ['PVC', 'Metálico', 'PPR', 'Ferro fundido', 'Cerâmico', 'Concreto', 'Outro'],
+        manifestacoes: [
+          { id: '6.1.1', codigo: '6.1.1', descricao: 'Degradação/desgaste do material, oxidação, corrosão' },
+          { id: '6.1.2', codigo: '6.1.2', descricao: 'Desagregação de elementos, partes soltas, partes quebradas' },
+          { id: '6.1.3', codigo: '6.1.3', descricao: 'Entupimentos' },
+          { id: '6.1.4', codigo: '6.1.4', descricao: 'Vazamentos e infiltrações' },
+          { id: '6.1.5', codigo: '6.1.5', descricao: 'Não conformidade na pintura das tubulações' },
+          { id: '6.1.6', codigo: '6.1.6', descricao: 'Irregularidades geométricas, deformações excessivas' },
+          { id: '6.1.7', codigo: '6.1.7', descricao: 'Sujidades ou materiais indevidos depositados no interior' },
+          { id: '6.1.8', codigo: '6.1.8', descricao: 'Ineficiência na abertura/fechamento, trincos e fechaduras' },
+          { id: '6.1.9', codigo: '6.1.9', descricao: 'Outro' }
+        ]
+      },
+      {
+        id: '6.2',
+        nome: 'Elétricas',
+        tipos: ['Metálico', 'PVC', 'Fibrocimento', 'Outro'],
+        manifestacoes: [
+          { id: '6.2.1', codigo: '6.2.1', descricao: 'Degradação/desgaste do material, oxidação, corrosão' },
+          { id: '6.2.2', codigo: '6.2.2', descricao: 'Desagregação de elementos, partes soltas, partes quebradas' },
+          { id: '6.2.3', codigo: '6.2.3', descricao: 'Ausência de cordoalhas de aterramento entre portas e corpo dos quadros elétricos' },
+          { id: '6.2.4', codigo: '6.2.4', descricao: 'Ineficiência de funcionamento (abertura, acendimento)' },
+          { id: '6.2.5', codigo: '6.2.5', descricao: 'Lâmpadas queimadas ou ausência' },
+          { id: '6.2.6', codigo: '6.2.6', descricao: 'Risco de descarga elétrica' },
+          { id: '6.2.7', codigo: '6.2.7', descricao: 'Outro' }
+        ]
+      },
+      {
+        id: '6.3',
+        nome: 'Casa de gás',
+        tipos: ['Metálico', 'Concreto', 'Alvenaria', 'Outro'],
+        manifestacoes: [
+          { id: '6.3.1', codigo: '6.3.1', descricao: 'Degradação/desgaste do material, oxidação, corrosão' },
+          { id: '6.3.2', codigo: '6.3.2', descricao: 'Desagregação de elementos, partes soltas, partes quebradas' },
+          { id: '6.3.3', codigo: '6.3.3', descricao: 'Indícios de vazamentos de gás' },
+          { id: '6.3.4', codigo: '6.3.4', descricao: 'Ausência/inadequação do certificado de manutenção' },
+          { id: '6.3.5', codigo: '6.3.5', descricao: 'Ineficiência na abertura/fechamento, trincos e fechaduras' },
+          { id: '6.3.6', codigo: '6.3.6', descricao: 'Outro' }
+        ]
+      }
+    ]
+  },
+  {
+    id: '7',
+    nome: 'EQUIPAMENTOS',
+    elementos: [
+      {
+        id: '7.1',
+        nome: 'Elevadores',
+        tipos: ['Elétrico', 'Hidráulico', 'Outro'],
+        manifestacoes: [
+          { id: '7.1.1', codigo: '7.1.1', descricao: 'Degradação/desgaste do material, oxidação, corrosão' },
+          { id: '7.1.2', codigo: '7.1.2', descricao: 'Desagregação de elementos, partes soltas, partes quebradas' },
+          { id: '7.1.3', codigo: '7.1.3', descricao: 'Sujidades ou materiais indevidos no interior' },
+          { id: '7.1.4', codigo: '7.1.4', descricao: 'Infiltrações de umidade' },
+          { id: '7.1.5', codigo: '7.1.5', descricao: 'Fosso com infiltração de água' },
+          { id: '7.1.6', codigo: '7.1.6', descricao: 'Falhas de funcionamento' },
+          { id: '7.1.7', codigo: '7.1.7', descricao: 'Ausência/inadequação do certificado de manutenção' },
+          { id: '7.1.8', codigo: '7.1.8', descricao: 'Outro' }
+        ]
+      },
+      {
+        id: '7.2',
+        nome: 'Outros equipamentos com manutenção própria',
+        tipos: ['Portão automático', 'Sistema de CCTV', 'Interfone', 'Bomba d\'água', 'Gerador', 'Outro'],
+        manifestacoes: [
+          { id: '7.2.1', codigo: '7.2.1', descricao: 'Degradação/desgaste do material, oxidação, corrosão' },
+          { id: '7.2.2', codigo: '7.2.2', descricao: 'Desagregação de elementos, partes soltas, partes quebradas' },
+          { id: '7.2.3', codigo: '7.2.3', descricao: 'Falhas de funcionamento' },
+          { id: '7.2.4', codigo: '7.2.4', descricao: 'Ausência/inadequação do certificado de manutenção' },
+          { id: '7.2.5', codigo: '7.2.5', descricao: 'Infiltrações de umidade' },
+          { id: '7.2.6', codigo: '7.2.6', descricao: 'Outro' }
+        ]
+      }
+    ]
+  },
+  {
+    id: '8',
+    nome: 'SISTEMAS DE PREVENÇÃO CONTRA INCÊNDIO',
+    elementos: [
+      {
+        id: '8.1',
+        nome: 'Extintores, hidrantes, para-raios, iluminação de emergência, portas corta-fogo',
+        tipos: ['Extintor pó químico', 'Extintor CO2', 'Extintor água', 'Hidrante', 'Para-raios', 'Iluminação emergência', 'Porta corta-fogo', 'Outro'],
+        manifestacoes: [
+          { id: '8.1.1', codigo: '8.1.1', descricao: 'Degradação/desgaste do material, oxidação, corrosão' },
+          { id: '8.1.2', codigo: '8.1.2', descricao: 'Desagregação de elementos, partes soltas, partes quebradas' },
+          { id: '8.1.3', codigo: '8.1.3', descricao: 'Sujidades ou materiais indevidos no interior' },
+          { id: '8.1.4', codigo: '8.1.4', descricao: 'Infiltrações de umidade' },
+          { id: '8.1.5', codigo: '8.1.5', descricao: 'Ineficiência na abertura/fechamento, trincos e fechaduras' },
+          { id: '8.1.6', codigo: '8.1.6', descricao: 'Falhas no desempenho do sistema' },
+          { id: '8.1.7', codigo: '8.1.7', descricao: 'Falha na sinalização' },
+          { id: '8.1.8', codigo: '8.1.8', descricao: 'Obstrução de acessos' },
+          { id: '8.1.9', codigo: '8.1.9', descricao: 'Ausência/inadequação do alvará anual do CBM' },
+          { id: '8.1.10', codigo: '8.1.10', descricao: 'Ausência/inadequação do certificado de manutenção/validade de extintores' },
+          { id: '8.1.11', codigo: '8.1.11', descricao: 'Outro' }
+        ]
+      }
+    ]
+  },
+  {
+    id: '9',
+    nome: 'MANUTENÇÃO',
+    elementos: [
+      {
+        id: '9.1',
+        nome: 'Limpeza e plano de manutenções',
+        tipos: ['Plano de manutenção', 'Limpeza', 'Outro'],
+        manifestacoes: [
+          { id: '9.1.1', codigo: '9.1.1', descricao: 'Há plano de manutenção?' },
+          { id: '9.1.2', codigo: '9.1.2', descricao: 'Está coerente com normas técnicas?' },
+          { id: '9.1.3', codigo: '9.1.3', descricao: 'Rotinas estão adequadas?' },
+          { id: '9.1.4', codigo: '9.1.4', descricao: 'Existe acesso aos equipamentos?' },
+          { id: '9.1.5', codigo: '9.1.5', descricao: 'Há condições de segurança para a realização da manutenção?' },
+          { id: '9.1.6', codigo: '9.1.6', descricao: 'Os ambientes estão limpos?' },
+          { id: '9.1.7', codigo: '9.1.7', descricao: 'Há registros gerados pelas atividades de manutenção?' },
+          { id: '9.1.8', codigo: '9.1.8', descricao: 'Os registros estão organizados e disponíveis?' },
+          { id: '9.1.9', codigo: '9.1.9', descricao: 'Outro' }
+        ]
+      }
+    ]
   }
-  // ... continuar com os demais sistemas
 ];
 
 export const useChecklistVistoria = () => {
