@@ -9,6 +9,7 @@ import {
   Settings, 
   MessageSquare,
   Layers,
+  BookTemplate,
   LogOut,
   Menu,
   X
@@ -33,6 +34,7 @@ const Layout = ({ children, currentPage, onNavigate }: LayoutProps) => {
   const menuItems = [
     { id: 'vistorias', label: 'Vistorias', icon: Home },
     { id: 'nova-vistoria', label: 'Nova Vistoria', icon: FileText },
+    { id: 'templates', label: 'Templates', icon: BookTemplate },
     { id: 'usuarios', label: 'Usuários', icon: Users },
     { id: 'condominios', label: 'Condomínios', icon: Building },
     { id: 'ambientes-grupos', label: 'Ambientes e Grupos', icon: Layers },

@@ -8,6 +8,7 @@ import GerenciarCondominios from '@/components/GerenciarCondominios';
 import GerenciarAmbientesGrupos from '@/components/GerenciarAmbientesGrupos';
 import ChatIAPersistente from '@/components/ChatIAPersistente';
 import GerenciarUsuarios from '@/components/GerenciarUsuarios';
+import GerenciarTemplates from '@/components/GerenciarTemplates';
 import { useCondominiosSupabase } from '@/hooks/useCondominiosSupabase';
 
 const Index = () => {
@@ -34,6 +35,8 @@ const Index = () => {
             onBack={handleBackFromNova}
           />
         );
+      case 'templates':
+        return <GerenciarTemplates />;
       case 'usuarios':
         return <GerenciarUsuarios />;
       case 'condominios':
