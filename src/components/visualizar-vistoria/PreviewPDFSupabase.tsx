@@ -135,10 +135,20 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     dataVistoria: string;
   }) => {
     try {
-      console.log('Enviando email com dados confirmados:', dadosEnvio);
+      console.log('=== DADOS ANTES DO ENVIO ===');
+      console.log('Dados enviados para a função:', dadosEnvio);
+      console.log('emailsCopia tipo:', typeof dadosEnvio.emailsCopia);
+      console.log('emailsCopia é array:', Array.isArray(dadosEnvio.emailsCopia));
+      console.log('emailsCopia valor:', dadosEnvio.emailsCopia);
+      console.log('emailsCopia length:', dadosEnvio.emailsCopia?.length);
+      console.log('===========================');
 
       const { data, error } = await supabase.functions.invoke('enviar-email-pdf', {
-        body: dadosEnvio
+        body: {
+          ...dadosEnvio,
+          // Garantir que emailsCopia seja sempre um array
+          emailsCopia: Array.isArray(dadosEnvio.emailsCopia) ? dadosEnvio.emailsCopia : []
+        }
       });
 
       if (error) {
