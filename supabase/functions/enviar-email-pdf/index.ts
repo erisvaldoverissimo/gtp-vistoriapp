@@ -161,8 +161,20 @@ const handler = async (req: Request): Promise<Response> => {
     const respostasEmails = [emailPrincipalData];
     const errosEnvio = [];
 
+    console.log('=== PREPARANDO EMAILS DE CÓPIA ===');
+    console.log('emailsCopia recebido:', emailsCopia);
+    console.log('Tipo de emailsCopia:', typeof emailsCopia);
+    console.log('Array.isArray(emailsCopia):', Array.isArray(emailsCopia));
+
     if (emailsCopia && emailsCopia.length > 0) {
-      const emailsValidosCopia = emailsCopia.filter(email => email && email.trim());
+      const emailsValidosCopia = emailsCopia.filter(email => {
+        const isValid = email && email.trim();
+        console.log(`Email ${email} é válido:`, isValid);
+        return isValid;
+      });
+      
+      console.log('Emails válidos de cópia:', emailsValidosCopia);
+      console.log('Quantidade de emails de cópia válidos:', emailsValidosCopia.length);
       
       for (const emailCopia of emailsValidosCopia) {
         try {
@@ -191,6 +203,11 @@ const handler = async (req: Request): Promise<Response> => {
           errosEnvio.push(`${emailCopia}: ${error.message || 'Erro fatal'}`);
         }
       }
+    } else {
+      console.log('=== NÃO ENTRANDO NO LOOP DE EMAILS DE CÓPIA ===');
+      console.log('Condição emailsCopia:', !!emailsCopia);
+      console.log('emailsCopia && emailsCopia.length > 0:', emailsCopia && emailsCopia.length > 0);
+      console.log('=======================================');
     }
 
     console.log('=== RESUMO DO ENVIO ===');
