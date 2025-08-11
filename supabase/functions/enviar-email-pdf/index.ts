@@ -102,11 +102,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Preparar lista de destinatários
     const destinatarios = [emailPrincipal];
+    console.log('Email principal adicionado:', emailPrincipal);
+    
     if (emailsCopia && emailsCopia.length > 0) {
-      destinatarios.push(...emailsCopia.filter(email => email && email.trim()));
+      const emailsValidosCopia = emailsCopia.filter(email => email && email.trim());
+      console.log('Emails de cópia recebidos:', emailsCopia);
+      console.log('Emails de cópia válidos:', emailsValidosCopia);
+      destinatarios.push(...emailsValidosCopia);
     }
 
-    console.log('Destinatários:', destinatarios);
+    console.log('=== DESTINATÁRIOS FINAIS ===');
+    console.log('Total de destinatários:', destinatarios.length);
+    console.log('Lista completa:', destinatarios);
+    console.log('==========================');
 
     // Inicializar Resend
     const resend = new Resend(resendApiKey);
@@ -125,6 +133,11 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     // Enviar email usando Resend
+    console.log('=== ENVIANDO EMAIL ===');
+    console.log('Para:', destinatarios);
+    console.log('Assunto:', assunto);
+    console.log('======================');
+    
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: 'Sistema GTP <vistoria@resend.dev>',
       to: destinatarios,
@@ -132,7 +145,9 @@ const handler = async (req: Request): Promise<Response> => {
       html: conteudoHtml,
     });
 
-    console.log('Resposta do Resend:', emailData);
+    console.log('=== RESPOSTA DO RESEND ===');
+    console.log('Dados da resposta:', emailData);
+    console.log('==========================');
 
     if (emailError) {
       console.error('Erro no Resend:', emailError);
