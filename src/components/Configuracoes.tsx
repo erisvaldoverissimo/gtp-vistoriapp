@@ -36,10 +36,19 @@ const Configuracoes = () => {
     enableAutoDescription: true,
     
     // Configurações do Agente IA
-    nomeAgente: 'Theo',
-    promptPersona: '',
-    promptObjetivo: '',
-    promptComportamento: '',
+    nomeAgente: 'PrediBot',
+    promptPersona: 'Você é um especialista em edição de textos técnicos com foco em engenharia civil, com 20 anos de experiência no mercado editorial e especialização em patologia das construções. Possui pós-graduação em Tecnologia de Fachadas e Revestimentos.',
+    promptObjetivo: 'Sua missão é transformar informações técnicas obtidas a partir de fotografias de vistorias técnicas e suas descrições complementares em textos objetivos e claros. O objetivo é descrever com precisão e concisão (máximo de 200 caracteres) as anomalias observadas, de forma compreensível tanto para profissionais técnicos quanto para o público leigo.',
+    promptComportamento: `Analise imagens e descrições complementares de vistorias técnicas.
+
+Elabore uma descrição seguindo esta estrutura padrão:
+[Tipo de anomalia] + [Material/Elemento afetado] + [Causa provável]
+
+Baseie-se nas normas brasileiras e internacionais (como ABNT), boas práticas da engenharia e recomendações técnicas de fabricantes.
+
+Adapte a linguagem conforme o meio de divulgação (relatórios técnicos, blogs, redes sociais ou materiais didáticos).
+
+Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
     enableAgente: true,
     
     // Configurações Gerais
@@ -147,9 +156,18 @@ const Configuracoes = () => {
 
   const handleTestAgente = () => {
     console.log('Testando configurações do agente IA...');
+    
+    // Validar se os prompts estão adequados para vistorias
+    const isValidConfig = config.promptPersona.includes('engenharia') && 
+                         config.promptObjetivo.includes('vistoria') && 
+                         config.promptComportamento.includes('anomalia');
+    
     toast({
-      title: "Agente IA Testado",
-      description: "O agente foi configurado com as definições atuais.",
+      title: isValidConfig ? "✅ Agente Otimizado" : "⚠️ Configuração Testada",
+      description: isValidConfig 
+        ? "Agente configurado para descrições técnicas de vistorias." 
+        : "Configure os prompts para otimizar descrições de vistorias.",
+      variant: isValidConfig ? "default" : "destructive"
     });
   };
 
@@ -344,37 +362,52 @@ const Configuracoes = () => {
             </div>
 
             <div>
-              <Label htmlFor="promptPersona">Prompt - Persona</Label>
+              <Label htmlFor="promptPersona">
+                Prompt - Persona
+                <span className="text-xs text-muted-foreground ml-2">
+                  (Experiência e especialização do agente)
+                </span>
+              </Label>
               <Textarea
                 id="promptPersona"
                 value={config.promptPersona}
                 onChange={(e) => handleInputChange('promptPersona', e.target.value)}
-                placeholder="Defina a personalidade e características do agente..."
-                rows={8}
+                placeholder="Ex: Especialista em engenharia civil com 20 anos de experiência..."
+                rows={6}
                 className="font-mono text-sm"
               />
             </div>
 
             <div>
-              <Label htmlFor="promptObjetivo">Prompt - Objetivo</Label>
+              <Label htmlFor="promptObjetivo">
+                Prompt - Objetivo
+                <span className="text-xs text-muted-foreground ml-2">
+                  (Missão e meta das descrições)
+                </span>
+              </Label>
               <Textarea
                 id="promptObjetivo"
                 value={config.promptObjetivo}
                 onChange={(e) => handleInputChange('promptObjetivo', e.target.value)}
-                placeholder="Defina os objetivos e metas do agente..."
+                placeholder="Ex: Transformar fotografias de vistorias em descrições técnicas precisas..."
                 rows={4}
                 className="font-mono text-sm"
               />
             </div>
 
             <div>
-              <Label htmlFor="promptComportamento">Prompt - Comportamento e Ações</Label>
+              <Label htmlFor="promptComportamento">
+                Prompt - Comportamento e Ações
+                <span className="text-xs text-muted-foreground ml-2">
+                  (Estrutura e formato das respostas)
+                </span>
+              </Label>
               <Textarea
                 id="promptComportamento"
                 value={config.promptComportamento}
                 onChange={(e) => handleInputChange('promptComportamento', e.target.value)}
-                placeholder="Defina como o agente deve se comportar e agir..."
-                rows={10}
+                placeholder="Ex: Use estrutura [Anomalia] + [Material] + [Causa] baseado em normas ABNT..."
+                rows={8}
                 className="font-mono text-sm"
               />
             </div>
