@@ -8,6 +8,7 @@ import { VistoriaSupabase } from '@/hooks/useVistoriasSupabase';
 import { usePDFGenerator } from '@/hooks/usePDFGenerator';
 import { useChecklistVistoria } from '@/hooks/useChecklistVistoria';
 import { supabase } from '@/integrations/supabase/client';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface PreviewPDFSupabaseProps {
   vistoria: VistoriaSupabase;
@@ -440,31 +441,32 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     
     return (
       <div className="border rounded-lg p-3 flex-1">
-        <img
-          src={foto.arquivo_url}
-          alt={`Foto ${numeroFoto} - Sistema ${grupoIndex + 1}`}
-          className="w-full aspect-square object-cover rounded mb-3"
-          crossOrigin="anonymous"
-          loading="eager"
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-            display: 'block'
-          }}
-          onLoad={(e) => {
-            console.log(`Imagem carregada com sucesso: ${foto.arquivo_url}`);
-            e.currentTarget.setAttribute('data-loaded', 'true');
-          }}
-          onError={(e) => {
-            console.error(`Erro ao carregar imagem: ${foto.arquivo_url}`, e);
-            e.currentTarget.setAttribute('data-error', 'true');
-            setTimeout(() => {
-              if (!e.currentTarget.getAttribute('data-loaded')) {
-                e.currentTarget.src = foto.arquivo_url + '?t=' + Date.now();
-              }
-            }, 1000);
-          }}
-        />
+        <AspectRatio ratio={4/3}>
+          <img
+            src={foto.arquivo_url}
+            alt={`Foto ${numeroFoto} - Sistema ${grupoIndex + 1}`}
+            className="w-full h-full object-cover rounded"
+            crossOrigin="anonymous"
+            loading="eager"
+            style={{
+              maxWidth: '100%',
+              display: 'block'
+            }}
+            onLoad={(e) => {
+              console.log(`Imagem carregada com sucesso: ${foto.arquivo_url}`);
+              e.currentTarget.setAttribute('data-loaded', 'true');
+            }}
+            onError={(e) => {
+              console.error(`Erro ao carregar imagem: ${foto.arquivo_url}`, e);
+              e.currentTarget.setAttribute('data-error', 'true');
+              setTimeout(() => {
+                if (!e.currentTarget.getAttribute('data-loaded')) {
+                  e.currentTarget.src = foto.arquivo_url + '?t=' + Date.now();
+                }
+              }, 1000);
+            }}
+          />
+        </AspectRatio>
         <div>
           <p className="text-sm font-medium mb-2">
             Foto {String(numeroFoto).padStart(2, '0')} - Sistema {grupoIndex + 1}
@@ -563,7 +565,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                   
                   {/* Layout com 2 fotos lado a lado na primeira página */}
                   {fotos.length > 0 && (
-                    <div className="flex gap-4 mb-4 flex-1">
+                    <div className="flex gap-4 mb-4">
                       {fotos.slice(0, 2).map((foto, idx) => (
                         <div key={`primeira-${idx}`} className="flex-1">
                           {renderFotoCard(foto, idx, grupoIndex)}
@@ -590,7 +592,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
                       Evidências Fotográficas - Sistema {grupoIndex + 1} (Continuação)
                     </h4>
                     
-                    <div className="flex gap-4 mb-4 flex-1">
+                    <div className="flex gap-4 mb-4">
                       {fotosPagina.map((foto, idx) => (
                         <div key={`adicional-${i + idx}`} className="flex-1">
                           {renderFotoCard(foto, i + idx + 2, grupoIndex)}

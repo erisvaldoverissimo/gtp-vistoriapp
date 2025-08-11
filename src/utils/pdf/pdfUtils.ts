@@ -64,8 +64,9 @@ export const processPageElement = async (pageElement: HTMLElement, pageIndex: nu
       logging: false,
       imageTimeout: 10000,
       removeContainer: true,
-      height: rect.height,
-      width: rect.width,
+      // Capturar o conteúdo completo do elemento (evita cortes)
+      height: pageElement.scrollHeight,
+      width: pageElement.scrollWidth,
       x: 0,
       y: 0,
       onclone: (clonedDoc: Document, clonedElement: HTMLElement) => {
