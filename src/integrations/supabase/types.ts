@@ -537,7 +537,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      obter_proximo_numero_sequencial: {
+        Args: { condominio_uuid: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
