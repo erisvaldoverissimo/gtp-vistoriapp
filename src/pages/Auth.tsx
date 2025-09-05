@@ -48,6 +48,10 @@ const Auth = () => {
     if (error) {
       if (error.message.includes('Invalid login credentials')) {
         setError('Email ou senha incorretos');
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('Email não confirmado. Verifique sua caixa de entrada e confirme seu email antes de fazer login.');
+      } else if (error.message.includes('signup_disabled')) {
+        setError('Cadastro desabilitado. Entre em contato com o administrador.');
       } else {
         setError('Erro ao fazer login: ' + error.message);
       }
