@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Mail, Lock, Building } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const { signIn, user, resetPassword } = useAuth();
@@ -18,6 +18,11 @@ const Auth = () => {
   const [success, setSuccess] = useState<string>('');
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [newPasswordForm, setNewPasswordForm] = useState({
+    password: '',
+    confirmPassword: ''
+  });
   
   
   // Formulários
@@ -27,9 +32,20 @@ const Auth = () => {
   });
   
 
-  // Redirecionar se já estiver logado
+  // Verificar se há token de reset na URL e redirecionar se já estiver logado
   useEffect(() => {
     document.title = 'Entrar | Sistema de Vistorias';
+    
+    // Verificar se há um token de recuperação na URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('access_token');
+    const type = urlParams.get('type');
+    
+    if (accessToken && type === 'recovery') {
+      setShowNewPassword(true);
+      setShowResetPassword(false);
+    }
+    
     if (user) {
       navigate('/');
     }
@@ -91,6 +107,46 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    
+    if (!newPasswordForm.password || !newPasswordForm.confirmPassword) {
+      setError('Preencha todos os campos');
+      setLoading(false);
+      return;
+    }
+    
+    if (newPasswordForm.password !== newPasswordForm.confirmPassword) {
+      setError('As senhas não coincidem');
+      setLoading(false);
+      return;
+    }
+    
+    if (newPasswordForm.password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres');
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPasswordForm.password
+    });
+    
+    if (error) {
+      setError('Erro ao atualizar senha: ' + error.message);
+    } else {
+      setSuccess('Senha atualizada com sucesso! Você já está logado.');
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+    }
+    
+    setLoading(false);
+  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -109,11 +165,54 @@ const Auth = () => {
           <CardContent className="p-6">
             <CardHeader className="px-0 pt-0 pb-4">
               <CardTitle className="text-xl">
-                {showResetPassword ? 'Redefinir Senha' : 'Entrar na sua conta'}
+                {showNewPassword ? 'Definir Nova Senha' : 
+                 showResetPassword ? 'Redefinir Senha' : 'Entrar na sua conta'}
               </CardTitle>
             </CardHeader>
 
-            {!showResetPassword ? (
+            {showNewPassword ? (
+              <form onSubmit={handleNewPassword} className="space-y-4">
+                <div>
+                  <Label htmlFor="new-password">Nova Senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="new-password"
+                      type="password"
+                      placeholder="Sua nova senha"
+                      className="pl-10"
+                      value={newPasswordForm.password}
+                      onChange={(e) => setNewPasswordForm({ ...newPasswordForm, password: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      placeholder="Confirme sua nova senha"
+                      className="pl-10"
+                      value={newPasswordForm.confirmPassword}
+                      onChange={(e) => setNewPasswordForm({ ...newPasswordForm, confirmPassword: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-teal-600 hover:bg-teal-700"
+                  disabled={loading}
+                >
+                  {loading ? 'Atualizando...' : 'Atualizar Senha'}
+                </Button>
+              </form>
+            ) : !showResetPassword ? (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <Label htmlFor="login-email">Email</Label>
