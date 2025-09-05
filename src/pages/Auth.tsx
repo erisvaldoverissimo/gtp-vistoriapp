@@ -11,10 +11,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
-  const { signIn, user } = useAuth();
+  const { signIn, user, resetPassword } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
   
   
   // Formulários
@@ -36,6 +39,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
     
     if (!loginForm.email || !loginForm.password) {
       setError('Preencha todos os campos');
@@ -62,6 +66,31 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    
+    if (!resetEmail) {
+      setError('Digite seu email');
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await resetPassword(resetEmail);
+    
+    if (error) {
+      setError('Erro ao enviar email de redefinição: ' + error.message);
+    } else {
+      setSuccess('Email de redefinição enviado! Verifique sua caixa de entrada.');
+      setShowResetPassword(false);
+      setResetEmail('');
+    }
+    
+    setLoading(false);
+  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -79,51 +108,110 @@ const Auth = () => {
         <Card>
           <CardContent className="p-6">
             <CardHeader className="px-0 pt-0 pb-4">
-              <CardTitle className="text-xl">Entrar na sua conta</CardTitle>
+              <CardTitle className="text-xl">
+                {showResetPassword ? 'Redefinir Senha' : 'Entrar na sua conta'}
+              </CardTitle>
             </CardHeader>
 
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <Label htmlFor="login-email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    className="pl-10"
-                    value={loginForm.email}
-                    onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                    required
-                  />
+            {!showResetPassword ? (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <Label htmlFor="login-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      className="pl-10"
+                      value={loginForm.email}
+                      onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="login-password">Senha</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="Sua senha"
-                    className="pl-10"
-                    value={loginForm.password}
-                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                    required
-                  />
+                <div>
+                  <Label htmlFor="login-password">Senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="Sua senha"
+                      className="pl-10"
+                      value={loginForm.password}
+                      onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <Button 
-                type="submit" 
-                className="w-full bg-teal-600 hover:bg-teal-700"
-                disabled={loading}
-              >
-                {loading ? 'Entrando...' : 'Entrar'}
-              </Button>
-              <p className="text-xs text-gray-500 text-center">Cadastro somente via Administrador.</p>
-            </form>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-teal-600 hover:bg-teal-700"
+                  disabled={loading}
+                >
+                  {loading ? 'Entrando...' : 'Entrar'}
+                </Button>
+
+                <div className="text-center">
+                  <button
+                    type="button"
+                    className="text-teal-600 hover:text-teal-700 text-sm underline"
+                    onClick={() => setShowResetPassword(true)}
+                  >
+                    Esqueceu a senha?
+                  </button>
+                </div>
+                
+                <p className="text-xs text-gray-500 text-center">Cadastro somente via Administrador.</p>
+              </form>
+            ) : (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div>
+                  <Label htmlFor="reset-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      className="pl-10"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-teal-600 hover:bg-teal-700"
+                  disabled={loading}
+                >
+                  {loading ? 'Enviando...' : 'Enviar Link de Redefinição'}
+                </Button>
+
+                <div className="text-center">
+                  <button
+                    type="button"
+                    className="text-gray-600 hover:text-gray-700 text-sm underline"
+                    onClick={() => setShowResetPassword(false)}
+                  >
+                    Voltar ao login
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {success && (
+              <Alert className="mt-4 border-green-200 bg-green-50">
+                <AlertDescription className="text-green-800">
+                  {success}
+                </AlertDescription>
+              </Alert>
+            )}
             
             {error && (
               <Alert className="mt-4 border-red-200 bg-red-50">
