@@ -30,6 +30,7 @@ interface FotoExistente {
 
 interface UploadFotosProps {
   onFotosChange: (fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => void;
+  onFotosExistentesChange?: (fotosAtualizadas: FotoExistente[]) => void;
   maxFotos?: number;
   grupoId?: string;
   fotosExistentes?: FotoVistoriaSupabase[];
@@ -43,7 +44,8 @@ interface UploadFotosProps {
 }
 
 const UploadFotos = ({ 
-  onFotosChange, 
+  onFotosChange,
+  onFotosExistentesChange,
   maxFotos = 10, 
   grupoId, 
   fotosExistentes = [], 
@@ -241,6 +243,11 @@ const UploadFotos = ({
       i === index ? { ...foto, descricao } : foto
     );
     setFotosExistentesState(updatedFotosExistentes);
+    
+    // Notificar mudanças nas fotos existentes
+    if (onFotosExistentesChange) {
+      onFotosExistentesChange(updatedFotosExistentes);
+    }
   };
 
   const handleDescriptionGenerated = (index: number, description: string) => {

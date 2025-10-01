@@ -33,6 +33,7 @@ const EditarVistoriaSupabase = ({ vistoriaId, onPreview, onBack }: EditarVistori
     adicionarGrupo,
     removerGrupo,
     handleFotosChange,
+    handleFotosExistentesChange,
     handleSave,
     handlePreview,
     carregarVistoria
@@ -114,6 +115,7 @@ const EditarVistoriaSupabase = ({ vistoriaId, onPreview, onBack }: EditarVistori
           onGrupoChange={handleGrupoChange}
           onRemoverGrupo={removerGrupo}
           onFotosChange={handleFotosChange}
+          onFotosExistentesChange={handleFotosExistentesChange}
         />
       ))}
 

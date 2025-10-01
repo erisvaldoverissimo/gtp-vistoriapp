@@ -34,6 +34,9 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
   const [loading, setLoading] = useState(true);
   const [grupoFotos, setGrupoFotos] = useState<{ [key: number]: FotoUpload[] }>({});
   const [gruposOriginais, setGruposOriginais] = useState<GrupoVistoriaSupabase[]>([]);
+  const [fotosExistentesAtualizadas, setFotosExistentesAtualizadas] = useState<{
+    [key: number]: Array<{id: string, descricao: string}>
+  }>({});
 
   // Função para carregar dados atualizados da vistoria
   const carregarVistoria = useCallback(async () => {
@@ -180,6 +183,13 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
     }));
   }, []);
 
+  const handleFotosExistentesChange = useCallback((grupoIndex: number, fotosAtualizadas: Array<{id: string, url: string, nome: string, descricao: string, isExisting: true}>) => {
+    setFotosExistentesAtualizadas(prev => ({
+      ...prev,
+      [grupoIndex]: fotosAtualizadas.map(foto => ({ id: foto.id, descricao: foto.descricao }))
+    }));
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (!formData.condominio_id) {
       toast({
@@ -275,6 +285,22 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
             console.log(`Fazendo upload de ${novasFotos.length} novas fotos para grupo ${grupoId}`);
             await uploadFotos(grupoId, novasFotos);
           }
+
+          // Atualizar descrições das fotos existentes
+          const fotosExistentesDoGrupo = fotosExistentesAtualizadas[i];
+          if (fotosExistentesDoGrupo && fotosExistentesDoGrupo.length > 0) {
+            console.log(`Atualizando descrições de ${fotosExistentesDoGrupo.length} fotos existentes para grupo ${grupoId}`);
+            for (const foto of fotosExistentesDoGrupo) {
+              const { error: updateFotoError } = await supabase
+                .from('fotos_vistoria')
+                .update({ descricao: foto.descricao })
+                .eq('id', foto.id);
+
+              if (updateFotoError) {
+                console.error('Erro ao atualizar descrição da foto:', updateFotoError);
+              }
+            }
+          }
         }
 
         // Remover grupos que foram deletados (se houver menos grupos agora)
@@ -310,6 +336,7 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
       
       // Limpar fotos temporárias
       setGrupoFotos({});
+      setFotosExistentesAtualizadas({});
       
       toast({
         title: "Sucesso",
@@ -332,7 +359,7 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
     } finally {
       setSaving(false);
     }
-  }, [formData, grupoFotos, gruposOriginais, vistoriaId, uploadFotos, onBack, toast, recarregar, carregarVistoria]);
+  }, [formData, grupoFotos, fotosExistentesAtualizadas, gruposOriginais, vistoriaId, uploadFotos, onBack, toast, recarregar, carregarVistoria, supabase]);
 
   const handlePreview = useCallback(() => {
     if (!formData.condominio_id) {
@@ -359,6 +386,7 @@ export const useEditarVistoriaForm = (vistoriaId: string, onBack?: () => void) =
     adicionarGrupo,
     removerGrupo,
     handleFotosChange,
+    handleFotosExistentesChange,
     handleSave,
     handlePreview,
     carregarVistoria

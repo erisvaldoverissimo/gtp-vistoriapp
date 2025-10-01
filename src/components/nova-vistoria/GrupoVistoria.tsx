@@ -12,6 +12,14 @@ import { GrupoVistoriaSupabase, ChecklistTecnico } from '@/hooks/useVistoriasSup
 import { useChecklistVistoria } from '@/hooks/useChecklistVistoria';
 import UploadFotos from '@/components/UploadFotos';
 
+interface FotoExistente {
+  id: string;
+  url: string;
+  nome: string;
+  descricao: string;
+  isExisting: true;
+}
+
 interface GrupoVistoriaProps {
   grupo: GrupoVistoriaSupabase;
   index: number;
@@ -23,7 +31,7 @@ interface GrupoVistoriaProps {
   onGrupoChange: (index: number, field: keyof GrupoVistoriaSupabase, value: any) => void;
   onRemoverGrupo: (index: number) => void;
   onFotosChange: (index: number, fotos: File[], fotosComDescricao?: Array<{file: File, descricao: string}>) => void;
-  onFotosExistentesChange?: () => void;
+  onFotosExistentesChange?: (grupoIndex: number, fotosAtualizadas: FotoExistente[]) => void;
 }
 
 const GrupoVistoria = ({
@@ -382,6 +390,7 @@ const GrupoVistoria = ({
           <Label>Fotos do Grupo</Label>
           <UploadFotos
             onFotosChange={(fotos, fotosComDescricao) => onFotosChange(index, fotos, fotosComDescricao)}
+            onFotosExistentesChange={(fotosAtualizadas) => onFotosExistentesChange?.(index, fotosAtualizadas)}
             maxFotos={10}
             grupoId={grupo.id}
             fotosExistentes={grupo.fotos || []}
