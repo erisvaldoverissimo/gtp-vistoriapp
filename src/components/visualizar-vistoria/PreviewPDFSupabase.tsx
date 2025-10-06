@@ -440,40 +440,42 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     });
     
     return (
-      <div className="border rounded-lg p-2 flex-1 flex flex-col">
-        <div className="mb-2">
-          <AspectRatio ratio={4/3}>
-            <img
-              src={foto.arquivo_url}
-              alt={`Foto ${numeroFoto} - Sistema ${grupoIndex + 1}`}
-              className="w-full h-full object-cover rounded"
-              crossOrigin="anonymous"
-              loading="eager"
-              style={{
-                maxWidth: '100%',
-                display: 'block'
-              }}
-              onLoad={(e) => {
-                console.log(`Imagem carregada com sucesso: ${foto.arquivo_url}`);
-                e.currentTarget.setAttribute('data-loaded', 'true');
-              }}
-              onError={(e) => {
-                console.error(`Erro ao carregar imagem: ${foto.arquivo_url}`, e);
-                e.currentTarget.setAttribute('data-error', 'true');
-                setTimeout(() => {
-                  if (!e.currentTarget.getAttribute('data-loaded')) {
-                    e.currentTarget.src = foto.arquivo_url + '?t=' + Date.now();
-                  }
-                }, 1000);
-              }}
-            />
-          </AspectRatio>
+      <div className="border rounded-lg p-3 flex-1 flex flex-col" style={{ minHeight: '280px' }}>
+        <div className="mb-3 flex items-center justify-center bg-gray-50 rounded" style={{ height: '200px' }}>
+          <img
+            src={foto.arquivo_url}
+            alt={`Foto ${numeroFoto} - Sistema ${grupoIndex + 1}`}
+            className="rounded"
+            crossOrigin="anonymous"
+            loading="eager"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '200px',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain',
+              display: 'block'
+            }}
+            onLoad={(e) => {
+              console.log(`Imagem carregada com sucesso: ${foto.arquivo_url}`);
+              e.currentTarget.setAttribute('data-loaded', 'true');
+            }}
+            onError={(e) => {
+              console.error(`Erro ao carregar imagem: ${foto.arquivo_url}`, e);
+              e.currentTarget.setAttribute('data-error', 'true');
+              setTimeout(() => {
+                if (!e.currentTarget.getAttribute('data-loaded')) {
+                  e.currentTarget.src = foto.arquivo_url + '?t=' + Date.now();
+                }
+              }, 1000);
+            }}
+          />
         </div>
         <div className="flex-shrink-0">
-          <p className="text-xs font-semibold mb-1 text-brand-purple">
+          <p className="text-xs font-semibold mb-2 text-brand-purple">
             Foto {String(numeroFoto).padStart(2, '0')} - Sistema {grupoIndex + 1}
           </p>
-          <p className="text-xs text-gray-700 leading-tight break-words" style={{ minHeight: '2.5rem' }}>
+          <p className="text-xs text-gray-700 leading-relaxed break-words">
             {descricaoFoto}
           </p>
         </div>
