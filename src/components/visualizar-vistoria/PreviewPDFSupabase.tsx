@@ -440,8 +440,8 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
     });
     
     return (
-      <div className="border rounded-lg p-3 flex-1 flex flex-col" style={{ minHeight: '280px' }}>
-        <div className="mb-3 flex items-center justify-center bg-gray-50 rounded" style={{ height: '200px' }}>
+      <div className="border rounded-lg p-3 flex-1 flex flex-col" style={{ minHeight: '380px' }}>
+        <div className="mb-3 flex items-center justify-center bg-gray-50 rounded" style={{ height: '320px' }}>
           <img
             src={foto.arquivo_url}
             alt={`Foto ${numeroFoto} - Sistema ${grupoIndex + 1}`}
@@ -450,7 +450,7 @@ const PreviewPDFSupabase = ({ vistoria: vistoriaInicial, onBack }: PreviewPDFSup
             loading="eager"
             style={{
               maxWidth: '100%',
-              maxHeight: '200px',
+              maxHeight: '320px',
               width: 'auto',
               height: 'auto',
               objectFit: 'contain',
