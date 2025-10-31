@@ -1,73 +1,100 @@
-# Welcome to your Lovable project
+# VistoriApp
 
-## Project info
+VistoriApp é uma aplicação web construída em React para apoiar equipes de vistoria na gestão de laudos, relatórios e comunicação com clientes. Este repositório reúne o código gerado inicialmente no Lovable, mas agora organizado para um fluxo de desenvolvimento profissional, com controle de qualidade e automações locais.
 
-**URL**: https://lovable.dev/projects/a43a6d77-e631-4575-8aa3-08c3ff904381
+## Stack principal
 
-## How can I edit this code?
+- [Vite](https://vitejs.dev) + [React](https://react.dev) + [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com) e [shadcn/ui](https://ui.shadcn.com)
+- [Supabase](https://supabase.com) para autenticação e persistência de dados
+- [TanStack Query](https://tanstack.com/query/latest) para gestão de cache e requisições assíncronas
 
-There are several ways of editing your application.
+## Pré-requisitos
 
-**Use Lovable**
+- Node.js 18.18+ ou 20+
+- npm 9+
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a43a6d77-e631-4575-8aa3-08c3ff904381) and start prompting.
+Recomendamos usar [Volta](https://volta.sh) ou [nvm](https://github.com/nvm-sh/nvm) para gerenciar versões de Node.js.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Configuração inicial
 
-**Use your preferred IDE**
+1. Instale as dependências:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+   ```bash
+   npm install
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+2. Crie um arquivo `.env` na raiz do projeto com as credenciais públicas do Supabase. Um modelo está disponível em `.env.example`:
 
-Follow these steps:
+   ```bash
+   cp .env.example .env
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+   Atualize os valores de acordo com os ambientes (dev/staging/prod). Nunca versione o arquivo `.env`.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Variáveis de ambiente
 
-# Step 3: Install the necessary dependencies.
-npm i
+| Variável                 | Onde configurar         | Descrição                                                             |
+| ------------------------ | ----------------------- | --------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`      | `.env` do frontend      | URL do projeto Supabase, utilizada pelo cliente web.                  |
+| `VITE_SUPABASE_ANON_KEY` | `.env` do frontend      | Chave pública (anon) do Supabase para acesso via navegador.           |
+| `FRONTEND_BASE_URL`      | Supabase Edge Functions | URL pública do frontend para gerar links em emails enviados via Edge. |
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+3. Execute o servidor de desenvolvimento:
+
+   ```bash
+   npm run dev
+   ```
+
+   O Vite ficará disponível em `http://localhost:5173` por padrão.
+
+## Scripts disponíveis
+
+| Script                 | Descrição                                                                  |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `npm run dev`          | Inicia o servidor Vite em modo desenvolvimento.                            |
+| `npm run build`        | Gera o bundle de produção.                                                 |
+| `npm run preview`      | Serve o bundle de produção localmente.                                     |
+| `npm run lint`         | Executa o ESLint nos arquivos do projeto.                                  |
+| `npm run lint:fix`     | Tenta corrigir automaticamente problemas identificados pelo ESLint.        |
+| `npm run format`       | Formata todos os arquivos suportados via Prettier.                         |
+| `npm run format:check` | Verifica se os arquivos estão formatados de acordo com o Prettier.         |
+| `npm run typecheck`    | Executa o TypeScript sem gerar código para garantir consistência de tipos. |
+| `npm run check`        | Atalho que roda lint + typecheck.                                          |
+
+## Qualidade de código
+
+- **Prettier**: formatação consistente definida em `.prettierrc.cjs`.
+- **ESLint**: regras base para JavaScript/TypeScript e React em `eslint.config.js`.
+- **Husky + lint-staged**: executa automaticamente verificação e formatação (`lint-staged`) antes de cada commit.
+
+Se desejar desativar temporariamente os hooks, use `HUSKY=0 git commit ...`.
+
+## Alias e organização de pastas
+
+Os imports relativos profundos foram substituídos por aliases definidos em `tsconfig.paths.json` e carregados automaticamente pelo plugin `vite-tsconfig-paths`. Utilize `@/` para importar arquivos a partir de `src/`:
+
+```ts
+import { supabase } from "@/integrations/supabase/client";
 ```
 
-**Edit a file directly in GitHub**
+A estrutura de pastas principal é:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+src/
+├── components/         # Componentes reutilizáveis
+├── integrations/       # Clientes e tipagens de integrações externas (Supabase, etc.)
+├── pages/              # Páginas roteadas
+├── utils/              # Funções utilitárias e helpers
+└── env.d.ts            # Tipagem das variáveis de ambiente expostas pelo Vite
+```
 
-**Use GitHub Codespaces**
+## Próximos passos sugeridos
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Configurar pipelines de CI (ex.: GitHub Actions) executando `npm run check` e `npm run build` em cada Pull Request.
+- Definir ambientes Supabase por stage e automatizar migrations/seeds quando aplicável.
+- Instrumentar monitoramento de erros (Sentry, LogRocket) e métricas de uso relevantes.
 
-## What technologies are used for this project?
+## Licença
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/a43a6d77-e631-4575-8aa3-08c3ff904381) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Este projeto é proprietário e de uso interno da equipe responsável pelo VistoriApp. Consulte a liderança do projeto antes de compartilhar o código fora da organização.
