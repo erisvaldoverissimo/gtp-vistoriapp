@@ -215,6 +215,100 @@ export type Database = {
         }
         Relationships: []
       }
+      foto_patologia_embeddings: {
+        Row: {
+          contexto: string | null
+          created_at: string
+          embedding: string | null
+          feedback_id: string
+        }
+        Insert: {
+          contexto?: string | null
+          created_at?: string
+          embedding?: string | null
+          feedback_id: string
+        }
+        Update: {
+          contexto?: string | null
+          created_at?: string
+          embedding?: string | null
+          feedback_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_patologia_embeddings_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: true
+            referencedRelation: "foto_patologia_feedback"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foto_patologia_feedback: {
+        Row: {
+          confianca: number | null
+          created_at: string
+          descricao: string
+          foto_id: string | null
+          grupo_vistoria_id: string | null
+          id: string
+          metadata: Json | null
+          modelo: string | null
+          origem: string
+          parent_feedback_id: string | null
+          tags: string[] | null
+          temperatura: number | null
+          updated_at: string
+          usuario_id: string | null
+          validada: boolean
+          vistoria_id: string | null
+        }
+        Insert: {
+          confianca?: number | null
+          created_at?: string
+          descricao: string
+          foto_id?: string | null
+          grupo_vistoria_id?: string | null
+          id?: string
+          metadata?: Json | null
+          modelo?: string | null
+          origem?: string
+          parent_feedback_id?: string | null
+          tags?: string[] | null
+          temperatura?: number | null
+          updated_at?: string
+          usuario_id?: string | null
+          validada?: boolean
+          vistoria_id?: string | null
+        }
+        Update: {
+          confianca?: number | null
+          created_at?: string
+          descricao?: string
+          foto_id?: string | null
+          grupo_vistoria_id?: string | null
+          id?: string
+          metadata?: Json | null
+          modelo?: string | null
+          origem?: string
+          parent_feedback_id?: string | null
+          tags?: string[] | null
+          temperatura?: number | null
+          updated_at?: string
+          usuario_id?: string | null
+          validada?: boolean
+          vistoria_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_patologia_feedback_parent_feedback_id_fkey"
+            columns: ["parent_feedback_id"]
+            isOneToOne: false
+            referencedRelation: "foto_patologia_feedback"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fotos_vistoria: {
         Row: {
           arquivo_nome: string
@@ -629,10 +723,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_expired_pdf_links: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_pdf_links: { Args: never; Returns: undefined }
       has_condominio_access: {
         Args: { _condominio_id: string; _user_id: string }
         Returns: boolean
@@ -644,9 +735,23 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: {
-        Args: { _user_id: string }
-        Returns: boolean
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      match_patologia_feedback: {
+        Args: {
+          match_count?: number
+          query_embedding: string
+          similarity_threshold?: number
+        }
+        Returns: {
+          contexto: string
+          descricao: string
+          feedback_id: string
+          grupo_vistoria_id: string
+          origem: string
+          similarity: number
+          tags: string[]
+          vistoria_id: string
+        }[]
       }
       obter_proximo_numero_sequencial: {
         Args: { condominio_uuid: string }
