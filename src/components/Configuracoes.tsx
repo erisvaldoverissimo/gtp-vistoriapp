@@ -122,6 +122,7 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
       email_assinatura: config.assinaturaEmail,
       
       api_key_openai: config.apiKeyOpenAI,
+      ia_modelo: config.modeloIA,
       ia_auto_descricao: config.enableAutoDescription,
       
       agente_nome: config.nomeAgente,
