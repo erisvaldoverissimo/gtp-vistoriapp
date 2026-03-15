@@ -323,7 +323,17 @@ EXEMPLO: "Fissuras mapeadas no revestimento de argamassa da fachada norte, abert
       }
 
       const data = await response.json();
-      const description = data.choices[0].message.content;
+      let description = data.choices[0].message.content;
+      
+      // Limpar formatação markdown e listas da resposta
+      description = description
+        .replace(/\*\*/g, '')           // Remove **bold**
+        .replace(/\*/g, '')             // Remove *italic*
+        .replace(/^[-•]\s*/gm, '')      // Remove marcadores de lista
+        .replace(/^\d+\.\s*/gm, '')     // Remove listas numeradas
+        .replace(/\n+/g, ' ')           // Quebras de linha → espaço
+        .replace(/\s{2,}/g, ' ')        // Múltiplos espaços → um
+        .trim();
 
       onDescriptionGenerated(description);
 
