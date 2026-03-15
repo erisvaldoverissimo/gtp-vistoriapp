@@ -82,6 +82,7 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
         assinaturaEmail: obterConfiguracao('email_assinatura', ''),
         
         apiKeyOpenAI: obterConfiguracao('api_key_openai', ''),
+        modeloIA: obterConfiguracao('ia_modelo', 'gpt-4o'),
         enableAutoDescription: obterConfiguracao('ia_auto_descricao', true),
         
         nomeAgente: obterConfiguracao('agente_nome', 'PrediBot'),
