@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { getTokenParam } from '@/utils/ai/tokenParams';
 import { Button } from '@/components/ui/button';
 import { Brain, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
