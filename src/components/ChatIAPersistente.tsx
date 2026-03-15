@@ -42,7 +42,8 @@ const ChatIAPersistente = () => {
     promptObjetivo: obterConfiguracao('agente_prompt_objetivo', ''),
     promptComportamento: obterConfiguracao('agente_prompt_comportamento', ''),
     enableAgente: obterConfiguracao('agente_enable', true),
-    apiKeyOpenAI: obterConfiguracao('api_key_openai', '')
+    apiKeyOpenAI: obterConfiguracao('api_key_openai', ''),
+    modeloIA: obterConfiguracao('ia_modelo', 'gpt-4o')
   };
 
   // Debug logs para configurações
