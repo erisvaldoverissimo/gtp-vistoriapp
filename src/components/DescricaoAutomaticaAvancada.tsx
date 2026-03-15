@@ -278,14 +278,14 @@ EXEMPLO: "Fissuras mapeadas no revestimento de argamassa da fachada norte, abert
       }
 
       const maxTokens = {
-        auto: 150,
-        estrutural: 200,
-        instalacoes: 180,
-        acabamentos: 150,
-        seguranca: 180,
-        conservacao: 150,
-        manutencao: 200,
-        detalhado: 350
+        auto: 250,
+        estrutural: 250,
+        instalacoes: 250,
+        acabamentos: 250,
+        seguranca: 250,
+        conservacao: 250,
+        manutencao: 250,
+        detalhado: 400
       };
 
       const requestBody = {
