@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Bot, Brain, Key, Settings, Trash2, Plus, BookOpen, Save, Upload, Mail, Image } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useConfiguracoes } from '@/hooks/useConfiguracoes';
 
@@ -34,6 +35,7 @@ const Configuracoes = () => {
     
     // Configurações de IA
     apiKeyOpenAI: '',
+    modeloIA: 'gpt-4o',
     enableAutoDescription: true,
     
     // Configurações do Agente IA
@@ -81,6 +83,7 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
         assinaturaEmail: obterConfiguracao('email_assinatura', ''),
         
         apiKeyOpenAI: obterConfiguracao('api_key_openai', ''),
+        modeloIA: obterConfiguracao('ia_modelo', 'gpt-4o'),
         enableAutoDescription: obterConfiguracao('ia_auto_descricao', true),
         
         nomeAgente: obterConfiguracao('agente_nome', 'PrediBot'),
@@ -120,6 +123,7 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
       email_assinatura: config.assinaturaEmail,
       
       api_key_openai: config.apiKeyOpenAI,
+      ia_modelo: config.modeloIA,
       ia_auto_descricao: config.enableAutoDescription,
       
       agente_nome: config.nomeAgente,
@@ -571,6 +575,23 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
               />
               <p className="text-sm text-gray-600 mt-1">
                 Suporta OpenAI (sk-...) e Groq (gsk_...). Detecção automática do provedor.
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="modeloIA">Modelo de IA</Label>
+              <Select value={config.modeloIA} onValueChange={(value) => handleInputChange('modeloIA', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar modelo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4o">GPT-4o (Recomendado - Visão + Texto)</SelectItem>
+                  <SelectItem value="gpt-4o-mini">GPT-4o Mini (Mais rápido e econômico)</SelectItem>
+                  <SelectItem value="gpt-5.4">GPT-5.4 (Último modelo - Máxima qualidade)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground mt-1">
+                O modelo selecionado será usado para descrições de fotos e chat IA.
               </p>
             </div>
 

@@ -42,7 +42,8 @@ const ChatIAPersistente = () => {
     promptObjetivo: obterConfiguracao('agente_prompt_objetivo', ''),
     promptComportamento: obterConfiguracao('agente_prompt_comportamento', ''),
     enableAgente: obterConfiguracao('agente_enable', true),
-    apiKeyOpenAI: obterConfiguracao('api_key_openai', '')
+    apiKeyOpenAI: obterConfiguracao('api_key_openai', ''),
+    modeloIA: obterConfiguracao('ia_modelo', 'gpt-4o')
   };
 
   // Debug logs para configurações
@@ -162,7 +163,7 @@ const ChatIAPersistente = () => {
   // Detectar o tipo de API baseado na chave
   const detectApiProvider = (apiKey: string) => {
     if (apiKey.startsWith('sk-')) {
-      return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
+      return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: config.modeloIA };
     } else if (apiKey.startsWith('gsk_')) {
       return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.1-8b-instant' };
     }
