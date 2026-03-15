@@ -34,6 +34,7 @@ const Configuracoes = () => {
     
     // Configurações de IA
     apiKeyOpenAI: '',
+    modeloIA: 'gpt-4o',
     enableAutoDescription: true,
     
     // Configurações do Agente IA
