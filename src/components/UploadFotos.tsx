@@ -459,7 +459,7 @@ const UploadFotos = ({
                     id={`descricao-${index}`}
                     value={foto.descricao}
                     onChange={(e) => handleDescricaoChange(index, e.target.value)}
-                    placeholder="Descreva o que mostra esta foto..."
+                    placeholder="💡 Dica: escreva uma pré-descrição antes de gerar com IA (ex: 'eflorescência no rejunte do piso') e a IA usará como base para elaborar o texto técnico."
                     className={`min-h-[100px] ${foto.descricao.length > MAX_DESCRICAO_LENGTH ? 'border-red-500 focus:ring-red-500' : ''}`}
                     rows={4}
                   />
