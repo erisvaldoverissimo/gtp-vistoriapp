@@ -106,74 +106,68 @@ ANÁLISE INTELIGENTE (MÁXIMO 300 CARACTERES):
 EXEMPLO: "Fissura horizontal em alvenaria de vedação no terço inferior, abertura ~0,3mm, extensão aprox. 1,5m. Padrão sugere movimentação diferencial da fundação. Grau de risco: médio."`,
 
       estrutural: `
-FOCO ESTRUTURAL:
-- NUNCA comece com "A imagem mostra" ou similares
-- Escreva um texto descritivo corrido e técnico sobre elementos estruturais
-- Analise elementos estruturais: lajes, vigas, pilares, paredes, fundações
-- Identifique fissuras, rachaduras, deformações, deslocamentos em um parágrafo fluido
-- Avalie materiais: concreto, alvenaria, estrutura metálica
-- Note sinais de deterioração, corrosão ou sobrecarga
-- MÁXIMO 400 caracteres`,
+FOCO ESTRUTURAL (MÁXIMO 300 CARACTERES):
+- Analise elementos estruturais: lajes, vigas, pilares, paredes portantes, fundações
+- Identifique patologias: fissuras (classificar abertura), trincas, deformações, flechas excessivas, deslocamentos
+- Avalie materiais: concreto (cobrimento, carbonatação), alvenaria, estrutura metálica (corrosão)
+- Note sinais de deterioração, corrosão de armadura ou sobrecarga
+
+EXEMPLO: "Trinca diagonal em alvenaria estrutural partindo do vértice da abertura de janela, abertura ~1mm, sem verga adequada. Indica concentração de tensões por ausência de reforço."`,
 
       instalacoes: `
-FOCO INSTALAÇÕES:
-- NUNCA comece com "A imagem mostra" ou similares
-- Escreva um texto descritivo corrido sobre as instalações observadas
-- Identifique instalações elétricas: quadros, cabos, tomadas, luminárias
-- Observe instalações hidráulicas: tubulações, registros, válvulas
-- Note condições de funcionamento, adequação às normas em texto fluido
-- Identifique problemas: vazamentos, sobrecarga, obsolescência
-- MÁXIMO 350 caracteres`,
+FOCO INSTALAÇÕES (MÁXIMO 300 CARACTERES):
+- Identifique instalações elétricas: quadros, disjuntores, fiação, tomadas, aterramento
+- Observe instalações hidráulicas: tubulações (material e diâmetro), registros, válvulas, conexões
+- Note condições de funcionamento, adequação técnica, sinais de obsolescência
+- Identifique: vazamentos, manchas de umidade, oxidação, subdimensionamento
+
+EXEMPLO: "Quadro de distribuição com disjuntores incompatíveis com a seção dos condutores. Fiação com emendas expostas fora de caixa de passagem, apresentando risco de curto-circuito."`,
 
       acabamentos: `
-FOCO ACABAMENTOS:
-- NUNCA comece com "A imagem mostra" ou similares
-- Escreva um texto descritivo corrido sobre revestimentos e acabamentos
-- Analise revestimentos: pisos, paredes, tetos em descrição fluida
-- Observe pintura, azulejos, cerâmica, pedras naturais
-- Note desgaste, manchas, descolamentos, trincas em parágrafo natural
-- Avalie necessidade de reforma ou manutenção
-- IMPORTANTE: Mantenha o texto COMPLETO dentro de 280 caracteres para evitar cortes`,
+FOCO ACABAMENTOS (MÁXIMO 300 CARACTERES):
+- Analise revestimentos: argamassa, cerâmica, porcelanato, pintura, gesso
+- Identifique patologias: desplacamento, empolamento, vesículas, eflorescência, manchas
+- Avalie aderência, nivelamento, planicidade, juntas de assentamento
+- Note necessidade de reparos pontuais ou substituição integral
+
+EXEMPLO: "Desplacamento de revestimento cerâmico em fachada, área aprox. 2m², com exposição do substrato de argamassa. Perda de aderência indica falha na camada de chapisco ou movimentação térmica."`,
 
       seguranca: `
-FOCO SEGURANÇA:
-- NUNCA comece com "A imagem mostra" ou similares
-- Escreva um texto descritivo corrido sobre aspectos de segurança
-- Identifique elementos de segurança: grades, portões, corrimãos
-- Observe acessibilidade: rampas, sinalização, obstáculos em descrição fluida
-- Note riscos: superfícies escorregadias, obstáculos, iluminação inadequada
-- Avalie conformidade com normas de segurança
-- MÁXIMO 350 caracteres`,
+FOCO SEGURANÇA (MÁXIMO 300 CARACTERES):
+- Identifique elementos de proteção: guarda-corpos, corrimãos, antiderrapantes, sinalização
+- Observe acessibilidade: rampas, larguras de passagem, desníveis, pisos táteis
+- Note riscos: superfícies escorregadias, bordas desprotegidas, iluminação inadequada
+- Avalie conformidade com requisitos básicos de segurança
+
+EXEMPLO: "Guarda-corpo metálico com altura de 0,90m, abaixo do mínimo recomendado de 1,10m. Espaçamento entre balaústres superior a 11cm, apresentando risco para crianças."`,
 
       conservacao: `
-FOCO CONSERVAÇÃO:
-- NUNCA comece com "A imagem mostra" ou similares
-- Escreva um texto descritivo corrido sobre o estado de conservação
-- Avalie estado geral de conservação dos elementos em parágrafo fluido
-- Identifique sinais de deterioração natural ou acelerada
-- Note áreas que precisam de intervenção imediata
-- Classifique: Bom, Regular, Ruim, Crítico
-- IMPORTANTE: Mantenha o texto COMPLETO dentro de 280 caracteres para evitar cortes`,
+FOCO CONSERVAÇÃO (MÁXIMO 300 CARACTERES):
+- Classifique o estado: Bom / Regular / Ruim / Crítico
+- Identifique agentes de degradação: umidade, insolação, agentes químicos, desgaste mecânico
+- Note vida útil residual estimada quando possível
+- Indique urgência de intervenção
+
+EXEMPLO: "Elemento em estado regular de conservação. Pintura com descascamento generalizado e exposição do substrato. Presença de bolor nas regiões inferiores indica umidade ascendente recorrente."`,
 
       manutencao: `
-FOCO MANUTENÇÃO:
-- NUNCA comece com "A imagem mostra" ou similares
-- Escreva um texto descritivo corrido sobre necessidades de manutenção
-- Identifique necessidades de manutenção preventiva ou corretiva em parágrafo fluido
-- Priorize intervenções por urgência e impacto
-- Sugira prazos para ações necessárias
-- Note materiais e métodos recomendados
-- MÁXIMO 400 caracteres`,
+FOCO MANUTENÇÃO (MÁXIMO 300 CARACTERES):
+- Identifique necessidades de manutenção preventiva ou corretiva
+- Priorize por urgência: imediata, curto prazo (30 dias), médio prazo (90 dias)
+- Descreva o serviço necessário e materiais recomendados
+- Note se requer profissional especializado
+
+EXEMPLO: "Infiltração ativa em laje de cobertura com mancha de umidade de aprox. 3m². Necessária impermeabilização corretiva com manta asfáltica. Prioridade: curto prazo. Risco de dano ao forro de gesso."`,
 
       detalhado: `
-ANÁLISE TÉCNICA DETALHADA:
-- NUNCA comece com "A imagem mostra" ou similares
-- Escreva um texto descritivo técnico corrido e detalhado
-- Forneça análise completa e minuciosa em parágrafo fluido
-- Inclua aspectos técnicos, normativos e de segurança
-- Detalhe materiais, métodos construtivos, patologias em texto natural
-- Sugira investigações adicionais se necessário
-- MÁXIMO 600 caracteres`
+ANÁLISE TÉCNICA DETALHADA (MÁXIMO 600 CARACTERES):
+- Forneça análise minuciosa com identificação precisa da patologia
+- Descreva mecanismo de deterioração e evolução provável
+- Inclua recomendação técnica de reparo com materiais e método
+- Indique necessidade de ensaios complementares se aplicável
+- Classifique grau de risco e urgência de intervenção
+
+EXEMPLO: "Fissuras mapeadas no revestimento de argamassa da fachada norte, abertura média de 0,2mm, distribuídas uniformemente na superfície. Padrão característico de retração da argamassa por dosagem inadequada ou cura deficiente. Não apresenta comprometimento estrutural. Recomenda-se tratamento superficial com selante flexível de poliuretano após limpeza e abertura dos sulcos. Prioridade: médio prazo."`
     };
 
     return baseContext + specificPrompts[mode as keyof typeof specificPrompts];
