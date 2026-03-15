@@ -30,7 +30,8 @@ const ChatIA = () => {
     promptObjetivo: '',
     promptComportamento: '',
     enableAgente: true,
-    apiKeyOpenAI: ''
+    apiKeyOpenAI: '',
+    modeloIA: 'gpt-4o'
   });
 
   useEffect(() => {
@@ -43,7 +44,8 @@ const ChatIA = () => {
         promptObjetivo: parsedConfig.promptObjetivo || '',
         promptComportamento: parsedConfig.promptComportamento || '',
         enableAgente: parsedConfig.enableAgente || true,
-        apiKeyOpenAI: parsedConfig.apiKeyOpenAI || ''
+        apiKeyOpenAI: parsedConfig.apiKeyOpenAI || '',
+        modeloIA: parsedConfig.modeloIA || 'gpt-4o'
       });
     }
   }, []);
