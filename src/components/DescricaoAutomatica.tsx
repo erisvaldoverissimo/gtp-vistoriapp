@@ -172,8 +172,8 @@ EXEMPLOS DE REFERÊNCIA:
       const requestBody = {
         model: apiInfo.model,
         messages: messages,
-        max_tokens: hasSpecificInstruction ? 500 : 150, // Mais tokens para instruções específicas
-        temperature: hasSpecificInstruction ? 1.0 : 0.1  // Temperatura máxima para seguir instruções
+        max_tokens: hasSpecificInstruction ? 500 : 250,
+        temperature: hasSpecificInstruction ? 0.7 : 0.2
       };
 
       console.log('Configuração da requisição:');
