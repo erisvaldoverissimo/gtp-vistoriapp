@@ -243,7 +243,7 @@ const ChatIA = () => {
             }
           ],
           temperature: 0.7,
-          max_tokens: 1000
+          ...getTokenParam(apiInfo.model, 1000)
         }),
       });
 

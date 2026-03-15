@@ -171,10 +171,11 @@ EXEMPLOS DE REFERÊNCIA:
         });
       }
 
+      const tokensValue = hasSpecificInstruction ? 500 : 250;
       const requestBody = {
         model: apiInfo.model,
         messages: messages,
-        max_tokens: hasSpecificInstruction ? 500 : 250,
+        ...getTokenParam(apiInfo.model, tokensValue),
         temperature: hasSpecificInstruction ? 0.7 : 0.2
       };
 

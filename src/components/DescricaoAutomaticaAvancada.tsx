@@ -290,10 +290,11 @@ EXEMPLO: "Fissuras mapeadas no revestimento de argamassa da fachada norte, abert
         detalhado: 400
       };
 
+      const tokensValue = hasSpecificInstruction ? 300 : maxTokens[selectedMode as keyof typeof maxTokens];
       const requestBody = {
         model: apiInfo.model,
         messages: messages,
-        max_tokens: hasSpecificInstruction ? 300 : maxTokens[selectedMode as keyof typeof maxTokens],
+        ...getTokenParam(apiInfo.model, tokensValue),
         temperature: hasSpecificInstruction ? 0.7 : 0.3
       };
 
