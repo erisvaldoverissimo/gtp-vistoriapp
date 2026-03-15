@@ -141,16 +141,23 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
           content: [
             {
               type: 'text',
-              text: `Como ${nomeAgente}, analise esta imagem de vistoria predial.
+              text: `Como ${nomeAgente}, analise esta imagem de vistoria predial com precisão de engenharia diagnóstica.
 
-INSTRUÇÕES:
-- MÁXIMO 200 caracteres
-- Use linguagem técnica e objetiva
-- Descreva trabalhos/atividades em execução
-- Identifique: ambiente, materiais, estado das estruturas
-- Foque em aspectos técnicos relevantes
+REGRAS OBRIGATÓRIAS:
+- MÁXIMO 300 caracteres - finalize a frase antes do limite
+- NUNCA comece com "A imagem mostra", "Na imagem" ou similares
+- Comece DIRETAMENTE pelo elemento ou patologia observada
+- Texto corrido técnico em parágrafo único, como laudo de engenharia
+- Identifique: elemento construtivo, tipo de patologia/condição, extensão aproximada, gravidade aparente e causa provável
+- Se houver atividade em execução, descreva o serviço, materiais e técnica observada
 
-Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, estrutura em bom estado."`
+VOCABULÁRIO TÉCNICO OBRIGATÓRIO:
+Use termos como: fissura, trinca, eflorescência, desplacamento, infiltração, carbonatação, corrosão de armadura, bolor, desagregação, empolamento, vesícula, junta de dilatação, argamassa de revestimento, substrato, laje, alvenaria, contramarco, verga, pingadeira
+
+EXEMPLOS DE REFERÊNCIA:
+- "Fissura horizontal em alvenaria de vedação no terço inferior da parede, abertura estimada em 0,3mm, extensão de aproximadamente 1,5m. Padrão sugere movimentação diferencial da fundação. Grau de risco: médio."
+- "Eflorescência localizada na face interna da parede junto ao rodapé, indicando presença de umidade ascendente por capilaridade. Revestimento com descolamento incipiente na região afetada."
+- "Instalação de tubulação hidráulica em PVC soldável Ø50mm em prumada de esgoto. Conexões com aplicação de adesivo adequada, alinhamento e prumo satisfatórios."`
             },
             {
               type: 'image_url',
@@ -165,8 +172,8 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
       const requestBody = {
         model: apiInfo.model,
         messages: messages,
-        max_tokens: hasSpecificInstruction ? 500 : 150, // Mais tokens para instruções específicas
-        temperature: hasSpecificInstruction ? 1.0 : 0.1  // Temperatura máxima para seguir instruções
+        max_tokens: hasSpecificInstruction ? 500 : 250,
+        temperature: hasSpecificInstruction ? 0.7 : 0.2
       };
 
       console.log('Configuração da requisição:');
@@ -209,9 +216,12 @@ Exemplo: "Aplicação de argamassa em parede interna. Materiais organizados, est
       
       let description = data.choices[0].message.content;
 
-      // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
-      if (!hasSpecificInstruction && description.length > 200) {
-        description = description.substring(0, 197) + '...';
+      // Garantir que a descrição não exceda 300 caracteres se não for instrução específica
+      if (!hasSpecificInstruction && description.length > 300) {
+        // Cortar na última frase completa antes de 300 chars
+        const truncated = description.substring(0, 300);
+        const lastPeriod = truncated.lastIndexOf('.');
+        description = lastPeriod > 150 ? truncated.substring(0, lastPeriod + 1) : truncated.substring(0, 297) + '...';
       }
 
       onDescriptionGenerated(description);
