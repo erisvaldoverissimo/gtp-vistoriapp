@@ -578,6 +578,23 @@ Mantenha sempre um equilíbrio entre rigor técnico, clareza e acessibilidade.`,
               </p>
             </div>
 
+            <div>
+              <Label htmlFor="modeloIA">Modelo de IA</Label>
+              <Select value={config.modeloIA} onValueChange={(value) => handleInputChange('modeloIA', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar modelo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4o">GPT-4o (Recomendado - Visão + Texto)</SelectItem>
+                  <SelectItem value="gpt-4o-mini">GPT-4o Mini (Mais rápido e econômico)</SelectItem>
+                  <SelectItem value="gpt-5.4">GPT-5.4 (Último modelo - Máxima qualidade)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground mt-1">
+                O modelo selecionado será usado para descrições de fotos e chat IA.
+              </p>
+            </div>
+
             <div className="flex items-center space-x-2">
               <Switch
                 checked={config.enableAutoDescription}
