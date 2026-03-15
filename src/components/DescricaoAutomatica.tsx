@@ -180,7 +180,7 @@ EXEMPLOS DE REFERÊNCIA:
       };
 
       console.log('Configuração da requisição:');
-      console.log('- Max tokens:', requestBody.max_tokens);
+      console.log('- Max tokens:', tokensValue);
       console.log('- Temperature:', requestBody.temperature);
       console.log('- Mensagens enviadas:', JSON.stringify(messages, null, 2));
 

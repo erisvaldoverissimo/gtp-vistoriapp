@@ -442,7 +442,7 @@ Quando o usuário mencionar relatórios, vistorias, condomínios, problemas ou e
             }
           ],
           temperature: 0.7,
-          max_tokens: 1000
+          ...getTokenParam(apiInfo.model, 1000)
         }),
       });
 
