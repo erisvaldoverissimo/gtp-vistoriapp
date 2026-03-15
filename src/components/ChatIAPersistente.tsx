@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { getTokenParam } from '@/utils/ai/tokenParams';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -441,7 +442,7 @@ Quando o usuário mencionar relatórios, vistorias, condomínios, problemas ou e
             }
           ],
           temperature: 0.7,
-          max_tokens: 1000
+          ...getTokenParam(apiInfo.model, 1000)
         }),
       });
 

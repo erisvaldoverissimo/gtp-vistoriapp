@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { getTokenParam } from '@/utils/ai/tokenParams';
 import { Button } from '@/components/ui/button';
 import { Brain, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -170,15 +171,16 @@ EXEMPLOS DE REFERÊNCIA:
         });
       }
 
+      const tokensValue = hasSpecificInstruction ? 500 : 250;
       const requestBody = {
         model: apiInfo.model,
         messages: messages,
-        max_tokens: hasSpecificInstruction ? 500 : 250,
+        ...getTokenParam(apiInfo.model, tokensValue),
         temperature: hasSpecificInstruction ? 0.7 : 0.2
       };
 
       console.log('Configuração da requisição:');
-      console.log('- Max tokens:', requestBody.max_tokens);
+      console.log('- Max tokens:', tokensValue);
       console.log('- Temperature:', requestBody.temperature);
       console.log('- Mensagens enviadas:', JSON.stringify(messages, null, 2));
 

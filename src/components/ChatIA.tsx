@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Bot, User, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AudioRecorder from './AudioRecorder';
+import { getTokenParam } from '@/utils/ai/tokenParams';
 
 interface Message {
   id: string;
@@ -242,7 +243,7 @@ const ChatIA = () => {
             }
           ],
           temperature: 0.7,
-          max_tokens: 1000
+          ...getTokenParam(apiInfo.model, 1000)
         }),
       });
 
