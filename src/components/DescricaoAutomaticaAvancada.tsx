@@ -243,14 +243,18 @@ EXEMPLO: "Fissuras mapeadas no revestimento de argamassa da fachada norte, abert
       let messages = [];
       
       if (hasSpecificInstruction) {
-        // Modo instrução específica
+        // Modo instrução específica - inclui regras de formatação
         messages = [
+          {
+            role: 'system',
+            content: 'Você é um engenheiro civil especialista em vistorias prediais. REGRAS OBRIGATÓRIAS: Responda SEMPRE em texto corrido, parágrafo único, sem listas, sem marcadores, sem bullet points, sem hífens, sem asteriscos, sem markdown, sem quebras de linha. Máximo 280 caracteres. Termine com frase completa e ponto final.'
+          },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: `INSTRUÇÃO ESPECÍFICA: ${currentDescription.trim()}\n\nAnalise a imagem de vistoria seguindo exatamente esta instrução.`
+                text: `Use esta orientação como base para descrever a imagem: ${currentDescription.trim()}`
               },
               {
                 type: 'image_url',
@@ -319,7 +323,17 @@ EXEMPLO: "Fissuras mapeadas no revestimento de argamassa da fachada norte, abert
       }
 
       const data = await response.json();
-      const description = data.choices[0].message.content;
+      let description = data.choices[0].message.content;
+      
+      // Limpar formatação markdown e listas da resposta
+      description = description
+        .replace(/\*\*/g, '')           // Remove **bold**
+        .replace(/\*/g, '')             // Remove *italic*
+        .replace(/^[-•]\s*/gm, '')      // Remove marcadores de lista
+        .replace(/^\d+\.\s*/gm, '')     // Remove listas numeradas
+        .replace(/\n+/g, ' ')           // Quebras de linha → espaço
+        .replace(/\s{2,}/g, ' ')        // Múltiplos espaços → um
+        .trim();
 
       onDescriptionGenerated(description);
 
