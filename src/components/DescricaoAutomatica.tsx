@@ -216,9 +216,12 @@ EXEMPLOS DE REFERÊNCIA:
       
       let description = data.choices[0].message.content;
 
-      // Garantir que a descrição não exceda 200 caracteres se não for instrução específica
-      if (!hasSpecificInstruction && description.length > 200) {
-        description = description.substring(0, 197) + '...';
+      // Garantir que a descrição não exceda 300 caracteres se não for instrução específica
+      if (!hasSpecificInstruction && description.length > 300) {
+        // Cortar na última frase completa antes de 300 chars
+        const truncated = description.substring(0, 300);
+        const lastPeriod = truncated.lastIndexOf('.');
+        description = lastPeriod > 150 ? truncated.substring(0, lastPeriod + 1) : truncated.substring(0, 297) + '...';
       }
 
       onDescriptionGenerated(description);
