@@ -59,7 +59,7 @@ const ChatIA = () => {
   // Detectar o tipo de API baseado na chave
   const detectApiProvider = (apiKey: string) => {
     if (apiKey.startsWith('sk-')) {
-      return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
+      return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: config.modeloIA };
     } else if (apiKey.startsWith('gsk_')) {
       return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.1-8b-instant' };
     }

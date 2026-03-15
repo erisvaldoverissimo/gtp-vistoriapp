@@ -24,8 +24,9 @@ const DescricaoAutomatica: React.FC<DescricaoAutomaticaProps> = ({
 
   // Detectar o tipo de API baseado na chave
   const detectApiProvider = (apiKey: string) => {
+    const modeloConfigurado = obterConfiguracao('ia_modelo', 'gpt-4o');
     if (apiKey.startsWith('sk-')) {
-      return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
+      return { provider: 'openai', url: 'https://api.openai.com/v1/chat/completions', model: modeloConfigurado };
     } else if (apiKey.startsWith('gsk_')) {
       return { provider: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.2-11b-vision-preview' };
     }
