@@ -251,7 +251,17 @@ const UploadFotos = ({
   };
 
   const handleDescriptionGenerated = (index: number, description: string) => {
-    const descricaoLimitada = description.slice(0, MAX_DESCRICAO_LENGTH);
+    let descricaoLimitada = description;
+    if (descricaoLimitada.length > MAX_DESCRICAO_LENGTH) {
+      // Truncar na última frase completa (ponto final) dentro do limite
+      const truncated = descricaoLimitada.substring(0, MAX_DESCRICAO_LENGTH);
+      const lastPeriod = truncated.lastIndexOf('.');
+      if (lastPeriod > MAX_DESCRICAO_LENGTH * 0.5) {
+        descricaoLimitada = truncated.substring(0, lastPeriod + 1);
+      } else {
+        descricaoLimitada = truncated;
+      }
+    }
     handleDescricaoChange(index, descricaoLimitada);
   };
 
