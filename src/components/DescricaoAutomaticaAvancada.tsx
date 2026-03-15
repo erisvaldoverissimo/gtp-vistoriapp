@@ -90,7 +90,8 @@ REGRA CRÍTICA DE LIMITE:
 REGRAS DE ESTILO:
 - NUNCA comece com "A imagem mostra", "Na imagem", "Observa-se na imagem" ou similares
 - Comece DIRETAMENTE pelo elemento construtivo ou patologia identificada
-- Texto corrido técnico em parágrafo único, como laudo de engenharia diagnóstica
+- OBRIGATÓRIO: Texto corrido técnico em parágrafo único. NUNCA use listas, marcadores, bullet points, hífens ou quebras de linha
+- Escreva tudo em uma única sequência de frases conectadas, como um laudo de engenharia diagnóstica
 - Use vocabulário técnico: fissura, trinca, eflorescência, desplacamento, infiltração, carbonatação, corrosão de armadura, bolor, desagregação, empolamento, vesícula, junta de dilatação, argamassa, substrato, alvenaria, verga, pingadeira
 - Identifique quando possível: elemento construtivo, tipo de patologia/condição, extensão, gravidade aparente e causa provável
 
