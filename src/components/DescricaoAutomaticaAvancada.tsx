@@ -77,8 +77,15 @@ const DescricaoAutomaticaAvancada: React.FC<DescricaoAutomaticaAvancadaProps> = 
       : '';
 
     const baseContext = `
-Você é um engenheiro especialista em vistorias prediais com 20+ anos de experiência.
-Analise esta imagem de vistoria predial e forneça uma descrição técnica precisa e útil.
+Você é um engenheiro civil especialista em engenharia diagnóstica e vistorias prediais com 20+ anos de experiência em patologias construtivas.
+
+REGRAS GLOBAIS OBRIGATÓRIAS:
+- NUNCA comece com "A imagem mostra", "Na imagem", "Observa-se na imagem" ou similares
+- Comece DIRETAMENTE pelo elemento construtivo ou patologia identificada
+- Texto corrido técnico em parágrafo único, como laudo de engenharia diagnóstica
+- Finalize a frase adequadamente ANTES do limite de caracteres
+- Use vocabulário técnico: fissura, trinca, eflorescência, desplacamento, infiltração, carbonatação, corrosão de armadura, bolor, desagregação, empolamento, vesícula, junta de dilatação, argamassa, substrato, alvenaria, verga, pingadeira
+- Identifique quando possível: elemento construtivo, tipo de patologia/condição, extensão, gravidade aparente e causa provável
 
 CONTEXTO DA VISTORIA:
 ${ambiente ? `- Ambiente: ${ambiente}` : ''}
@@ -90,16 +97,13 @@ ${condominioInfo?.tipo ? `- Tipo: ${condominioInfo.tipo}` : ''}${exemplosTexto}$
 
     const specificPrompts = {
       auto: `
-ANÁLISE INTELIGENTE:
-- Identifique automaticamente o principal elemento/atividade/problema
-- Use linguagem técnica clara e objetiva, NUNCA comece com "A imagem mostra" ou similares
-- Escreva um texto descritivo corrido e natural, como um parágrafo técnico
-- Inicie descrevendo o elemento e sua condição, seguindo com detalhes em sequência natural
-- Priorize informações mais relevantes para decisões de manutenção
-- IMPORTANTE: Mantenha o texto COMPLETO dentro de 280 caracteres para evitar cortes
-- Finalize frases adequadamente sem cortar no meio
+ANÁLISE INTELIGENTE (MÁXIMO 300 CARACTERES):
+- Identifique o principal elemento, patologia ou atividade visível
+- Descreva com precisão técnica a condição observada
+- Inclua causa provável quando identificável
+- Se houver serviço em execução, descreva técnica e materiais
 
-ESTILO: Texto descritivo técnico corrido, como um relatório de vistoria profissional`,
+EXEMPLO: "Fissura horizontal em alvenaria de vedação no terço inferior, abertura ~0,3mm, extensão aprox. 1,5m. Padrão sugere movimentação diferencial da fundação. Grau de risco: médio."`,
 
       estrutural: `
 FOCO ESTRUTURAL:
