@@ -81,11 +81,16 @@ const DescricaoAutomaticaAvancada: React.FC<DescricaoAutomaticaAvancadaProps> = 
     const baseContext = `
 Você é um engenheiro civil especialista em engenharia diagnóstica e vistorias prediais com 20+ anos de experiência em patologias construtivas.
 
-REGRAS GLOBAIS OBRIGATÓRIAS:
+REGRA CRÍTICA DE LIMITE:
+- Sua resposta DEVE ter NO MÁXIMO 280 caracteres (incluindo espaços e pontuação).
+- Conte os caracteres antes de responder. Se ultrapassar 280, reescreva mais curto.
+- TERMINE sempre com uma frase completa seguida de ponto final.
+- NUNCA deixe o texto cortado no meio de uma frase.
+
+REGRAS DE ESTILO:
 - NUNCA comece com "A imagem mostra", "Na imagem", "Observa-se na imagem" ou similares
 - Comece DIRETAMENTE pelo elemento construtivo ou patologia identificada
 - Texto corrido técnico em parágrafo único, como laudo de engenharia diagnóstica
-- Finalize a frase adequadamente ANTES do limite de caracteres
 - Use vocabulário técnico: fissura, trinca, eflorescência, desplacamento, infiltração, carbonatação, corrosão de armadura, bolor, desagregação, empolamento, vesícula, junta de dilatação, argamassa, substrato, alvenaria, verga, pingadeira
 - Identifique quando possível: elemento construtivo, tipo de patologia/condição, extensão, gravidade aparente e causa provável
 
